@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>Brain Dump</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #0e0e0f; --surface: #161618; --surface2: #1e1e21;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.14);
+  --text: #f0efe8; --muted: #888884; --dim: #4a4a48;
+  --accent: #c8f06a; --accent-dim: rgba(200,240,106,0.12);
+  --red: #ff5a5a; --red-dim: rgba(255,90,90,0.12);
+  --blue: #5ab4ff; --blue-dim: rgba(90,180,255,0.12);
+  --amber: #f5a623; --amber-dim: rgba(245,166,35,0.12);
+  --teal: #3dd6b5; --teal-dim: rgba(61,214,181,0.12);
+  --radius: 14px; --radius-sm: 10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'DM Sans', sans-serif; font-size: 15px;
+  display: flex; flex-direction: column;
+  max-width: 540px; margin: 0 auto;
+  padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 16px);
+  height: 100%;
+}
+
+/* Header */
+.header { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 12px; flex-shrink: 0; }
+.header h1 { font-size: 18px; font-weight: 500; }
+.clear-btn { background: none; border: none; color: var(--dim); font-size: 13px; cursor: pointer; padding: 6px; font-family: inherit; }
+.clear-btn:active { color: var(--red); }
+
+/* Chat window */
+.chat-window {
+  flex: 1; overflow-y: auto; display: flex; flex-direction: column;
+  gap: 10px; padding: 4px 0 12px;
+  -webkit-overflow-scrolling: touch;
+}
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 12px; padding: 40px 0; }
+.empty-icon { font-size: 48px; opacity: 0.15; }
+.empty-text { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.6; }
+
+.bubble { padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.55; max-width: 88%; word-break: break-word; }
+.bubble.user { background: var(--surface2); border: 1px solid var(--border); align-self: flex-end; border-radius: 16px 16px 4px 16px; }
+.bubble.assistant { background: var(--accent-dim); border: 1px solid rgba(200,240,106,0.15); color: var(--text); align-self: flex-start; border-radius: 16px 16px 16px 4px; }
+.bubble.thinking { color: var(--muted); font-style: italic; align-self: flex-start; font-size: 13px; background: none; border: none; padding-left: 4px; }
+.bubble-label { font-size: 10px; font-weight: 600; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px; }
+
+/* Bottom controls */
+.bottom { flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; padding-top: 8px; border-top: 1px solid var(--border); }
+
+/* Big mic button */
+.mic-btn {
+  width: 100%; padding: 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit; font-size: 15px; font-weight: 500;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: all 0.15s;
+  -webkit-user-select: none; user-select: none;
+}
+.mic-btn.recording { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+.mic-btn.processing { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+.mic-btn.speaking { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.mic-icon { font-size: 22px; line-height: 1; }
+.voice-status { font-size: 12px; color: var(--muted); text-align: center; min-height: 14px; }
+
+/* Text input row */
+.text-row { display: flex; gap: 8px; }
+.text-input {
+  flex: 1; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-family: inherit; font-size: 14px;
+  padding: 10px 12px; outline: none; resize: none;
+  min-height: 42px; max-height: 80px; line-height: 1.5;
+}
+.text-input:focus { border-color: var(--border2); }
+.text-input::placeholder { color: var(--dim); }
+.send-btn {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-size: 18px; padding: 0 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; min-width: 46px;
+}
+.send-btn:disabled { opacity: 0.35; }
+
+/* Convert & save */
+.action-btn {
+  width: 100%; padding: 14px; border-radius: var(--radius);
+  border: none; font-family: inherit; font-size: 15px; font-weight: 500;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.convert-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); }
+.convert-btn.ready { background: var(--blue-dim); border-color: var(--blue); color: var(--blue); }
+.convert-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.save-btn { background: var(--accent-dim); border: 1px solid rgba(200,240,106,0.3); color: var(--accent); }
+.save-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Tasks */
+.tasks-wrap { display: flex; flex-direction: column; gap: 8px; }
+.tasks-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.task-item { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; }
+.task-text { flex: 1; font-size: 13px; line-height: 1.4; }
+.tag-pill {
+  font-size: 10px; font-weight: 600; padding: 3px 9px;
+  border-radius: 20px; cursor: pointer; border: none;
+  font-family: inherit; flex-shrink: 0;
+}
+.tag-gym { background: var(--blue-dim); color: var(--blue); }
+.tag-business { background: var(--teal-dim); color: var(--teal); }
+.tag-personal { background: var(--amber-dim); color: var(--amber); }
+.tag-urgent { background: var(--red-dim); color: var(--red); }
+.remove-task { background: none; border: none; color: var(--dim); font-size: 18px; cursor: pointer; padding: 0 2px; line-height: 1; flex-shrink: 0; }
+
+.status-bar { font-size: 13px; text-align: center; min-height: 18px; color: var(--muted); }
+.status-bar.ok { color: var(--accent); }
+.status-bar.err { color: var(--red); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🧠 Brain dump</h1>
+  <button class="clear-btn" onclick="clearAll()">Clear</button>
+</div>
+
+<div class="chat-window" id="chat-window">
+  <div class="empty-state" id="empty-state">
+    <div class="empty-icon">🎙️</div>
+    <div class="empty-text">Tap the mic and start talking.<br>I'll listen and reply out loud.<br>Convert when you're done.</div>
+  </div>
+</div>
+
+<div class="bottom">
+  <button class="mic-btn" id="mic-btn" onclick="toggleRecording()">
+    <span class="mic-icon" id="mic-icon">🎙️</span>
+    <span id="mic-label">Tap to start talking</span>
+  </button>
+  <div class="voice-status" id="voice-status"></div>
+
+  <div class="text-row">
+    <textarea class="text-input" id="text-input" placeholder="Or type here..." rows="1" onkeydown="handleKey(event)"></textarea>
+    <button class="send-btn" id="send-btn" onclick="sendText()">↑</button>
+  </div>
+
+  <button class="action-btn convert-btn" id="convert-btn" onclick="convertToTasks()" disabled>
+    ✦ Convert to tasks
+  </button>
+
+  <div id="tasks-wrap" style="display:none;" class="tasks-wrap">
+    <div class="tasks-label">Review before saving</div>
+    <div id="tasks-list"></div>
+    <button class="action-btn save-btn" id="save-btn" onclick="saveToGithub()">
+      ↗ Save to dashboard
+    </button>
+  </div>
+
+  <div class="status-bar" id="status-bar"></div>
+</div>
+
+<script>
+const ANTHROPIC_KEY = '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';
+const GITHUB_TOKEN = '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';
+const GITHUB_REPO = 'ant839/dashboard';
+const TASKS_FILE = 'tasks.json';
+const TAGS = ['personal','gym','business','urgent'];
+
+let conversation = [];
+let convertedTasks = [];
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+let isBusy = false;
+
+function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderChat() {
+  const win = document.getElementById('chat-window');
+  const empty = document.getElementById('empty-state');
+  const msgs = conversation.filter(m => true);
+  if (!msgs.length) {
+    win.innerHTML = '';
+    const es = document.createElement('div');
+    es.className = 'empty-state'; es.id = 'empty-state';
+    es.innerHTML = '<div class="empty-icon">🎙️</div><div class="empty-text">Tap the mic and start talking.<br>I\'ll listen and reply out loud.<br>Convert when you\'re done.</div>';
+    win.appendChild(es);
+    document.getElementById('convert-btn').disabled = true;
+    document.getElementById('convert-btn').className = 'action-btn convert-btn';
+    return;
+  }
+  win.innerHTML = msgs.map(m => {
+    if (m.role === 'user') return `<div class="bubble user"><div class="bubble-label">You</div>${escH(m.content)}</div>`;
+    if (m.role === '_thinking') return `<div class="bubble thinking">Thinking...</div>`;
+    return `<div class="bubble assistant"><div class="bubble-label">Claude</div>${escH(m.content)}</div>`;
+  }).join('');
+  win.scrollTop = win.scrollHeight;
+  const hasEnough = conversation.filter(m => m.role !== '_thinking').length >= 2;
+  document.getElementById('convert-btn').disabled = !hasEnough;
+  document.getElementById('convert-btn').className = 'action-btn convert-btn' + (hasEnough ? ' ready' : '');
+}
+
+function setMicState(state) {
+  const btn = document.getElementById('mic-btn');
+  const icon = document.getElementById('mic-icon');
+  const label = document.getElementById('mic-label');
+  btn.className = 'mic-btn';
+  if (state === 'idle') { icon.textContent = '🎙️'; label.textContent = 'Tap to start talking'; }
+  else if (state === 'recording') { btn.classList.add('recording'); icon.textContent = '⏹️'; label.textContent = 'Recording — tap to stop'; }
+  else if (state === 'processing') { btn.classList.add('processing'); icon.textContent = '⏳'; label.textContent = 'Transcribing...'; }
+  else if (state === 'speaking') { btn.classList.add('speaking'); icon.textContent = '🔊'; label.textContent = 'Claude is speaking — tap to interrupt'; }
+}
+
+async function toggleRecording() {
+  if (isBusy && !isRecording) return;
+  if (window.speechSynthesis && window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel(); setMicState('idle'); return;
+  }
+  if (!isRecording) { await startRecording(); }
+  else { await stopRecording(); }
+}
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.start(100);
+    isRecording = true;
+    setMicState('recording');
+    document.getElementById('voice-status').textContent = '';
+  } catch(e) {
+    document.getElementById('voice-status').textContent = 'Mic blocked — check browser permissions.';
+  }
+}
+
+async function stopRecording() {
+  if (!mediaRecorder || !isRecording) return;
+  isRecording = false; isBusy = true;
+  setMicState('processing');
+  return new Promise(resolve => {
+    mediaRecorder.onstop = async () => {
+      mediaRecorder.stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      const text = await transcribeAudio(blob);
+      document.getElementById('voice-status').textContent = '';
+      if (text && text.trim()) { await sendMessage(text.trim()); }
+      else { setMicState('idle'); }
+      isBusy = false; resolve();
+    };
+    mediaRecorder.stop();
+  });
+}
+
+async function transcribeAudio(blob) {
+  try {
+    const b64 = await new Promise(res => {
+      const r = new FileReader();
+      r.onloadend = () => res(r.result.split(',')[1]);
+      r.readAsDataURL(blob);
+    });
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6', max_tokens: 400,
+        messages: [{ role: 'user', content: [
+          { type: 'document', source: { type: 'base64', media_type: 'audio/webm', data: b64 } },
+          { type: 'text', text: 'Transcribe this audio exactly as spoken. Return only the transcription, nothing else.' }
+        ]}]
+      })
+    });
+    const data = await res.json();
+    return data.content?.[0]?.text || '';
+  } catch(e) {
+    document.getElementById('voice-status').textContent = 'Transcription failed — try typing.';
+    return '';
+  }
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); }
+}
+
+async function sendText() {
+  const inp = document.getElementById('text-input');
+  const text = inp.value.trim();
+  if (!text || isBusy) return;
+  inp.value = ''; isBusy = true;
+  document.getElementById('send-btn').disabled = true;
+  await sendMessage(text);
+  isBusy = false;
+  document.getElementById('send-btn').disabled = false;
+}
+
+async function sendMessage(text) {
+  conversation.push({ role: 'user', content: text });
+  conversation.push({ role: '_thinking', content: '' });
+  renderChat();
+  try {
+    const msgs = conversation.filter(m => m.role !== '_thinking').map(m => ({ role: m.role, content: m.content }));
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6', max_tokens: 300,
+        system: "You are Claude in Ant Usmar's voice brain dump tool. He uses this on his phone, often while driving. Ant owns Rev Barbell Club (Olympic weightlifting gym, ~60 members) in Balcatta Perth WA, trains BJJ competing August 2026, runs @antstrengthcoach on Instagram, building IntelliFight wearable startup. Help him capture and clarify what he needs to do. Keep replies to 1-2 short sentences max. Conversational and punchy. No lists, no em dashes, no fluff. If he's just dumping tasks, confirm and ask if there's more.",
+        messages: msgs
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || 'Something went wrong.';
+    conversation = conversation.filter(m => m.role !== '_thinking');
+    conversation.push({ role: 'assistant', content: reply });
+    speakReply(reply);
+  } catch(e) {
+    conversation = conversation.filter(m => m.role !== '_thinking');
+    conversation.push({ role: 'assistant', content: 'Connection error — try again.' });
+    setMicState('idle');
+  }
+  renderChat();
+}
+
+function speakReply(text) {
+  if (!window.speechSynthesis) { setMicState('idle'); return; }
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.rate = 1.05;
+  utt.onstart = () => setMicState('speaking');
+  utt.onend = () => setMicState('idle');
+  utt.onerror = () => setMicState('idle');
+  window.speechSynthesis.speak(utt);
+}
+
+async function convertToTasks() {
+  const btn = document.getElementById('convert-btn');
+  btn.disabled = true; btn.textContent = '⏳ Converting...';
+  const transcript = conversation.filter(m => m.role !== '_thinking')
+    .map(m => (m.role === 'user' ? 'Me: ' : 'Claude: ') + m.content).join('\n');
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6', max_tokens: 1000,
+        system: `Extract every actionable task from this conversation. Return ONLY a valid JSON array, no markdown, no preamble, no explanation.
+Each item: { "text": "action verb task", "tag": "gym|business|personal|urgent" }
+gym = training/coaching/gym ops/Rev Barbell. business = admin/marketing/content/money/emails/Instagram/IntelliFight. urgent = time-sensitive. personal = everything else.
+Start each task with a verb. Keep text concise.`,
+        messages: [{ role: 'user', content: transcript }]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content?.[0]?.text || '[]';
+    convertedTasks = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    renderTasks();
+  } catch(e) {
+    setStatus('Conversion failed — try again.', 'err');
+  }
+  btn.disabled = false; btn.textContent = '✦ Convert to tasks';
+  btn.className = 'action-btn convert-btn ready';
+}
+
+function renderTasks() {
+  const wrap = document.getElementById('tasks-wrap');
+  const list = document.getElementById('tasks-list');
+  if (!convertedTasks.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'flex';
+  list.innerHTML = convertedTasks.map((t, i) => `
+    <div class="task-item" style="margin-bottom:6px;">
+      <span class="task-text">${escH(t.text)}</span>
+      <button class="tag-pill tag-${t.tag}" onclick="cycleTag(${i})">${t.tag}</button>
+      <button class="remove-task" onclick="removeTask(${i})">×</button>
+    </div>`).join('');
+  wrap.scrollIntoView({ behavior: 'smooth' });
+}
+
+function cycleTag(i) {
+  const cur = TAGS.indexOf(convertedTasks[i].tag);
+  convertedTasks[i].tag = TAGS[(cur + 1) % TAGS.length];
+  renderTasks();
+}
+
+function removeTask(i) {
+  convertedTasks.splice(i, 1);
+  if (!convertedTasks.length) { document.getElementById('tasks-wrap').style.display = 'none'; return; }
+  renderTasks();
+}
+
+async function saveToGithub() {
+  if (!convertedTasks.length) return;
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = '⏳ Saving...';
+  try {
+    const fileRes = await fetch(
+      `https://api.github.com/repos/${GITHUB_REPO}/contents/${TASKS_FILE}?t=${Date.now()}`,
+      { headers: { Authorization: 'Bearer ' + GITHUB_TOKEN, Accept: 'application/vnd.github+json' } }
+    );
+    let sha = null, existing = [];
+    if (fileRes.ok) {
+      const fd = await fileRes.json();
+      sha = fd.sha;
+      existing = JSON.parse(atob(fd.content.replace(/\n/g, '')));
+    }
+    const newTasks = [...existing, ...convertedTasks.map(t => ({ ...t, done: false, id: Date.now() + Math.random() }))];
+    const putRes = await fetch(
+      `https://api.github.com/repos/${GITHUB_REPO}/contents/${TASKS_FILE}`,
+      { method: 'PUT',
+        headers: { Authorization: 'Bearer ' + GITHUB_TOKEN, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'Tasks from voice brain dump', content: btoa(JSON.stringify(newTasks, null, 2)), ...(sha ? { sha } : {}) })
+      }
+    );
+    if (putRes.ok) {
+      setStatus(convertedTasks.length + ' tasks saved to dashboard!', 'ok');
+      convertedTasks = [];
+      setTimeout(() => { document.getElementById('tasks-wrap').style.display = 'none'; setStatus(''); }, 3000);
+    } else { throw new Error(); }
+  } catch(e) {
+    setStatus('Save failed — check connection.', 'err');
+  }
+  btn.disabled = false; btn.textContent = '↗ Save to dashboard';
+}
+
+function setStatus(msg, type='') {
+  const el = document.getElementById('status-bar');
+  el.textContent = msg; el.className = 'status-bar' + (type ? ' '+type : '');
+}
+
+function clearAll() {
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  conversation = []; convertedTasks = [];
+  document.getElementById('tasks-wrap').style.display = 'none';
+  setStatus('');
+  renderChat();
+}
+
+renderChat();
+</script>
+</body>
+</html>
