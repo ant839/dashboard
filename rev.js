@@ -17,6 +17,7 @@
   ];
 
   const css = `
+  [hidden]{display:none!important}
   .rev-nav{display:flex;align-items:center;gap:4px;margin:0 0 18px;border-bottom:1px solid var(--border,rgba(255,255,255,.07));overflow-x:auto}
   .rev-nav a{padding:9px 14px;font-size:13px;font-weight:500;color:var(--muted,#888884);text-decoration:none;border-bottom:2px solid transparent;white-space:nowrap}
   .rev-nav a:hover{color:var(--text,#f0efe8)}
