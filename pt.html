@@ -247,9 +247,10 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
         <div class="chips" id="f-days"></div>
         <span class="hint">They show up on these days in your tick-off list. You can still log sessions on other days.</span>
       </div>
-      <label class="f" data-for="weekly period">Cost per session ($)<input id="f-psess" type="number" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 65"></label>
+      <label class="f" data-for="weekly">Weekly amount ($)<input id="f-pweek" type="number" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 160"></label>
+      <label class="f" data-for="period">Cost per session ($)<input id="f-psess" type="number" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 65"></label>
       <label class="f" data-for="period pack fortnightly"><span id="l-ppack">Package price ($)</span><input id="f-ppack" type="number" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 1400"></label>
-      <label class="f" data-for="weekly fortnightly">Pays on<select id="f-payday"><option value="">Not set</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="7">Sunday</option></select></label>
+      <div class="f full" data-for="weekly fortnightly"><span>Pays on</span><div class="chips" id="f-payday"></div></div>
       <label class="f">Phone<input id="f-phone" type="tel"></label>
       <div class="f"><span>Active</span><label class="switch"><input type="checkbox" id="f-active" checked><span class="slider"></span><span class="switch-txt" id="f-activeTxt">Active</span></label></div>
       <label class="f full">Notes<textarea id="f-notes"></textarea></label>
@@ -277,13 +278,14 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="rev.js?v=16"></script>
-<script src="pt-core.js?v=15"></script>
+<script src="pt-core.js?v=17"></script>
 <script>
 (function(){
 const $=s=>document.querySelector(s);
 const {store,status,PLAN_LABEL,DAY_SHORT,iso,today,addDays,addMonths,daysBetween,fmt,esc}=PT;
 let day=iso(today()), editing=null, showInactive=false;
 revRenderNav($("#app"));
+$("#f-payday").innerHTML=DAY_SHORT.map((d,i)=>`<label><input type="radio" name="payday" value="${i+1}"><span>${d}</span></label>`).join("");
 $("#f-days").innerHTML=DAY_SHORT.map((d,i)=>`<label><input type="checkbox" name="days" value="${i+1}"><span>${d}</span></label>`).join("");
 
 function toast(msg,undo){const t=$("#toast");$("#toastMsg").textContent=msg;const u=$("#toastUndo");u.hidden=!undo;u.onclick=()=>{t.hidden=true;undo&&undo()};t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,undo?6000:3000)}
@@ -342,7 +344,7 @@ function render(){
 
   if(!store.clients.length){$("#clientList").innerHTML=`<div class="empty">No clients yet. Tap + Add client to get started.</div>`;return}
   /* weekly clients by weekly income, then everyone else by next payment date, inactive faded at the bottom */
-  const weeklyAmt=c=>(c.sessions_per_week||(c.days||[]).length||0)*Number(c.price_session||0);
+  const weeklyAmt=c=>PT.weekAmount(c);
   const nextDue=c=>{ if(c.plan==="fortnightly"){const d=PT.nextFortnightPay(c);return d?{date:d,amount:c.price_package!=null?Number(c.price_package):null,estimate:false}:null}
     return PT.nextPayment({...c,active:true}); };
   const actC=store.clients.filter(c=>c.active), inact=store.clients.filter(c=>!c.active).sort((a,b)=>a.name.localeCompare(b.name));
@@ -351,7 +353,7 @@ function render(){
   const row=(c,n)=>{
     const s=status(c);
     let right;
-    if(c.plan==="weekly") right=`<span class="cprice strong">${weeklyAmt(c)?PT.money(weeklyAmt(c))+"/wk":"No price"}</span><span class="cprice">${c.price_session!=null?PT.money(c.price_session)+" × "+(c.sessions_per_week||(c.days||[]).length||0):""}${c.pay_day?" · "+PT.payDayName(c):""}</span>`;
+    if(c.plan==="weekly") right=`<span class="cprice strong">${weeklyAmt(c)?PT.money(weeklyAmt(c))+"/wk":"No amount"}</span><span class="cprice">${c.pay_day?"Pays "+PT.DAY_LONG[c.pay_day-1]:"No pay day"}</span>`;
     else if(n) right=`<span class="cprice strong">${n.amount!=null?PT.money(n.amount):"No price"}</span><span class="cprice">${n.date<=t?"Due now":(n.estimate?"~":"")+fmt(n.date,{day:"numeric",month:"short"})}</span>`;
     else right=`<span class="cprice strong">${c.price_package!=null?PT.money(c.price_package):""}</span><span class="cprice">No date</span>`;
     return `<div class="client${c.active?"":" inactive"}" data-edit="${c.id}" role="button" tabindex="0">
@@ -400,7 +402,7 @@ function openDrawer(id){
   document.querySelectorAll('input[name=days]').forEach(ch=>ch.checked=(c.days||[]).includes(+ch.value));
   $("#f-phone").value=c.phone||""; $("#f-notes").value=c.notes||"";
   $("#f-active").checked=c.active!==false; $("#f-activeTxt").textContent=c.active!==false?"Active":"Inactive";
-  $("#f-psess").value=c.price_session??""; $("#f-ppack").value=c.price_package??""; $("#f-payday").value=c.pay_day||"";
+  $("#f-psess").value=c.price_session??""; $("#f-ppack").value=c.price_package??""; document.querySelectorAll("input[name=payday]").forEach(r=>r.checked=+r.value===c.pay_day); $("#f-pweek").value=c.price_week??(c.plan==="weekly"&&c.price_session!=null?PT.weekAmount(c):"");
   if(editing&&c.plan==="fortnightly"){const nx=PT.nextFortnightPay(c);if(nx)$("#f-start").value=nx;}
   renderHist(); showPlanFields();
   $("#drawerRoot").hidden=false; setTimeout(()=>$("#f-name").focus(),30);
@@ -414,6 +416,8 @@ function renderHist(){
 function closeDrawer(){$("#drawerRoot").hidden=true;editing=null}
 $("#f-plan").addEventListener("change",showPlanFields);
 /* fortnightly: picking a pay day moves the next payment date onto that day */
+/* tap the selected day again to clear it */
+$("#f-payday").addEventListener("click",e=>{const r=e.target.closest("label")?.querySelector("input"); if(!r) return; if(r.checked&&r.dataset.was==="1"){e.preventDefault();r.checked=false;r.dataset.was="";} else {document.querySelectorAll("input[name=payday]").forEach(x=>x.dataset.was="");setTimeout(()=>{r.dataset.was=r.checked?"1":""},0);}});
 $("#f-payday").addEventListener("change",e=>{
   if(planVal()!=="fortnightly"||!e.target.value) return;
   const want=+e.target.value, cur=$("#f-start").value||iso(today());
@@ -432,10 +436,11 @@ $("#dForm").addEventListener("submit",async e=>{
     period_end:(plan==="period"||plan==="pack")?($("#f-end").value||null):null,
     days:[...document.querySelectorAll('input[name=days]:checked')].map(ch=>+ch.value),
     phone:$("#f-phone").value.trim(),notes:$("#f-notes").value.trim(),
-    price_session:(plan==="weekly"||plan==="period")&&$("#f-psess").value!==""?Number($("#f-psess").value):null,
+    price_session:plan==="period"&&$("#f-psess").value!==""?Number($("#f-psess").value):null,
+    price_week:plan==="weekly"&&$("#f-pweek").value!==""?Number($("#f-pweek").value):null,
     price_package:plan!=="weekly"&&$("#f-ppack").value!==""?Number($("#f-ppack").value):null,
     active:$("#f-active").checked,
-    pay_day:(plan==="weekly"||plan==="fortnightly")&&$("#f-payday").value?+$("#f-payday").value:null};
+    pay_day:(plan==="weekly"||plan==="fortnightly")&&document.querySelector("input[name=payday]:checked")?+document.querySelector("input[name=payday]:checked").value:null};
   if(!row.name){$("#f-name").focus();return}
   if(plan==="pack"&&!row.pack_size){$("#f-pack").focus();toast("Enter how many sessions are in the pack.");return}
   if(row.period_start&&row.period_end&&row.period_end<row.period_start){$("#f-end").focus();toast("The end date is before the start date.");return}

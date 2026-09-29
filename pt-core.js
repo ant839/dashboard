@@ -93,6 +93,9 @@
   }
 
 
+  /* Weekly clients: their weekly total (set directly, or sessions x price for older entries) and the share per session. */
+  const weekAmount = c => c.price_week != null ? Number(c.price_week) : (c.sessions_per_week || (c.days || []).length || 0) * Number(c.price_session || 0);
+  const perSession = c => { const n = c.sessions_per_week || (c.days || []).length || 1; return weekAmount(c) / n; };
   const money = n => '$' + Number(n || 0).toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
   /* Weekly clients this week: earned from ticked sessions, and expected from their usual sessions per week. */
@@ -100,9 +103,11 @@
     const ref = onDay || iso(today()), ws = weekStart(ref), we = addDays(ws, 6);
     let earned = 0, expected = 0, priced = 0;
     store.clients.filter(c => c.active && c.plan === 'weekly').forEach(c => {
-      const p = Number(c.price_session || 0); if (!p) return; priced++;
-      earned += store.sessions.filter(x => x.client_id === c.id && isDone(x) && x.day >= ws && x.day <= we).length * p;
-      expected += Math.max(0, (c.sessions_per_week || (c.days || []).length || 0) - skipsIn(c.id, ws, we)) * p;
+      const wk = weekAmount(c); if (!wk) return; priced++;
+      const amt = Math.max(0, wk - skipsIn(c.id, ws, we) * perSession(c));
+      expected += amt;
+      if (c.pay_day) { if (addDays(ws, c.pay_day - 1) <= ref) earned += amt; }
+      else earned += Math.min(amt, store.sessions.filter(x => x.client_id === c.id && isDone(x) && x.day >= ws && x.day <= we).length * perSession(c));
     });
     store.clients.filter(c => c.active && c.plan === 'fortnightly').forEach(c => {
       const amt = Number(c.price_package || 0), d = fortnightPayIn(c, ws, we); if (!amt) return; priced++;
@@ -139,9 +144,9 @@
     const ws = weekStart(anyDay), we = addDays(ws, 6), items = [];
     store.clients.filter(c => c.active).forEach(c => {
       if (c.plan === 'weekly') {
-        const usual = c.sessions_per_week || (c.days || []).length || 0, sk = skipsIn(c.id, ws, we), n = Math.max(0, usual - sk), p = Number(c.price_session || 0);
+        const wk = weekAmount(c), sk = skipsIn(c.id, ws, we), amt = Math.max(0, wk - sk * perSession(c));
         const pd = c.pay_day ? addDays(ws, c.pay_day - 1) : null;
-        items.push({ c, kind: 'Weekly', amount: n * p, note: (p ? `${n} × ${money(p)}` : 'no price set') + (sk ? ` · ${sk} skipped` : '') + (pd ? ` · pays ${fmt(pd, { weekday: 'short', day: 'numeric', month: 'short' })}` : ''), date: pd });
+        items.push({ c, kind: 'Weekly', amount: amt, note: (wk ? `${money(wk)}/wk` : 'no amount set') + (sk ? ` · ${sk} skipped` : '') + (pd ? ` · pays ${fmt(pd, { weekday: 'short', day: 'numeric', month: 'short' })}` : ''), date: pd });
       } else if (c.plan === 'fortnightly') {
         const d = fortnightPayIn(c, ws, we);
         if (d) items.push({ c, kind: 'Fortnightly', amount: Number(c.price_package || 0), note: 'pays ' + fmt(d, { weekday: 'short', day: 'numeric', month: 'short' }), date: d });
@@ -198,6 +203,6 @@
       .subscribe();
   }
 
-  window.PT = { DAY_LONG, payDayName, anchorFor, isSkipped, skip, unskip, skipsIn, weekForecast, nextFortnightPay, fortnightPayIn, money, weeklyIncome, nextPayment, upcomingPayments, PLAN_LABEL, DAY_SHORT, store, load, status, sessionsOf, hasSession, scheduledOn, trainedOn, needsAttention, tick, untick, removeSession, subscribe,
+  window.PT = { weekAmount, perSession, DAY_LONG, payDayName, anchorFor, isSkipped, skip, unskip, skipsIn, weekForecast, nextFortnightPay, fortnightPayIn, money, weeklyIncome, nextPayment, upcomingPayments, PLAN_LABEL, DAY_SHORT, store, load, status, sessionsOf, hasSession, scheduledOn, trainedOn, needsAttention, tick, untick, removeSession, subscribe,
     iso, parseD, today, addDays, addMonths, daysBetween, weekday, weekStart, fmt, esc };
 })();
