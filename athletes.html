@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0e0e0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Athletes · Rev</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0e0f; --surface:#161618; --surface2:#1e1e21;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.14);
+  --text:#f0efe8; --muted:#888884; --dim:#4a4a48;
+  --accent:#c8f06a; --accent-dim:rgba(200,240,106,0.12);
+  --red:#ff5a5a; --red-dim:rgba(255,90,90,0.14);
+  --amber:#f5a623; --amber-dim:rgba(245,166,35,0.14);
+  --teal:#3dd6b5; --teal-dim:rgba(61,214,181,0.12);
+  --blue:#5ab4ff; --radius:10px; --radius-sm:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{color-scheme:dark}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;font-size:14px;min-height:100vh;padding:calc(22px + env(safe-area-inset-top,0px)) 26px calc(170px + env(safe-area-inset-bottom,0px));font-variant-numeric:tabular-nums}
+input,select,textarea,button{font-family:inherit;font-size:13px;color:var(--text)}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 11px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--border2)}
+select option{background:var(--surface2)}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto}
+
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:16px}
+.head .eyebrow{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+.head h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
+.btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;display:inline-flex;align-items:center;gap:5px}
+.btn:hover{border-color:var(--border2)}
+.btn.primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+.btn.danger{color:var(--red)}
+
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;text-align:left;border-left:3px solid var(--dim)}
+.metric .l{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.metric .v{display:block;font-size:19px;font-weight:500}
+.metric.m-over{border-left-color:var(--red)} .metric.m-week{border-left-color:var(--amber)} .metric.m-next{border-left-color:var(--accent)} .metric.m-all{border-left-color:var(--blue)}
+.metric.on{border-color:var(--border2);background:var(--surface2)}
+
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.filters input[type=search]{flex:1 1 200px;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);color:var(--muted);background:none}
+.chip:hover{border-color:var(--border2);color:var(--text)}
+.chip[aria-pressed="true"]{background:var(--surface2);border-color:var(--border2);color:var(--text)}
+.toggle{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.toggle input{accent-color:var(--accent)}
+
+.group{margin-bottom:20px}
+.group h2{display:flex;align-items:baseline;gap:8px;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.group h2 span{font-weight:400;letter-spacing:0;text-transform:none;color:var(--dim);font-size:11px}
+.list{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.row{display:grid;grid-template-columns:24px minmax(0,1.6fr) 44px 132px 150px 136px 56px 118px;align-items:center;gap:10px;padding:8px 14px;border-top:1px solid var(--border)}
+.row:first-child{border-top:0}
+.row.head-row{background:var(--surface2);font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;padding-block:7px}
+.row:not(.head-row):hover{background:rgba(255,255,255,.02)}
+.row.sel{background:var(--accent-dim)}
+.ck{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+.name{border:0;background:none;padding:0;text-align:left;font-size:13px;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.name:hover{color:var(--accent)}
+.note{display:block;font-weight:400;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.ef{display:inline-grid;place-items:center;width:34px;height:24px;border-radius:5px;background:var(--surface2);color:var(--accent);font:600 11px 'DM Mono',monospace;text-decoration:none;border:1px solid var(--border)}
+.ef:hover{border-color:var(--accent)}
+.ef.none{color:var(--dim);border-style:dashed}
+.selwrap{position:relative;display:inline-flex;max-width:100%;border-radius:5px}
+.selwrap::after{content:"▾";position:absolute;right:7px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:9px}
+.selwrap select{appearance:none;-webkit-appearance:none;border:0;background:transparent;color:inherit;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:4px 20px 4px 9px;border-radius:5px;max-width:100%;text-overflow:ellipsis;cursor:pointer}
+.selwrap select:disabled{cursor:default}
+.date-in{border:1px solid transparent;background:transparent;padding:4px 6px;width:100%;min-width:0;cursor:pointer;font-size:13px}
+.date-in:hover{border-color:var(--border);background:var(--surface2)}
+.days{display:inline-block;min-width:40px;text-align:center;padding:3px 6px;border-radius:5px;font:500 13px 'DM Mono',monospace}
+.d-over{background:var(--red-dim);color:var(--red)} .d-week{background:var(--amber-dim);color:var(--amber)} .d-next{background:var(--accent-dim);color:var(--accent)} .d-later{background:var(--surface2);color:var(--muted)}
+.sent{border:1px solid var(--border);background:var(--surface2);border-radius:var(--radius-sm);padding:5px 9px;font-size:12px;white-space:nowrap}
+.sent:hover{border-color:var(--accent);color:var(--accent)}
+.empty{padding:36px 20px;text-align:center;color:var(--muted);background:var(--surface);border:1px dashed var(--border2);border-radius:var(--radius);font-size:13px}
+.empty b{display:block;color:var(--text);font-weight:500;font-size:15px;margin-bottom:4px}
+
+/* type and focus colours, carried over from the old board */
+.t-individual{background:#3f5f9e;color:#fff} .t-base3{background:#4fbf7f;color:#08250f} .t-base4{background:#2c7a4f;color:#fff}
+.t-nationals{background:#e8bb2f;color:#2c2100} .t-sc{background:#b24a60;color:#fff} .t-onboarding{background:#7c5ac9;color:#fff} .t-other{background:var(--surface2);color:var(--muted)}
+.s-general{background:#2d66cf;color:#fff} .s-squat{background:#e3b52c;color:#2c2100} .s-upper{background:#e0803f;color:#261103} .s-pulling{background:#2f9a94;color:#fff}
+.s-custom{background:#55b88e;color:#0a2519} .s-na{background:#b87e6a;color:#fff} .s-other{background:var(--surface2);color:var(--muted)}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--surface);border-left:1px solid var(--border);z-index:21;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.drawer header{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--border)}
+.drawer h3{font-size:20px;font-weight:300;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drawer form{flex:1;overflow-y:auto;padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start}
+.drawer label{display:grid;gap:5px;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;min-width:0}
+.drawer label.full{grid-column:1/-1}
+.drawer label input,.drawer label textarea{font-size:14px;width:100%;min-width:0;letter-spacing:0;text-transform:none;font-weight:400}
+.drawer textarea{resize:vertical;min-height:80px}
+.hint{font-size:11px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--dim)}
+.drawer footer{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border)}
+.drawer footer div{display:flex;gap:8px}
+
+/* bulk bar */
+.bulk{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:15;background:var(--surface2);border:1px solid var(--border2);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.5);padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;width:min(980px,calc(100% - 32px))}
+.bulk b{font-size:13px;font-weight:600;color:var(--accent)}
+.bulk .grp{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.bulk .spacer{flex:1}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:25;display:grid;place-items:center;padding:16px;background:rgba(0,0,0,.55)}
+.modal .box{background:var(--surface);border:1px solid var(--border2);border-radius:12px;width:min(380px,100%);padding:18px;display:grid;gap:14px}
+.modal h4{font-size:18px;font-weight:400}
+.modal p{margin-top:-8px;color:var(--muted);font-size:12px;line-height:1.5}
+.modal input{font-size:16px;width:100%;padding:9px 11px}
+.quick{display:flex;flex-wrap:wrap;gap:6px}
+.quick button{border:1px solid var(--border);background:var(--surface2);border-radius:20px;padding:4px 10px;font-size:12px}
+.quick button:hover{border-color:var(--accent);color:var(--accent)}
+.modal .acts{display:flex;justify-content:flex-end;gap:8px}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--text);color:var(--bg);padding:10px 14px;border-radius:9px;display:flex;gap:14px;align-items:center;z-index:30;font-size:13px;max-width:calc(100% - 32px)}
+.toast button{border:0;background:none;color:inherit;font-weight:600;text-decoration:underline;padding:0}
+
+@media (max-width:760px){
+  body{padding-left:16px;padding-right:16px}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .row.head-row{display:none}
+  .row{display:flex;flex-wrap:wrap;gap:6px 8px;padding:10px 12px}
+  .c-check{order:0} .c-name{flex:1 1 40%;min-width:0;order:1} .c-days{order:2} .c-sent{order:3}
+  .c-type{order:4;margin-left:30px} .c-focus{order:5} .c-date{order:6;margin-left:auto;width:140px} .c-ef{order:7}
+  .bulk .spacer{display:none}
+}
+@media (prefers-reduced-motion:no-preference){.drawer{animation:slide .18s ease-out}@keyframes slide{from{transform:translateX(24px);opacity:.6}}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="head">
+    <div><div class="eyebrow">Rev Barbell Club</div><h1>Athletes</h1></div>
+    <button class="btn primary" id="addBtn" type="button">+ Add athlete</button>
+  </div>
+
+  <section class="metrics" aria-label="Programs due">
+    <button class="metric m-over" data-bucket="over" type="button"><span class="l">Overdue</span><span class="v" id="nOver">0</span></button>
+    <button class="metric m-week" data-bucket="week" type="button"><span class="l">Due in 7 days</span><span class="v" id="nWeek">0</span></button>
+    <button class="metric m-next" data-bucket="next" type="button"><span class="l">Due in 8 to 14 days</span><span class="v" id="nNext">0</span></button>
+    <button class="metric m-all" data-bucket="" type="button"><span class="l">Active athletes</span><span class="v" id="nAll">0</span></button>
+  </section>
+
+  <div class="filters">
+    <input type="search" id="q" placeholder="Search athletes or notes" aria-label="Search">
+    <div class="chips" id="typeChips"></div>
+    <label class="toggle"><input type="checkbox" id="showArchived"> Show archived</label>
+  </div>
+
+  <main id="board"><div class="empty"><b>Loading athletes</b>Your roster appears here once it loads.</div></main>
+</div>
+
+<div id="drawerRoot" hidden>
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <header><h3 id="dTitle">Athlete</h3><button class="btn" type="button" id="dClose">Close</button></header>
+    <form id="dForm" autocomplete="off">
+      <label class="full">Name<input id="f-name" required></label>
+      <label>Program type<input id="f-type" list="typeList" placeholder="e.g. BASE 3"></label>
+      <label>Focus<input id="f-focus" list="focusList" placeholder="e.g. SQUAT"></label>
+      <label>Next program due<input id="f-due" type="date"></label>
+      <label>Cycle (weeks)<input id="f-cycle_weeks" type="number" min="1" max="26" step="1"><span class="hint">Default gap when you press Program sent</span></label>
+      <label class="full">Everfit link<input id="f-everfit" type="url" placeholder="https://app.everfit.io/..."></label>
+      <label>Coach<input id="f-coach" list="coachList"></label>
+      <label class="full">Notes<textarea id="f-notes"></textarea></label>
+    </form>
+    <footer>
+      <button class="btn danger" type="button" id="dArchive">Archive</button>
+      <div><button class="btn" type="button" id="dCancel">Cancel</button><button class="btn primary" type="submit" form="dForm" id="dSave">Save</button></div>
+    </footer>
+  </aside>
+</div>
+
+<datalist id="typeList"><option>INDIVIDUAL</option><option>BASE 3</option><option>BASE 4</option><option>NATIONALS</option><option>S &amp; C</option><option>ONBOARDING</option></datalist>
+<datalist id="focusList"><option>GENERAL</option><option>SQUAT</option><option>UPPER</option><option>PULLING</option><option>CUSTOM / ALTER</option><option>NA</option></datalist>
+<datalist id="coachList"><option>Ant Usmar</option></datalist>
+
+<div class="bulk" id="bulk" hidden>
+  <b id="bulkCount">0 selected</b>
+  <div class="grp"><label for="bulkDate">Next due</label><input type="date" id="bulkDate"><button class="btn" type="button" id="bulkDateGo">Set date</button></div>
+  <div class="grp"><select id="bulkType" aria-label="Set program type"></select></div>
+  <div class="grp"><select id="bulkFocus" aria-label="Set focus"></select></div>
+  <span class="spacer"></span>
+  <button class="btn danger" type="button" id="bulkArchive">Archive</button>
+  <button class="btn" type="button" id="bulkClear">Clear</button>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <form class="box" id="mForm" autocomplete="off">
+    <h4 id="mTitle"></h4>
+    <p id="mSub"></p>
+    <input id="mInput">
+    <div class="quick" id="mQuick"></div>
+    <div class="acts"><button class="btn" type="button" id="mCancel">Cancel</button><button class="btn primary" type="submit" id="mOk">Save</button></div>
+  </form>
+</div>
+
+<div class="toast" id="toast" hidden role="status"><span id="toastMsg"></span><button type="button" id="toastUndo" hidden>Undo</button></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+<script src="rev.js"></script>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const FORM_FIELDS=["name","type","focus","due","cycle_weeks","everfit","coach","notes"];
+const TYPES=[["INDIVIDUAL","t-individual"],["BASE 3","t-base3"],["BASE 4","t-base4"],["NATIONALS","t-nationals"],["S & C","t-sc"],["ONBOARDING","t-onboarding"]];
+const FOCUS={"GENERAL":"s-general","SQUAT":"s-squat","UPPER":"s-upper","PULLING":"s-pulling","CUSTOM / ALTER":"s-custom","NA":"s-na"};
+let athletes=[], loaded=false;
+let q="", typeFilter="", bucket="", showArchived=false, editingId=null;
+const selected=new Set();
+
+revRenderNav($("#app"));
+
+const norm=s=>(s||"").toString().trim().toUpperCase().replace(/\s+/g," ");
+const typeClass=t=>{const n=norm(t);const hit=TYPES.find(x=>x[0]===n);return hit?hit[1]:"t-other"};
+const focusClass=s=>FOCUS[norm(s)]||"s-other";
+function today(){const d=new Date();d.setHours(0,0,0,0);return d}
+function parseD(s){if(!s)return null;const [y,m,d]=s.split("-").map(Number);if(!y)return null;return new Date(y,m-1,d)}
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function daysTo(s){const d=parseD(s);if(!d)return null;return Math.round((d-today())/86400000)}
+function fmt(s){const d=parseD(s);if(!d)return "";return d.toLocaleDateString("en-AU",{weekday:"short",day:"numeric",month:"short"})}
+function fmtY(s){const d=parseD(s);if(!d)return "";return d.toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"})}
+function addWeeks(s,w){const d=parseD(s)||today();return iso(new Date(d.getFullYear(),d.getMonth(),d.getDate()+w*7))}
+function bucketOf(n){if(n===null)return "none";if(n<0)return "over";if(n<=7)return "week";if(n<=14)return "next";return "later"}
+function esc(s){return (s??"").toString().replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+const plural=n=>n+" athlete"+(n===1?"":"s");
+
+/* ---- data ---- */
+function merge(row){const i=athletes.findIndex(a=>a.id===row.id); if(i>=0) athletes[i]={...athletes[i],...row}; else athletes.push(row)}
+async function loadAll(){
+  const {data,error}=await sb.from("athletes").select("*");
+  if(error){ $("#board").innerHTML=`<div class="empty"><b>Couldn't load athletes</b>${esc(error.message)}. Reload the page to try again.</div>`; return; }
+  athletes=data||[]; loaded=true; render();
+}
+async function upd(id,patch){
+  const {error}=await sb.from("athletes").update(patch).eq("id",id);
+  if(error) throw error;
+  merge({id,...patch}); render();
+}
+async function updMany(ids,patchFn){
+  const res=await Promise.allSettled(ids.map(id=>{const a=athletes.find(x=>x.id===id);return upd(id,patchFn(a))}));
+  const bad=res.find(r=>r.status==="rejected"); if(bad) throw bad.reason;
+}
+function subscribe(){
+  sb.channel("athletes-live").on("postgres_changes",{event:"*",schema:"public",table:"athletes"},p=>{
+    if(p.eventType==="DELETE"){athletes=athletes.filter(a=>a.id!==p.old.id)} else merge(p.new);
+    render();
+  }).subscribe();
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") loadAll(); });
+}
+
+function toast(msg,undo){const t=$("#toast");t.style.bottom=$("#bulk").hidden?"":"calc(130px + env(safe-area-inset-bottom,0px))";$("#toastMsg").textContent=msg;const u=$("#toastUndo");u.hidden=!undo;u.onclick=()=>{t.hidden=true;undo&&undo()};t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,undo?7000:3000)}
+function fail(e){console.error(e);toast("Couldn't save that change. Check your connection and try again.");loadAll()}
+
+/* ---- rendering ---- */
+function visible(){
+  const qq=q.trim().toLowerCase();
+  return athletes.filter(a=>{
+    if(!!a.archived!==showArchived) return false;
+    if(typeFilter){ if(typeFilter==="__none"){ if(TYPES.some(t=>t[0]===norm(a.type))) return false; } else if(norm(a.type)!==typeFilter) return false; }
+    if(bucket && bucketOf(daysTo(a.due))!==bucket) return false;
+    if(qq && !((a.name||"")+" "+(a.notes||"")).toLowerCase().includes(qq)) return false;
+    return true;
+  });
+}
+function renderSummary(){
+  const act=athletes.filter(a=>!a.archived);const c={over:0,week:0,next:0};
+  act.forEach(a=>{const b=bucketOf(daysTo(a.due));if(c[b]!==undefined)c[b]++});
+  $("#nOver").textContent=c.over;$("#nWeek").textContent=c.week;$("#nNext").textContent=c.next;$("#nAll").textContent=act.length;
+  document.querySelectorAll(".metric").forEach(b=>b.classList.toggle("on",!!bucket&&b.dataset.bucket===bucket));
+}
+function renderChips(){
+  const opts=[["","All"],...TYPES.map(t=>[t[0],t[0]==="S & C"?"S&C":t[0][0]+t[0].slice(1).toLowerCase()]),["__none","No type"]];
+  $("#typeChips").innerHTML=opts.map(([v,l])=>`<button type="button" class="chip" data-type="${esc(v)}" aria-pressed="${typeFilter===v}">${esc(l)}</button>`).join("");
+}
+function typeOptions(){const s=new Set(TYPES.map(t=>t[0]));athletes.forEach(a=>{const n=norm(a.type);if(n)s.add(n)});return [...s]}
+function focusOptions(){const s=new Set(Object.keys(FOCUS));athletes.forEach(a=>{const n=norm(a.focus);if(n)s.add(n)});return [...s]}
+function selectHtml(kind,a){
+  const cur=norm(a[kind]); const opts=kind==="type"?typeOptions():focusOptions();
+  const cls=kind==="type"?(cur?typeClass(cur):"t-other"):(cur?focusClass(cur):"s-other");
+  const label=kind==="type"?"type":"focus";
+  return `<span class="selwrap ${cls}"><select data-set="${kind}" data-id="${esc(a.id)}" aria-label="Program ${label} for ${esc(a.name)}"${a.archived?" disabled":""}>
+    <option value=""${cur?"":" selected"}>No ${label}</option>
+    ${opts.map(o=>`<option value="${esc(o)}"${o===cur?" selected":""}>${esc(o)}</option>`).join("")}
+    <option value="__new">+ New ${label}…</option></select></span>`;
+}
+function efCell(a){return a.everfit?`<a class="ef" href="${esc(a.everfit)}" target="_blank" rel="noopener" title="Open in Everfit">EF</a>`:`<span class="ef none" title="No Everfit link">EF</span>`}
+function row(a){
+  const n=daysTo(a.due),b=bucketOf(n),on=selected.has(a.id);
+  return `<div class="row${on?" sel":""}">
+    <div class="c-check"><input type="checkbox" class="ck" data-pick="${esc(a.id)}" aria-label="Select ${esc(a.name)}"${on?" checked":""}></div>
+    <div class="c-name"><button class="name" type="button" data-edit="${esc(a.id)}">${esc(a.name||"Unnamed")}${a.notes?`<span class="note">${esc(a.notes)}</span>`:""}</button></div>
+    <div class="c-ef">${efCell(a)}</div>
+    <div class="c-type">${selectHtml("type",a)}</div>
+    <div class="c-focus">${selectHtml("focus",a)}</div>
+    <div class="c-date"><input type="date" class="date-in" data-due="${esc(a.id)}" value="${esc(a.due||"")}" aria-label="Next program due for ${esc(a.name)}"${a.archived?" disabled":""}></div>
+    <div class="c-days">${n===null?`<span class="days d-later">–</span>`:`<span class="days d-${b}" title="${esc(fmtY(a.due))}">${n}</span>`}</div>
+    <div class="c-sent">${a.archived?"":`<button class="sent" type="button" data-sent="${esc(a.id)}">Program sent</button>`}</div>
+  </div>`;
+}
+function render(){
+  renderSummary(); renderChips();
+  if(!loaded) return;
+  const board=$("#board");
+  if(!athletes.length){board.innerHTML=`<div class="empty"><b>No athletes yet</b>Add your first athlete to start tracking program due dates.</div>`;renderBulk();return}
+  const list=visible();
+  if(!list.length){board.innerHTML=`<div class="empty"><b>Nobody matches</b>Clear the search or filters to see everyone.</div>`;renderBulk();return}
+  const order=[["over","Overdue"],["week","Due in the next 7 days"],["next","Due in 8 to 14 days"],["later","Later"],["none","No due date"]];
+  const sorted=[...list].sort((x,y)=>(x.due||"9999").localeCompare(y.due||"9999")||(x.name||"").localeCompare(y.name||""));
+  board.innerHTML=order.map(([k,label])=>{
+    const g=sorted.filter(a=>bucketOf(daysTo(a.due))===k); if(!g.length) return "";
+    const all=g.every(a=>selected.has(a.id));
+    return `<section class="group"><h2>${label}<span>${plural(g.length)}</span></h2><div class="list">
+      <div class="row head-row"><div><input type="checkbox" class="ck" data-pickgroup="${k}" aria-label="Select all in ${label}"${all?" checked":""}></div><div>Athlete</div><div>EF</div><div>Type</div><div>Focus</div><div>Next due</div><div>Days</div><div></div></div>
+      ${g.map(row).join("")}</div></section>`;
+  }).join("");
+  renderBulk();
+}
+
+/* ---- bulk ---- */
+function renderBulk(){
+  [...selected].forEach(id=>{const a=athletes.find(x=>x.id===id); if(!a||a.archived) selected.delete(id)});
+  const bar=$("#bulk"); if(!selected.size){bar.hidden=true;return}
+  bar.hidden=false; $("#bulkCount").textContent=selected.size+" selected";
+  const fill=(el,label,opts)=>{el.innerHTML=`<option value="">${label}</option>`+opts.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join("")+`<option value="__clear">Clear it</option>`};
+  fill($("#bulkType"),"Set type…",typeOptions()); fill($("#bulkFocus"),"Set focus…",focusOptions());
+}
+async function applyMany(ids,patchFn,label){
+  const prev=ids.map(id=>athletes.find(x=>x.id===id)).filter(Boolean).map(a=>({...a}));
+  try{ await updMany(ids,patchFn); }catch(e){ return fail(e); }
+  const keys=Object.keys(patchFn(prev[0]||{}));
+  toast(label,async()=>{ try{ await Promise.all(prev.map(a=>{const back={};keys.forEach(k=>back[k]=a[k]??(k==="due"?null:""));return upd(a.id,back)})); }catch(e){fail(e)} });
+}
+$("#bulkDateGo").addEventListener("click",()=>{const v=$("#bulkDate").value; if(!v){$("#bulkDate").focus();return} const ids=[...selected]; applyMany(ids,()=>({due:v}),`${plural(ids.length)} now due ${fmt(v)}`)});
+function bulkPick(el,field,kind){let v=el.value; el.value=""; if(!v) return; if(v==="__clear") v=""; const ids=[...selected]; applyMany(ids,()=>({[field]:v}),`${kind} ${v?"set to "+v:"cleared"} for ${plural(ids.length)}`)}
+$("#bulkType").addEventListener("change",e=>bulkPick(e.target,"type","Type"));
+$("#bulkFocus").addEventListener("change",e=>bulkPick(e.target,"focus","Focus"));
+$("#bulkArchive").addEventListener("click",()=>{const ids=[...selected];selected.clear();applyMany(ids,()=>({archived:true}),`Archived ${plural(ids.length)}`)});
+$("#bulkClear").addEventListener("click",()=>{selected.clear();render()});
+
+/* ---- modal ---- */
+let modalDone=null;
+function openModal({title,sub,type,value,quick,ok,onOk}){
+  $("#mTitle").textContent=title; $("#mSub").textContent=sub||""; $("#mSub").hidden=!sub;
+  const inp=$("#mInput"); inp.type=type||"text"; inp.value=value||"";
+  $("#mQuick").innerHTML=(quick||[]).map((x,i)=>`<button type="button" data-q="${i}">${esc(x.label)}</button>`).join(""); $("#mQuick").hidden=!(quick&&quick.length);
+  $("#mQuick").onclick=e=>{const b=e.target.closest("[data-q]"); if(b) inp.value=quick[+b.dataset.q].value};
+  $("#mOk").textContent=ok||"Save"; modalDone=onOk; $("#modal").hidden=false; setTimeout(()=>inp.focus(),30);
+}
+function closeModal(){$("#modal").hidden=true;modalDone=null}
+$("#mForm").addEventListener("submit",e=>{e.preventDefault();const v=$("#mInput").value.trim();if(!v){$("#mInput").focus();return}const f=modalDone;closeModal();f&&f(v)});
+$("#mCancel").addEventListener("click",()=>{closeModal();render()});
+$("#modal").addEventListener("click",e=>{if(e.target.id==="modal"){closeModal();render()}});
+
+/* ---- drawer ---- */
+function openDrawer(id){
+  editingId=id||null; const a=id?athletes.find(x=>x.id===id):{coach:"Ant Usmar",cycle_weeks:4,due:addWeeks(null,1)};
+  if(!a) return;
+  $("#dTitle").textContent=id?(a.name||"Athlete"):"New athlete";
+  FORM_FIELDS.forEach(f=>{$("#f-"+f).value=a[f]??""});
+  if(!$("#f-cycle_weeks").value) $("#f-cycle_weeks").value=4;
+  $("#dArchive").hidden=!id; $("#dArchive").textContent=a.archived?"Restore":"Archive";
+  $("#drawerRoot").hidden=false; setTimeout(()=>$("#f-name").focus(),30);
+}
+function closeDrawer(){$("#drawerRoot").hidden=true;editingId=null}
+$("#dForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const d={}; FORM_FIELDS.forEach(f=>d[f]=$("#f-"+f).value.trim());
+  if(!d.name){$("#f-name").focus();return}
+  d.type=norm(d.type); d.focus=norm(d.focus); d.due=d.due||null; d.cycle_weeks=Math.min(26,Math.max(1,parseInt(d.cycle_weeks,10)||4));
+  try{
+    if(editingId){ await upd(editingId,d); toast("Saved "+d.name); }
+    else{ const {data,error}=await sb.from("athletes").insert(d).select().single(); if(error) throw error; merge(data); render(); toast("Added "+d.name); }
+    closeDrawer();
+  }catch(err){fail(err)}
+});
+$("#dArchive").addEventListener("click",async()=>{
+  const a=athletes.find(x=>x.id===editingId); if(!a) return; const to=!a.archived;
+  try{ await upd(a.id,{archived:to}); closeDrawer(); toast((to?"Archived ":"Restored ")+a.name,async()=>{try{await upd(a.id,{archived:!to})}catch(e){fail(e)}}); }catch(e){fail(e)}
+});
+["#dClose","#dCancel","#scrim"].forEach(s=>$(s).addEventListener("click",closeDrawer));
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return; if(!$("#modal").hidden){closeModal();render()} else if(!$("#drawerRoot").hidden)closeDrawer()});
+
+/* ---- interactions ---- */
+document.addEventListener("click",async e=>{
+  const d=e.target.closest(".date-in"); if(d&&!d.disabled){try{d.showPicker()}catch(err){}}
+  const t=e.target.closest("[data-edit],[data-sent],[data-type],.metric");
+  if(!t) return;
+  if(t.dataset.edit) return openDrawer(t.dataset.edit);
+  if(t.dataset.sent){
+    const a=athletes.find(x=>x.id===t.dataset.sent); if(!a) return;
+    const prev=a.due||null;
+    const quick=[2,3,4,5,6].map(w=>({label:`+${w} wk (${fmt(addWeeks(prev,w))})`,value:addWeeks(prev,w)}));
+    openModal({title:"Program sent",sub:`When is ${a.name}'s next program due? Quick picks count on from the current due date.`,type:"date",value:addWeeks(prev,a.cycle_weeks||4),quick,ok:"Save date",
+      onOk:async next=>{ try{ await upd(a.id,{due:next,last_sent:iso(today())}); toast(`${a.name}: next program due ${fmt(next)}`,async()=>{try{await upd(a.id,{due:prev})}catch(err){fail(err)}}); }catch(err){fail(err)} }});
+    return;
+  }
+  if(t.dataset.type!==undefined){ typeFilter=t.dataset.type; return render(); }
+  if(t.classList.contains("metric")){ const b=t.dataset.bucket; bucket=(bucket===b)?"":b; return render(); }
+});
+document.addEventListener("change",async e=>{
+  const t=e.target;
+  if(t.dataset.due){
+    const a=athletes.find(x=>x.id===t.dataset.due); if(!a) return; const prev=a.due||null; const v=t.value||null;
+    if(v===prev) return;
+    try{ await upd(a.id,{due:v}); toast(`${a.name}: next due ${v?fmt(v):"cleared"}`,async()=>{try{await upd(a.id,{due:prev})}catch(err){fail(err)}}); }catch(err){t.value=prev||"";fail(err)}
+    return;
+  }
+  if(t.dataset.set){
+    const a=athletes.find(x=>x.id===t.dataset.id); if(!a) return; const field=t.dataset.set;
+    const save=async v=>{const prev=a[field]||""; try{ await upd(a.id,{[field]:v}); toast(`${a.name}: ${field} ${v||"cleared"}`,async()=>{try{await upd(a.id,{[field]:prev})}catch(err){fail(err)}}); }catch(err){fail(err)}};
+    if(t.value==="__new"){ openModal({title:"New "+field,sub:`Adds it to the list and sets it for ${a.name}.`,type:"text",ok:"Add",onOk:v=>save(norm(v))}); return; }
+    save(t.value); return;
+  }
+  if(t.dataset.pick){ t.checked?selected.add(t.dataset.pick):selected.delete(t.dataset.pick); render(); return; }
+  if(t.dataset.pickgroup){ const k=t.dataset.pickgroup; visible().filter(a=>bucketOf(daysTo(a.due))===k).forEach(a=>t.checked?selected.add(a.id):selected.delete(a.id)); render(); }
+});
+$("#q").addEventListener("input",e=>{q=e.target.value;render()});
+$("#showArchived").addEventListener("change",e=>{showArchived=e.target.checked;selected.clear();render()});
+$("#addBtn").addEventListener("click",()=>openDrawer(null));
+setInterval(()=>{ if(loaded) render(); }, 30*60*1000);
+
+render();
+revRequireLogin(()=>{ loadAll(); subscribe(); });
+})();
+</script>
+</body>
+</html>

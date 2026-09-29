@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0e0e0f" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
 <title>Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -312,6 +314,9 @@ select option { background: var(--surface2); }
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+<script src="rev.js"></script>
+<script>revRenderNav(document.body);</script>
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script>
 const CLIENT_ID = '129633223960-8ebr601nsaapd8ojbloivi83k1tbitl6.apps.googleusercontent.com';
@@ -319,7 +324,7 @@ const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly';
 const KEY = 'ant_dash_v8';
 const TOKEN_KEY = 'ant_gcal_token';
 const CHAT_KEY = 'ant_chat_v1';
-const GITHUB_TOKEN = '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';
+const GITHUB_TOKEN = ''; // old token was exposed and has been cancelled; Brain Dump tasks move to Supabase next
 const GITHUB_REPO = 'ant839/dashboard';
 const TASKS_FILE = 'tasks.json';
 const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -632,6 +637,7 @@ function render(){
 
 // ---- GitHub Tasks ----
 async function fetchGithubTasks() {
+  if (!GITHUB_TOKEN) { githubTasks = []; return; }
   try {
     const res = await fetch(
       `https://api.github.com/repos/${GITHUB_REPO}/contents/${TASKS_FILE}?t=${Date.now()}`,
