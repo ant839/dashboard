@@ -12,7 +12,7 @@
   window.sb = sb;
 
   const TABS = [
-    { href: 'dashboard.html', label: 'Today' },
+    { href: 'dashboard.html', label: 'Home' },
     { href: 'athletes.html', label: 'Programming' },
     { href: 'plan.html', label: 'Periodisation' },
     { href: 'pt.html', label: 'PT Clients' }
