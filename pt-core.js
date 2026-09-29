@@ -14,16 +14,17 @@
   const fmt = (s, opts) => parseD(s).toLocaleDateString('en-AU', opts || { day: 'numeric', month: 'short' });
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  const store = { clients: [], sessions: [] };
+  const store = { clients: [], sessions: [], orders: [] };
 
   async function load(sinceDays = 400) {
     const since = addDays(iso(today()), -sinceDays);
-    const [c, s] = await Promise.all([
+    const [c, s, o] = await Promise.all([
       sb.from('pt_clients').select('*'),
-      sb.from('pt_sessions').select('id,client_id,day,created_at,status,moved_to').gte('day', since)
+      sb.from('pt_sessions').select('id,client_id,day,created_at,status,moved_to').gte('day', since),
+      sb.from('pt_day_order').select('day,ids').gte('day', addDays(iso(today()), -120))
     ]);
     if (c.error || s.error) throw (c.error || s.error);
-    store.clients = c.data || []; store.sessions = s.data || [];
+    store.clients = c.data || []; store.sessions = s.data || []; store.orders = (o && !o.error && o.data) || [];
     return store;
   }
 
@@ -167,6 +168,27 @@
     return { ws, we, items, total: items.reduce((s, x) => s + x.amount, 0) };
   }
 
+  /* Running order for a day: the order saved for that date, else the latest saved order for the
+     same weekday before it, else alphabetical. Anyone not in the saved order goes after, A to Z. */
+  function orderFor(day) {
+    const exact = store.orders.find(o => o.day === day);
+    if (exact) return exact.ids;
+    const wd = weekday(day);
+    const prev = store.orders.filter(o => o.day < day && weekday(o.day) === wd).sort((a, b) => b.day.localeCompare(a.day))[0];
+    return prev ? prev.ids : [];
+  }
+  function sortForDay(list, day) {
+    const ids = orderFor(day), pos = id => { const i = ids.indexOf(id); return i < 0 ? 1e6 : i; };
+    return [...list].sort((a, b) => pos(a.id) - pos(b.id) || a.name.localeCompare(b.name));
+  }
+  async function saveDayOrder(day, ids) {
+    const row = { day, ids, updated_at: new Date().toISOString() };
+    const i = store.orders.findIndex(o => o.day === day);
+    if (i < 0) store.orders.push(row); else store.orders[i] = row;
+    const { error } = await sb.from('pt_day_order').upsert(row);
+    if (error) throw error;
+  }
+
   async function clearSkip(clientId, day) {
     const ids = store.sessions.filter(x => x.client_id === clientId && x.day === day && x.status === 'skipped').map(x => x.id);
     if (!ids.length) return;
@@ -260,9 +282,10 @@
     return sb.channel('pt-live-' + Math.random().toString(36).slice(2))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pt_clients' }, onChange)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pt_sessions' }, onChange)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pt_day_order' }, onChange)
       .subscribe();
   }
 
-  window.PT = { move, unmove, movedTo, movedFrom, pickMoveDay, weekAmount, perSession, DAY_LONG, payDayName, anchorFor, isSkipped, skip, unskip, skipsIn, weekForecast, nextFortnightPay, fortnightPayIn, money, weeklyIncome, nextPayment, upcomingPayments, PLAN_LABEL, DAY_SHORT, store, load, status, sessionsOf, hasSession, scheduledOn, trainedOn, needsAttention, tick, untick, removeSession, subscribe,
+  window.PT = { sortForDay, saveDayOrder, move, unmove, movedTo, movedFrom, pickMoveDay, weekAmount, perSession, DAY_LONG, payDayName, anchorFor, isSkipped, skip, unskip, skipsIn, weekForecast, nextFortnightPay, fortnightPayIn, money, weeklyIncome, nextPayment, upcomingPayments, PLAN_LABEL, DAY_SHORT, store, load, status, sessionsOf, hasSession, scheduledOn, trainedOn, needsAttention, tick, untick, removeSession, subscribe,
     iso, parseD, today, addDays, addMonths, daysBetween, weekday, weekStart, fmt, esc };
 })();

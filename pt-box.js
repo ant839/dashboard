@@ -9,7 +9,7 @@
     const { esc, iso, today, status, scheduledOn, trainedOn, hasSession, needsAttention, PLAN_LABEL } = PT;
     const day = iso(today());
     const sched = scheduledOn(day), trained = trainedOn(day);
-    const list = [...sched, ...trained.filter(c => !sched.includes(c))].sort((a, b) => a.name.localeCompare(b.name));
+    const list = PT.sortForDay([...sched, ...trained.filter(c => !sched.includes(c))], day);
     const done = list.filter(c => hasSession(c.id, day)).length, skipped = list.filter(c => PT.isSkipped(c.id, day) || PT.movedTo(c.id, day)).length;
     $('ptb-count').textContent = list.length ? `${done}/${list.length - skipped}` : '';
     const wi = PT.weeklyIncome();
@@ -20,7 +20,7 @@
       const on = hasSession(c.id, day), sk = PT.isSkipped(c.id, day), mvTo = PT.movedTo(c.id, day), mvFrom = PT.movedFrom(c.id, day), s = status(c);
       const wk = d => PT.fmt(d, { weekday: 'short', day: 'numeric', month: 'short' });
       const line = sk ? 'Skipped today' : mvTo ? 'Moved to ' + wk(mvTo) : (mvFrom ? 'Moved from ' + wk(mvFrom) + ' · ' : '') + s.line;
-      return `<div class="rt-item ptb-item${sk || mvTo ? ' ptb-skipped' : ''}">
+      return `<div class="rt-item ptb-item${sk || mvTo ? ' ptb-skipped' : ''}" data-cid="${c.id}"><span class="ptb-grip" title="Drag to reorder" aria-label="Drag to reorder"><svg width="10" height="14" viewBox="0 0 10 14"><circle cx="2" cy="2" r="1.3"/><circle cx="8" cy="2" r="1.3"/><circle cx="2" cy="7" r="1.3"/><circle cx="8" cy="7" r="1.3"/><circle cx="2" cy="12" r="1.3"/><circle cx="8" cy="12" r="1.3"/></svg></span>
         <button type="button" class="task-check${on ? ' done' : ''}" data-pttick="${c.id}" aria-pressed="${on}" aria-label="${on ? 'Untick' : 'Tick off'} ${esc(c.name)}"></button>
         <div class="ptb-text"><span class="task-text${on ? ' done' : ''}">${esc(c.name)}</span><span class="ptb-line ${sk || mvTo ? '' : s.level}">${esc(line)}</span></div>
         ${on ? '' : sk ? `<button type="button" class="ptb-skip" data-ptskip="${c.id}">Undo</button>` : mvTo ? `<button type="button" class="ptb-skip" data-ptunmove="${c.id}">Undo</button>`
@@ -50,6 +50,9 @@
       const id = b.dataset.pttick, day = PT.iso(PT.today());
       try { PT.hasSession(id, day) ? await PT.untick(id, day) : await PT.tick(id, day); render(); } catch (err) { refresh(); }
     });
+    if (window.Sortable) Sortable.create($('ptb-body'), { handle: '.ptb-grip', draggable: '.ptb-item', animation: 150, ghostClass: 'pt-ghost', forceFallback: true, fallbackTolerance: 3,
+      onEnd: async ev => { if (ev.oldIndex === ev.newIndex) return; const ids = [...$('ptb-body').querySelectorAll('.ptb-item')].map(r => r.dataset.cid);
+        try { await PT.saveDayOrder(PT.iso(PT.today()), ids); } catch (err) { refresh(); } } });
     render();
     sb.auth.getSession().then(({ data }) => {
       signedIn = !!data.session; render(); if (!signedIn) return;

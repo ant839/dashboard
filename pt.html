@@ -75,6 +75,10 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 .tick-row.skipped .tick-name,.tick-row.skipped .tick-line{opacity:.45}
 .tick-row.skipped .tick{border-style:dashed}
 .skip-tag{color:var(--amber)}
+.pt-grip{flex-shrink:0;width:22px;height:34px;margin:0 -6px 0 -4px;display:flex;align-items:center;justify-content:center;cursor:grab;fill:var(--dim);touch-action:none;border-radius:4px}
+.pt-grip:hover{fill:var(--muted)}
+.tick-row.pt-ghost{opacity:.35}
+.tick-row.pt-chosen{background:var(--surface2);border-radius:var(--radius-sm)}
 .move-tag{color:var(--teal,#5ad1c8)}
 .row-btns{display:flex;gap:6px;flex-shrink:0}
 .tick-row.moved .tick-name,.tick-row.moved .tick-line{opacity:.45}
@@ -286,7 +290,8 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="rev.js?v=22"></script>
-<script src="pt-core.js?v=18"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js"></script>
+<script src="pt-core.js?v=19"></script>
 <script>
 (function(){
 const $=s=>document.querySelector(s);
@@ -314,14 +319,14 @@ function render(){
   $("#dayLabel").textContent=fmt(day,{weekday:"short",day:"numeric",month:"short"});
   $("#goToday").hidden=isToday;
   const sched=PT.scheduledOn(day), trained=PT.trainedOn(day);
-  const list=[...sched,...trained.filter(c=>!sched.includes(c))].sort((a,b)=>a.name.localeCompare(b.name));
+  const list=PT.sortForDay([...sched,...trained.filter(c=>!sched.includes(c))],day);
   const done=list.filter(c=>PT.hasSession(c.id,day)).length, skipped=list.filter(c=>PT.isSkipped(c.id,day)).length, movedOut=list.filter(c=>PT.movedTo(c.id,day)).length;
   $("#daySub").textContent=list.length?`${done} of ${list.length-skipped-movedOut} ticked off${skipped?` · ${skipped} skipped`:""}${movedOut?` · ${movedOut} moved`:""}`:"";
   $("#tickList").innerHTML=list.length?list.map(c=>{
     const on=PT.hasSession(c.id,day), sk=PT.isSkipped(c.id,day), mvTo=PT.movedTo(c.id,day), mvFrom=PT.movedFrom(c.id,day), s=status(c,day), extra=!sched.includes(c);
     const wk=d=>fmt(d,{weekday:"short",day:"numeric",month:"short"});
     const n=PT.sessionsOf(c.id).filter(x=>x.day===day).length;
-    return `<div class="tick-row${sk?" skipped":""}${mvTo?" moved":""}"><button type="button" class="tick${on?" done":""}" data-tick="${c.id}" aria-pressed="${on}" aria-label="${on?"Untick":"Tick off"} ${esc(c.name)}"></button>
+    return `<div class="tick-row${sk?" skipped":""}${mvTo?" moved":""}" data-cid="${c.id}"><span class="pt-grip" title="Drag to reorder" aria-label="Drag to reorder"><svg width="10" height="14" viewBox="0 0 10 14"><circle cx="2" cy="2" r="1.3"/><circle cx="8" cy="2" r="1.3"/><circle cx="2" cy="7" r="1.3"/><circle cx="8" cy="7" r="1.3"/><circle cx="2" cy="12" r="1.3"/><circle cx="8" cy="12" r="1.3"/></svg></span><button type="button" class="tick${on?" done":""}" data-tick="${c.id}" aria-pressed="${on}" aria-label="${on?"Untick":"Tick off"} ${esc(c.name)}"></button>
       <div class="tick-body"><div class="tick-name">${esc(c.name)} ${planBadge(c)}${extra?`<span class="extra">Extra session</span>`:""}${n>1?`<span class="extra">×${n}</span>`:""}${sk?`<span class="extra skip-tag">Skipped</span>`:""}${mvTo?`<span class="extra move-tag">Moved to ${wk(mvTo)}</span>`:""}${mvFrom&&!mvTo?`<span class="extra move-tag">Moved from ${wk(mvFrom)}</span>`:""}</div>
       <div class="tick-line ${s.level}">${esc(s.line)}</div></div>
       ${on?"":sk?`<button type="button" class="skip-btn" data-skip="${c.id}">Undo skip</button>`:mvTo?`<button type="button" class="skip-btn" data-unmove="${c.id}">Undo move</button>`
@@ -405,6 +410,9 @@ async function undoMove(id){
 }
 $("#logOther").addEventListener("submit",async e=>{e.preventDefault();const id=$("#otherClient").value;if(!id)return;const c=store.clients.find(x=>x.id===id);
   try{await PT.tick(id,day);render();toast(`Logged a session for ${c.name}`,async()=>{try{await PT.untick(id,day);render()}catch(err){fail(err)}})}catch(err){fail(err)}});
+if(window.Sortable) Sortable.create($("#tickList"),{handle:".pt-grip",draggable:".tick-row",animation:150,ghostClass:"pt-ghost",chosenClass:"pt-chosen",forceFallback:true,fallbackTolerance:3,
+  onEnd:async ev=>{ if(ev.oldIndex===ev.newIndex) return; const ids=[...$("#tickList").querySelectorAll(".tick-row")].map(r=>r.dataset.cid);
+    try{await PT.saveDayOrder(day,ids)}catch(e){fail(e)} }});
 $("#prevDay").addEventListener("click",()=>{day=addDays(day,-1);render()});
 $("#nextDay").addEventListener("click",()=>{day=addDays(day,1);render()});
 $("#goToday").addEventListener("click",()=>{day=iso(today());render()});
