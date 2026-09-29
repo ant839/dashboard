@@ -14,7 +14,8 @@
   const TABS = [
     { href: 'dashboard.html', label: 'Today' },
     { href: 'athletes.html', label: 'Athletes' },
-    { href: 'pt.html', label: 'PT' }
+    { href: 'pt.html', label: 'PT' },
+    { href: 'plan.html', label: 'Programming' }
   ];
 
   const css = `

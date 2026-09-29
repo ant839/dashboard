@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0e0e0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Programming · Rev</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: this-week track cards across the top, a next-comp countdown, then the season plan as a timeline (tracks x weeks) or a table (weeks x tracks, like the spreadsheet). */
+:root{
+  --bg:#0e0e0f; --surface:#161618; --surface2:#1e1e21; --surface3:#26262a;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.14);
+  --text:#f0efe8; --muted:#888884; --dim:#4a4a48;
+  --accent:#c8f06a; --accent-dim:rgba(200,240,106,0.12);
+  --red:#ff5a5a; --amber:#f5a623; --gold:#f7c948; --hl:#ffe14d;
+  --radius:10px; --radius-sm:6px;
+  --plate:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --cw:46px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html{color-scheme:dark}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;font-size:14px;min-height:100vh;padding:calc(22px + env(safe-area-inset-top,0px)) 26px calc(60px + env(safe-area-inset-bottom,0px));font-variant-numeric:tabular-nums}
+input,select,textarea,button{font-family:inherit;font-size:13px;color:var(--text)}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 11px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--border2)}
+select option{background:var(--surface2)}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto}
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:16px}
+.eyebrow{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
+.head-acts{display:flex;gap:8px;flex-wrap:wrap}
+.btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--border2)}
+.btn.primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+.btn.danger{color:var(--red)}
+
+/* next comp countdown */
+.countdown{display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:linear-gradient(100deg,rgba(247,201,72,.13),rgba(247,201,72,.02) 60%),var(--surface);border:1px solid rgba(247,201,72,.25);border-radius:var(--radius);padding:14px 18px;margin-bottom:14px}
+.cd-num{font-family:var(--plate);font-size:52px;line-height:.85;font-weight:700;color:var(--gold);letter-spacing:.01em}
+.cd-unit{font-family:var(--plate);font-size:18px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;margin-left:4px}
+.cd-body{flex:1;min-width:220px}
+.cd-title{font-size:15px;font-weight:500}
+.cd-sub{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
+.cd-trophy{width:40px;height:40px;flex-shrink:0;color:var(--gold)}
+
+/* this week cards */
+.now-h{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin:4px 0 8px;display:flex;justify-content:space-between;align-items:baseline}
+.now-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:22px}
+.tcard{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px 12px 16px;overflow:hidden;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:6px;min-height:132px}
+.tcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--tc)}
+.tcard:hover{border-color:var(--border2)}
+.tc-name{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tc-big{display:flex;align-items:baseline;gap:6px}
+.tc-wk{font-family:var(--plate);font-weight:700;font-size:42px;line-height:.9;color:var(--tc)}
+.tc-of{font-size:12px;color:var(--muted)}
+.tc-tag{font-family:var(--plate);font-weight:700;font-size:30px;line-height:1;letter-spacing:.04em}
+.tc-tag.dtm{color:var(--text)} .tc-tag.comp{color:var(--gold)} .tc-tag.off{color:var(--dim);font-size:22px}
+.tc-segs{display:flex;gap:2px;height:6px}
+.tc-segs span{flex:1;border-radius:2px;background:rgba(255,255,255,.08)}
+.tc-segs span.done{background:color-mix(in srgb,var(--tc) 55%,transparent)}
+.tc-segs span.cur{background:var(--tc)}
+.tc-segs span.hl{box-shadow:inset 0 -2px 0 var(--hl)}
+.tc-next{font-size:11px;color:var(--muted);margin-top:auto}
+.tc-next b{color:var(--text);font-weight:500}
+.tc-hl{position:absolute;top:10px;right:10px;font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#1a1600;background:var(--hl);padding:2px 6px;border-radius:10px}
+
+/* plan card + view toggle */
+.plan{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.plan-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.plan-title{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.seg{display:inline-flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:2px}
+.seg button{background:none;border:0;border-radius:6px;padding:5px 12px;font-size:12px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface3);color:var(--text)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);align-items:center}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+.lg-hl{background:rgba(255,255,255,.1);box-shadow:inset 0 3px 0 var(--hl)}
+.lg-dtm{background:repeating-linear-gradient(135deg,#2c2c30 0 3px,#1c1c1f 3px 6px);border:1px solid var(--border2)}
+.lg-comp{background:var(--gold)}
+.lg-now{background:var(--accent)}
+
+/* timeline */
+.tl-scroll{overflow-x:auto;overflow-y:hidden;padding-bottom:6px;scroll-behavior:smooth}
+.tl-scroll::-webkit-scrollbar{height:6px}
+.tl-scroll::-webkit-scrollbar-thumb{background:var(--dim);border-radius:3px}
+.tl{display:grid;position:relative}
+.tl-corner,.tl-name{position:sticky;left:0;z-index:3;background:var(--surface)}
+.tl-name{display:flex;align-items:center;gap:8px;padding:0 12px 0 0;font-size:12px;font-weight:500;white-space:nowrap;border-right:1px solid var(--border)}
+.tl-name i{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--tc)}
+.tl-month{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 0 2px 4px;border-left:1px solid var(--border2);white-space:nowrap;overflow:hidden}
+.tl-date{font-size:10px;color:var(--dim);text-align:center;padding:2px 0 6px;font-family:'DM Mono',monospace}
+.tl-date.now{color:var(--accent);font-weight:500}
+.cell{width:calc(100% - 2px);height:40px;margin:2px 1px;border-radius:5px;display:grid;place-items:center;font-family:var(--plate);font-weight:700;font-size:17px;position:relative;border:0;color:var(--text);background:transparent;transition:transform .12s}
+.cell:hover{transform:translateY(-1px);outline:1px solid var(--border2)}
+.cell.w{background:color-mix(in srgb,var(--tc) 22%,#141416);color:color-mix(in srgb,var(--tc) 80%,#fff)}
+.cell.w.hl{background:color-mix(in srgb,var(--tc) 38%,#141416);color:#fff;box-shadow:inset 0 3px 0 var(--hl)}
+.cell.dtm{background:repeating-linear-gradient(135deg,#2c2c30 0 4px,#1c1c1f 4px 8px);color:var(--text);font-size:13px;letter-spacing:.06em;box-shadow:inset 0 0 0 1px var(--border2)}
+.cell.comp{background:var(--gold);color:#1e1600;font-size:12px;letter-spacing:.04em}
+.cell.comp svg{width:14px;height:14px;margin-bottom:-1px}
+.cell.txt{background:var(--surface3);color:var(--text);font-size:11px;letter-spacing:.02em}
+.cell.empty{color:transparent}
+.cell.empty:hover{color:var(--dim);background:rgba(255,255,255,.03)}
+.cell.past{opacity:.42}
+.cell .note-dot{position:absolute;top:3px;right:3px;width:5px;height:5px;border-radius:50%;background:var(--text)}
+.now-col{position:absolute;top:0;bottom:0;border:2px solid var(--accent);border-radius:7px;pointer-events:none;z-index:2}
+.now-col::after{content:'NOW';position:absolute;top:-2px;left:50%;transform:translate(-50%,-100%);background:var(--accent);color:#000;font-size:9px;font-weight:700;letter-spacing:.08em;padding:1px 5px;border-radius:4px 4px 0 0}
+
+/* table view */
+.tb-scroll{overflow:auto;max-height:70vh;border:1px solid var(--border);border-radius:var(--radius-sm)}
+table.tb{border-collapse:separate;border-spacing:0;width:100%;min-width:640px}
+.tb th{position:sticky;top:0;background:var(--surface2);z-index:2;font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:8px 6px;text-align:center;border-bottom:1px solid var(--border2)}
+.tb th .tdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--tc);margin-right:5px;vertical-align:0}
+.tb th:first-child,.tb td:first-child{position:sticky;left:0;background:var(--surface);z-index:1;text-align:left;white-space:nowrap}
+.tb th:first-child{z-index:3;background:var(--surface2)}
+.tb td{padding:0 3px;border-bottom:1px solid var(--border);text-align:center}
+.tb td:first-child{padding:0 12px;font-size:12px;color:var(--muted);font-family:'DM Mono',monospace}
+.tb tr.now td{background:rgba(200,240,106,.06)}
+.tb tr.now td:first-child{color:var(--accent);box-shadow:inset 3px 0 0 var(--accent);background:#1a1d14}
+.tb tr.past{opacity:.45}
+.tb .cell{height:32px;width:100%;margin:3px 0}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:25;display:grid;place-items:center;padding:16px;background:rgba(0,0,0,.6)}
+.box{background:var(--surface);border:1px solid var(--border2);border-radius:12px;width:min(420px,100%);max-height:calc(100vh - 32px);overflow-y:auto;padding:18px;display:grid;gap:14px}
+.box h4{font-size:18px;font-weight:400;display:flex;align-items:center;gap:8px}
+.box h4 i{width:10px;height:10px;border-radius:50%;background:var(--tc)}
+.box p{margin-top:-8px;color:var(--muted);font-size:12px;line-height:1.5}
+.f{display:grid;gap:6px;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.07em;text-transform:uppercase}
+.f input,.f select,.f textarea{font-size:14px;letter-spacing:0;text-transform:none;font-weight:400;width:100%}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quick{display:flex;flex-wrap:wrap;gap:5px}
+.quick button{background:var(--surface2);border:1px solid var(--border);border-radius:6px;min-width:38px;padding:6px 8px;font-family:var(--plate);font-weight:700;font-size:15px;color:var(--muted)}
+.quick button:hover{color:var(--text);border-color:var(--border2)}
+.quick button.dtmq{letter-spacing:.05em} .quick button.compq{color:var(--gold)}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;letter-spacing:0;text-transform:none;font-weight:400;color:var(--text)}
+.chk input{width:16px;height:16px;accent-color:var(--accent)}
+.acts{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.acts div{display:flex;gap:8px}
+.preview{display:flex;gap:2px;flex-wrap:wrap}
+.preview span{font-family:var(--plate);font-weight:700;font-size:12px;min-width:24px;height:22px;display:grid;place-items:center;border-radius:4px;background:color-mix(in srgb,var(--tc) 22%,#141416);color:color-mix(in srgb,var(--tc) 80%,#fff)}
+.preview span.hl{box-shadow:inset 0 2px 0 var(--hl)}
+.preview span.dtm{background:#2a2a2e;color:var(--text);padding:0 4px}
+.preview span.comp{background:var(--gold);color:#1e1600;padding:0 4px}
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.swatches input{position:absolute;opacity:0;pointer-events:none}
+.swatches span{display:block;width:26px;height:26px;border-radius:50%;cursor:pointer;box-shadow:0 0 0 1px var(--border)}
+.swatches input:checked+span{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--text)}
+.swatches input:focus-visible+span{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+.trk-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
+.trk-row i{width:10px;height:10px;border-radius:50%;background:var(--tc);flex-shrink:0}
+.trk-row span{flex:1;font-size:13px}
+.trk-row button{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:12px;color:var(--muted)}
+.trk-row button:hover{color:var(--text)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--text);color:var(--bg);padding:10px 14px;border-radius:9px;display:flex;gap:14px;align-items:center;z-index:30;font-size:13px;max-width:calc(100% - 32px)}
+.toast button{border:0;background:none;color:inherit;font-weight:600;text-decoration:underline;padding:0}
+.empty-state{padding:30px 10px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6}
+@media (max-width:760px){
+  body{padding-left:16px;padding-right:16px}
+  .cd-num{font-size:40px}
+  .now-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tc-wk{font-size:34px}
+  :root{--cw:40px}
+}
+@media (prefers-reduced-motion:reduce){.tl-scroll{scroll-behavior:auto}.cell{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="head">
+    <div><div class="eyebrow">Periodisation</div><h1>Programming</h1></div>
+    <div class="head-acts">
+      <button class="btn" type="button" id="tracksBtn">Tracks</button>
+      <button class="btn primary" type="button" id="blockBtn">+ Plan a block</button>
+    </div>
+  </div>
+
+  <section class="countdown" id="countdown" hidden aria-live="polite">
+    <svg class="cd-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>
+    <div><span class="cd-num" id="cdNum">0</span><span class="cd-unit" id="cdUnit">weeks</span></div>
+    <div class="cd-body"><div class="cd-title" id="cdTitle"></div><div class="cd-sub" id="cdSub"></div></div>
+  </section>
+
+  <div class="now-h"><span id="nowH">This week</span><span id="nowD" style="text-transform:none;letter-spacing:0;font-weight:400"></span></div>
+  <div class="now-grid" id="nowGrid"><div class="empty-state">Loading your plan…</div></div>
+
+  <section class="plan">
+    <div class="plan-top">
+      <div class="plan-title">Season plan</div>
+      <div class="legend">
+        <span><i class="lg-hl"></i>Highlighted weeks</span><span><i class="lg-dtm"></i>DTM</span><span><i class="lg-comp"></i>Comp</span><span><i class="lg-now"></i>This week</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn" type="button" id="jumpNow">Jump to now</button>
+        <div class="seg" role="group" aria-label="View"><button type="button" data-view="timeline" aria-pressed="true">Timeline</button><button type="button" data-view="table" aria-pressed="false">Table</button></div>
+      </div>
+    </div>
+    <div id="planBody"></div>
+    <p style="font-size:11px;color:var(--dim);margin-top:10px">Tap any week to change it. Tap an empty square to add one.</p>
+  </section>
+</div>
+
+<!-- edit one week -->
+<div class="modal" id="cellModal" hidden>
+  <form class="box" id="cellForm" autocomplete="off">
+    <h4><i></i><span id="cmTitle"></span></h4>
+    <p id="cmSub"></p>
+    <div class="f">Week<input id="cmLabel" placeholder="Week number, DTM, COMP or a short label" maxlength="12"></div>
+    <div class="quick" id="cmQuick"></div>
+    <label class="chk"><input type="checkbox" id="cmHl"> Highlight this week</label>
+    <div class="f">Note<input id="cmNote" placeholder="Optional, e.g. travel, test day" maxlength="80"></div>
+    <div class="acts"><button class="btn danger" type="button" id="cmClear">Clear week</button><div><button class="btn" type="button" id="cmCancel">Cancel</button><button class="btn primary" type="submit">Save</button></div></div>
+  </form>
+</div>
+
+<!-- plan a block -->
+<div class="modal" id="blockModal" hidden>
+  <form class="box" id="blockForm" autocomplete="off">
+    <h4><i id="bmDot"></i>Plan a block</h4>
+    <p>Fills in a run of weeks for one track. Any weeks already planned in that range are replaced.</p>
+    <div class="f">Track<select id="bmTrack"></select></div>
+    <div class="f2">
+      <div class="f">First week (Monday)<input id="bmStart" type="date" required></div>
+      <div class="f">Training weeks<input id="bmLen" type="number" min="1" max="30" value="12" required></div>
+    </div>
+    <div class="f2">
+      <div class="f">Highlight first<input id="bmHl" type="number" min="0" max="30" value="4"></div>
+      <div class="f">Start numbering at<input id="bmFrom" type="number" min="1" max="30" value="1"></div>
+    </div>
+    <label class="chk"><input type="checkbox" id="bmDtm" checked> Add a DTM week after</label>
+    <label class="chk"><input type="checkbox" id="bmComp"> Then a COMP week</label>
+    <div class="f">Preview<div class="preview" id="bmPreview"></div><span id="bmRange" style="font-weight:400;letter-spacing:0;text-transform:none;color:var(--muted);font-size:12px"></span></div>
+    <div class="acts"><span></span><div><button class="btn" type="button" id="bmCancel">Cancel</button><button class="btn primary" type="submit">Add block</button></div></div>
+  </form>
+</div>
+
+<!-- tracks -->
+<div class="modal" id="trackModal" hidden>
+  <div class="box">
+    <h4>Tracks</h4>
+    <p>Each track is a row on the plan: a program group or an individual lifter.</p>
+    <div id="trkList"></div>
+    <form id="trkForm" autocomplete="off" style="display:grid;gap:12px;border-top:1px solid var(--border2);padding-top:14px">
+      <div class="f"><span id="trkFormTitle">Add a track</span><input id="trkName" placeholder="e.g. Masters group, or an athlete's name" maxlength="40" required></div>
+      <div class="swatches" id="trkColors"></div>
+      <div class="acts"><button class="btn danger" type="button" id="trkDelete" hidden>Delete track</button><div><button class="btn" type="button" id="trkCancel">Close</button><button class="btn primary" type="submit" id="trkSave">Add track</button></div></div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden role="status"><span id="toastMsg"></span><button type="button" id="toastUndo" hidden>Undo</button></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+<script src="rev.js?v=14"></script>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const COLORS={blue:'#5ab4ff',purple:'#b08fff',amber:'#f5a623',red:'#ff5a5a',teal:'#3dd6b5',pink:'#ff7ac6',lime:'#c8f06a',orange:'#ff8a4c',grey:'#9a9a95'};
+const TROPHY='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z"/></svg>';
+let tracks=[], weeks=[], loaded=false, view='timeline';
+try{ const v=localStorage.getItem('rev_plan_view'); if(v) view=v; }catch(e){}
+revRenderNav($("#app"));
+
+/* ---- dates ---- */
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const parseD=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const addDays=(s,n)=>{const d=parseD(s);d.setDate(d.getDate()+n);return iso(d)};
+const monday=s=>{const d=parseD(s);d.setDate(d.getDate()-((d.getDay()+6)%7));return iso(d)};
+const thisWeek=()=>monday(iso(new Date()));
+const weeksBetween=(a,b)=>Math.round((parseD(b)-parseD(a))/(7*86400000));
+const fmt=(s,o)=>parseD(s).toLocaleDateString('en-AU',o||{day:'numeric',month:'short'});
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const col=t=>COLORS[t.color]||COLORS.grey;
+
+function toast(msg,undo){const t=$("#toast");$("#toastMsg").textContent=msg;const u=$("#toastUndo");u.hidden=!undo;u.onclick=()=>{t.hidden=true;undo&&undo()};t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,undo?6000:3000)}
+function fail(e){console.error(e);toast("Couldn't save that. Check your connection and try again.");load()}
+
+/* ---- data helpers ---- */
+const activeTracks=()=>tracks.filter(t=>t.active).sort((a,b)=>a.sort-b.sort||a.name.localeCompare(b.name));
+const cellOf=(tid,w)=>weeks.find(x=>x.track_id===tid&&x.week_start===w);
+const kindOf=l=>{const u=(l||'').toUpperCase();return u==='DTM'?'dtm':u==='COMP'?'comp':/^\d+$/.test(u)?'w':'txt'};
+function blockInfo(tid,w){
+  /* for a numbered week: total length of this run and where its highlighted weeks are */
+  const c=cellOf(tid,w); if(!c||kindOf(c.label)!=='w') return null;
+  let start=w; while(true){const p=cellOf(tid,addDays(start,-7)); if(p&&kindOf(p.label)==='w'&&+p.label<+cellOf(tid,start).label) start=addDays(start,-7); else break;}
+  let end=w; while(true){const n=cellOf(tid,addDays(end,7)); if(n&&kindOf(n.label)==='w'&&+n.label>+cellOf(tid,end).label) end=addDays(end,7); else break;}
+  const run=[]; for(let d=start;d<=end;d=addDays(d,7)) run.push(cellOf(tid,d));
+  return {run,last:+cellOf(tid,end).label,after:cellOf(tid,addDays(end,7))};
+}
+const nextComp=(tid,from)=>weeks.filter(x=>x.track_id===tid&&x.week_start>=from&&kindOf(x.label)==='comp').sort((a,b)=>a.week_start.localeCompare(b.week_start))[0];
+
+/* ---- render: countdown + this week ---- */
+function renderTop(){
+  const now=thisWeek(), ts=activeTracks();
+  $("#nowD").textContent=`${fmt(now,{weekday:'short',day:'numeric',month:'short'})} to ${fmt(addDays(now,6),{weekday:'short',day:'numeric',month:'short'})}`;
+  if(!ts.length){ $("#nowGrid").innerHTML=`<div class="empty-state">No tracks yet. Tap Tracks to add one, then Plan a block.</div>`; $("#countdown").hidden=true; return; }
+  /* countdown to the next comp across all tracks */
+  const comps=ts.map(t=>({t,c:nextComp(t.id,now)})).filter(x=>x.c);
+  if(comps.length){
+    const first=comps.reduce((a,b)=>a.c.week_start<=b.c.week_start?a:b).c.week_start;
+    const who=comps.filter(x=>x.c.week_start===first).map(x=>x.t.name);
+    const n=weeksBetween(now,first);
+    $("#countdown").hidden=false;
+    $("#cdNum").textContent=n===0?'NOW':n; $("#cdUnit").textContent=n===0?'':n===1?'week':'weeks';
+    $("#cdTitle").textContent=n===0?`Comp week: ${fmt(first)} to ${fmt(addDays(first,6))}`:`Until the next comp · week of ${fmt(first,{weekday:'short',day:'numeric',month:'short'})}`;
+    const later=comps.filter(x=>x.c.week_start!==first).sort((a,b)=>a.c.week_start.localeCompare(b.c.week_start));
+    $("#cdSub").textContent=`${who.join(', ')}${later.length?` · then ${later.map(x=>`${x.t.name} ${fmt(x.c.week_start)}`).join(', ')}`:''}`;
+  } else $("#countdown").hidden=true;
+
+  $("#nowGrid").innerHTML=ts.map(t=>{
+    const c=cellOf(t.id,now), k=c?kindOf(c.label):null, comp=nextComp(t.id,now);
+    let big, segs='', hl='';
+    if(!c) big=`<span class="tc-tag off">No plan this week</span>`;
+    else if(k==='w'){
+      const b=blockInfo(t.id,now);
+      big=`<span class="tc-wk">WK ${esc(c.label)}</span><span class="tc-of">of ${b.last}${b.after?` then ${esc(b.after.label)}`:''}</span>`;
+      segs=`<div class="tc-segs" aria-hidden="true">${b.run.map(x=>`<span class="${x.week_start<now?'done':x.week_start===now?'cur':''}${x.highlight?' hl':''}"></span>`).join('')}</div>`;
+      if(c.highlight) hl=`<span class="tc-hl">Highlighted</span>`;
+    }
+    else if(k==='dtm') big=`<span class="tc-tag dtm">DTM WEEK</span>`;
+    else if(k==='comp') big=`<span class="tc-tag comp">COMP WEEK</span>`;
+    else big=`<span class="tc-tag dtm" style="font-size:24px">${esc(c.label)}</span>`;
+    const nxt=comp&&k!=='comp'?`Comp in <b>${weeksBetween(now,comp.week_start)} week${weeksBetween(now,comp.week_start)===1?'':'s'}</b> · ${fmt(comp.week_start)}`:k==='comp'?'Good luck this week':'No comp planned yet';
+    return `<button type="button" class="tcard" style="--tc:${col(t)}" data-cell="${t.id}|${now}" aria-label="${esc(t.name)} this week">
+      ${hl}<div class="tc-name">${esc(t.name)}</div><div class="tc-big">${big}</div>${segs}<div class="tc-next">${nxt}${c&&c.note?` · ${esc(c.note)}`:''}</div></button>`;
+  }).join('');
+}
+
+/* ---- render: plan ---- */
+function range(){
+  const now=thisWeek(); let lo=addDays(now,-8*7), hi=addDays(now,12*7);
+  weeks.forEach(w=>{if(w.week_start<lo)lo=w.week_start; if(w.week_start>hi)hi=w.week_start});
+  hi=addDays(hi,4*7);
+  const out=[]; for(let d=lo;d<=hi;d=addDays(d,7)) out.push(d); return out;
+}
+function cellHtml(t,w,now){
+  const c=cellOf(t.id,w); const past=w<now?' past':'';
+  const title=`${t.name} · week of ${fmt(w,{day:'numeric',month:'short',year:'numeric'})}${c?` · ${c.label}${c.note?' · '+c.note:''}`:''}`;
+  if(!c) return `<button type="button" class="cell empty${past}" data-cell="${t.id}|${w}" title="${esc(title)}" aria-label="${esc(title)}, empty">+</button>`;
+  const k=kindOf(c.label);
+  const inner=k==='comp'?`${TROPHY}`:esc(c.label);
+  return `<button type="button" class="cell ${k}${c.highlight&&k==='w'?' hl':''}${past}" style="--tc:${col(t)}" data-cell="${t.id}|${w}" title="${esc(title)}" aria-label="${esc(title)}">${inner}${c.note?'<span class="note-dot"></span>':''}</button>`;
+}
+function renderTimeline(){
+  const ts=activeTracks(), ws=range(), now=thisWeek();
+  const nameW=Math.min(200,Math.max(110,...ts.map(t=>t.name.length*7.2+34)));
+  let months='', lastM='';
+  ws.forEach((w,i)=>{const m=fmt(w,{month:'short',year:'2-digit'}); if(m!==lastM){ let span=0; for(let j=i;j<ws.length&&fmt(ws[j],{month:'short',year:'2-digit'})===m;j++) span++; months+=`<div class="tl-month" style="grid-row:1;grid-column:${i+2} / span ${span}">${fmt(w,{month:'long'})}</div>`; lastM=m; }});
+  const dates=ws.map((w,i)=>`<div class="tl-date${w===now?' now':''}" style="grid-row:2;grid-column:${i+2}">${parseD(w).getDate()}</div>`).join('');
+  const rows=ts.map((t,ti)=>`<div class="tl-name" style="--tc:${col(t)};grid-row:${ti+3};grid-column:1"><i></i>${esc(t.name)}</div>`+ws.map((w,wi)=>`<div style="grid-row:${ti+3};grid-column:${wi+2}">${cellHtml(t,w,now)}</div>`).join('')).join('');
+  const ni=ws.indexOf(now);
+  $("#planBody").innerHTML=`<div class="tl-scroll" id="tlScroll"><div class="tl" style="grid-template-columns:${nameW}px repeat(${ws.length},var(--cw))">
+    <div class="tl-corner" style="grid-row:1 / span 2"></div>${months}${dates}${rows}
+    ${ni>=0?`<div class="now-col" style="grid-column:${ni+2};grid-row:2 / span ${ts.length+1}"></div>`:''}
+  </div></div>`;
+}
+function renderTable(){
+  const ts=activeTracks(), ws=range(), now=thisWeek();
+  $("#planBody").innerHTML=`<div class="tb-scroll" id="tbScroll"><table class="tb"><thead><tr><th>Week</th>${ts.map(t=>`<th style="--tc:${col(t)}"><span class="tdot"></span>${esc(t.name)}</th>`).join('')}</tr></thead><tbody>
+    ${ws.map(w=>`<tr class="${w===now?'now':w<now?'past':''}" ${w===now?'id="nowRow"':''}><td>${fmt(w,{day:'2-digit',month:'short'})} – ${fmt(addDays(w,6),{day:'2-digit',month:'short'})}</td>${ts.map(t=>`<td>${cellHtml(t,w,'0000')}</td>`).join('')}</tr>`).join('')}
+  </tbody></table></div>`;
+}
+function renderPlan(scroll){
+  document.querySelectorAll('.seg [data-view]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===view));
+  if(!activeTracks().length){$("#planBody").innerHTML=`<div class="empty-state">Nothing planned yet.</div>`;return}
+  view==='table'?renderTable():renderTimeline();
+  if(scroll) jumpNow(false);
+}
+function jumpNow(smooth=true){
+  if(view==='table'){const r=$("#nowRow"),s=$("#tbScroll"); if(r&&s) s.scrollTo({top:r.offsetTop-s.clientHeight/3,behavior:smooth?'smooth':'auto'});}
+  else{const s=$("#tlScroll"),n=s&&s.querySelector('.now-col'); if(n) s.scrollTo({left:Math.max(0,n.offsetLeft-s.clientWidth*0.3),behavior:smooth?'smooth':'auto'});}
+}
+function render(scroll){ if(!loaded) return; renderTop(); renderPlan(scroll); }
+
+/* ---- edit one week ---- */
+let editing=null;
+function openCell(tid,w){
+  const t=tracks.find(x=>x.id===tid); if(!t) return;
+  const c=cellOf(tid,w); editing={tid,w,had:c?{...c}:null};
+  $("#cellForm").style.setProperty('--tc',col(t));
+  $("#cmTitle").textContent=t.name;
+  $("#cmSub").textContent=`Week of ${fmt(w,{weekday:'short',day:'numeric',month:'short',year:'numeric'})}`;
+  const prev=cellOf(tid,addDays(w,-7)), suggest=prev&&kindOf(prev.label)==='w'?+prev.label+1:1;
+  const nums=[...new Set([suggest,...Array.from({length:12},(_,i)=>i+1)])].slice(0,12).sort((a,b)=>a-b);
+  $("#cmQuick").innerHTML=nums.map(n=>`<button type="button" data-q="${n}">${n}</button>`).join('')+`<button type="button" class="dtmq" data-q="DTM">DTM</button><button type="button" class="compq" data-q="COMP">COMP</button>`;
+  $("#cmLabel").value=c?c.label:''; $("#cmHl").checked=c?c.highlight:false; $("#cmNote").value=c?c.note:'';
+  $("#cmClear").hidden=!c;
+  $("#cellModal").hidden=false; setTimeout(()=>$("#cmLabel").focus(),30);
+}
+$("#cmQuick").addEventListener('click',e=>{const b=e.target.closest('[data-q]'); if(b){$("#cmLabel").value=b.dataset.q; $("#cmLabel").focus();}});
+$("#cmCancel").addEventListener('click',()=>{$("#cellModal").hidden=true});
+$("#cellForm").addEventListener('submit',async e=>{
+  e.preventDefault(); const {tid,w,had}=editing;
+  let label=$("#cmLabel").value.trim(); if(!label){ return clearCell(); }
+  if(/^(dtm|comp)$/i.test(label)) label=label.toUpperCase();
+  const row={track_id:tid,week_start:w,label,highlight:$("#cmHl").checked,note:$("#cmNote").value.trim()};
+  try{ const {error}=await sb.from('plan_weeks').upsert(row); if(error) throw error;
+    weeks=weeks.filter(x=>!(x.track_id===tid&&x.week_start===w)); weeks.push(row); $("#cellModal").hidden=true; render();
+    toast('Saved',async()=>{ try{ if(had){await sb.from('plan_weeks').upsert(had)} else {await sb.from('plan_weeks').delete().eq('track_id',tid).eq('week_start',w)} load(); }catch(err){fail(err)} });
+  }catch(err){fail(err)}
+});
+async function clearCell(){
+  const {tid,w,had}=editing;
+  try{ const {error}=await sb.from('plan_weeks').delete().eq('track_id',tid).eq('week_start',w); if(error) throw error;
+    weeks=weeks.filter(x=>!(x.track_id===tid&&x.week_start===w)); $("#cellModal").hidden=true; render();
+    if(had) toast('Week cleared',async()=>{try{await sb.from('plan_weeks').upsert(had);load()}catch(err){fail(err)}});
+  }catch(err){fail(err)}
+}
+$("#cmClear").addEventListener('click',clearCell);
+
+/* ---- plan a block ---- */
+function blockRows(){
+  const tid=$("#bmTrack").value, start=monday($("#bmStart").value||thisWeek()), len=Math.max(1,Math.min(30,+$("#bmLen").value||1)),
+        hlN=Math.max(0,+$("#bmHl").value||0), from=Math.max(1,+$("#bmFrom").value||1), rows=[];
+  for(let i=0;i<len;i++) rows.push({track_id:tid,week_start:addDays(start,i*7),label:String(from+i),highlight:i<hlN,note:''});
+  let d=addDays(start,len*7);
+  if($("#bmDtm").checked){rows.push({track_id:tid,week_start:d,label:'DTM',highlight:false,note:''}); d=addDays(d,7);}
+  if($("#bmComp").checked) rows.push({track_id:tid,week_start:d,label:'COMP',highlight:false,note:''});
+  return rows;
+}
+function previewBlock(){
+  const t=tracks.find(x=>x.id===$("#bmTrack").value); if(!t) return;
+  $("#blockForm").style.setProperty('--tc',col(t)); $("#bmDot").style.background=col(t);
+  const rows=blockRows();
+  $("#bmPreview").innerHTML=rows.map(r=>{const k=kindOf(r.label);return `<span class="${k==='w'?'':k}${r.highlight?' hl':''}">${k==='comp'?'COMP':esc(r.label)}</span>`}).join('');
+  const clash=rows.filter(r=>cellOf(r.track_id,r.week_start)).length;
+  $("#bmRange").textContent=`${fmt(rows[0].week_start)} to ${fmt(addDays(rows.at(-1).week_start,6))}${clash?` · replaces ${clash} planned week${clash>1?'s':''}`:''}`;
+}
+function openBlock(tid){
+  const ts=activeTracks(); if(!ts.length){toast('Add a track first.');return openTracks();}
+  $("#bmTrack").innerHTML=ts.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  if(tid) $("#bmTrack").value=tid;
+  /* start the week after this track's last planned week */
+  const last=weeks.filter(x=>x.track_id===$("#bmTrack").value).map(x=>x.week_start).sort().at(-1);
+  $("#bmStart").value=last&&last>=thisWeek()?addDays(last,7):thisWeek();
+  $("#blockModal").hidden=false; previewBlock();
+}
+["#bmTrack","#bmStart","#bmLen","#bmHl","#bmFrom","#bmDtm","#bmComp"].forEach(s=>$(s).addEventListener('input',previewBlock));
+$("#bmTrack").addEventListener('change',()=>{const last=weeks.filter(x=>x.track_id===$("#bmTrack").value).map(x=>x.week_start).sort().at(-1);$("#bmStart").value=last&&last>=thisWeek()?addDays(last,7):thisWeek();previewBlock()});
+$("#bmCancel").addEventListener('click',()=>{$("#blockModal").hidden=true});
+$("#blockForm").addEventListener('submit',async e=>{
+  e.preventDefault(); const rows=blockRows(); const before=rows.map(r=>cellOf(r.track_id,r.week_start)).filter(Boolean).map(x=>({...x}));
+  try{ const {error}=await sb.from('plan_weeks').upsert(rows); if(error) throw error;
+    rows.forEach(r=>{weeks=weeks.filter(x=>!(x.track_id===r.track_id&&x.week_start===r.week_start)); weeks.push(r)});
+    $("#blockModal").hidden=true; render(); jumpNow();
+    const t=tracks.find(x=>x.id===rows[0].track_id);
+    toast(`Added a ${rows.filter(r=>kindOf(r.label)==='w').length}-week block for ${t.name}`,async()=>{
+      try{ await sb.from('plan_weeks').delete().eq('track_id',rows[0].track_id).in('week_start',rows.map(r=>r.week_start)); if(before.length) await sb.from('plan_weeks').upsert(before); load(); }catch(err){fail(err)} });
+  }catch(err){fail(err)}
+});
+
+/* ---- tracks ---- */
+let editingTrack=null;
+function renderTrackList(){
+  const ts=activeTracks();
+  $("#trkList").innerHTML=ts.map((t,i)=>`<div class="trk-row" style="--tc:${col(t)}"><i></i><span>${esc(t.name)}</span>
+    <button type="button" data-tup="${t.id}" ${i===0?'disabled':''} aria-label="Move ${esc(t.name)} up">↑</button><button type="button" data-tdown="${t.id}" ${i===ts.length-1?'disabled':''} aria-label="Move ${esc(t.name)} down">↓</button><button type="button" data-tedit="${t.id}">Edit</button></div>`).join('')||'<div class="empty-state">No tracks yet.</div>';
+}
+function resetTrackForm(t){
+  editingTrack=t||null;
+  $("#trkFormTitle").textContent=t?`Edit ${t.name}`:'Add a track'; $("#trkSave").textContent=t?'Save':'Add track';
+  $("#trkName").value=t?t.name:''; $("#trkDelete").hidden=!t; $("#trkDelete").textContent='Delete track'; $("#trkDelete").dataset.armed='';
+  const used=new Set(activeTracks().map(x=>x.color)); const pick=t?t.color:(Object.keys(COLORS).find(c=>!used.has(c))||'blue');
+  $("#trkColors").innerHTML=Object.entries(COLORS).map(([n,h])=>`<label title="${n}"><input type="radio" name="tcolor" value="${n}"${n===pick?' checked':''}><span style="background:${h}"></span></label>`).join('');
+}
+function openTracks(){renderTrackList();resetTrackForm(null);$("#trackModal").hidden=false}
+$("#trkList").addEventListener('click',async e=>{
+  const ed=e.target.closest('[data-tedit]'); if(ed){resetTrackForm(tracks.find(t=>t.id===ed.dataset.tedit));$("#trkName").focus();return}
+  const up=e.target.closest('[data-tup]'),dn=e.target.closest('[data-tdown]'); if(!up&&!dn) return;
+  const ts=activeTracks(), i=ts.findIndex(t=>t.id===(up||dn).dataset[up?'tup':'tdown']), j=up?i-1:i+1; if(j<0||j>=ts.length) return;
+  [ts[i],ts[j]]=[ts[j],ts[i]]; ts.forEach((t,k)=>t.sort=k);
+  try{ await Promise.all(ts.map(t=>sb.from('plan_tracks').update({sort:t.sort}).eq('id',t.id))); renderTrackList(); render(); }catch(err){fail(err)}
+});
+$("#trkForm").addEventListener('submit',async e=>{
+  e.preventDefault(); const name=$("#trkName").value.trim(); if(!name) return;
+  const color=(document.querySelector('input[name=tcolor]:checked')||{}).value||'blue';
+  try{
+    if(editingTrack){ const {error}=await sb.from('plan_tracks').update({name,color}).eq('id',editingTrack.id); if(error) throw error; Object.assign(editingTrack,{name,color}); toast(`Saved ${name}`); }
+    else{ const {data,error}=await sb.from('plan_tracks').insert({name,color,sort:tracks.length}).select().single(); if(error) throw error; tracks.push(data); toast(`Added ${name}. Use Plan a block to fill it in.`); }
+    renderTrackList(); resetTrackForm(null); render();
+  }catch(err){fail(err)}
+});
+$("#trkDelete").addEventListener('click',async()=>{
+  const b=$("#trkDelete"); if(!editingTrack) return;
+  if(!b.dataset.armed){b.dataset.armed='1';b.textContent=`Tap again to delete ${editingTrack.name} and its weeks`;return}
+  try{ const {error}=await sb.from('plan_tracks').delete().eq('id',editingTrack.id); if(error) throw error;
+    const n=editingTrack.name; tracks=tracks.filter(t=>t.id!==editingTrack.id); weeks=weeks.filter(w=>w.track_id!==editingTrack.id); renderTrackList(); resetTrackForm(null); render(); toast(`Deleted ${n}`); }catch(err){fail(err)}
+});
+$("#trkCancel").addEventListener('click',()=>{$("#trackModal").hidden=true});
+
+/* ---- wiring ---- */
+document.addEventListener('click',e=>{
+  const c=e.target.closest('[data-cell]'); if(c){const [tid,w]=c.dataset.cell.split('|'); return openCell(tid,w);}
+  const v=e.target.closest('[data-view]'); if(v){view=v.dataset.view; try{localStorage.setItem('rev_plan_view',view)}catch(err){} renderPlan(true);}
+});
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m) m.hidden=true}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape') document.querySelectorAll('.modal').forEach(m=>m.hidden=true)});
+$("#blockBtn").addEventListener('click',()=>openBlock());
+$("#tracksBtn").addEventListener('click',openTracks);
+$("#jumpNow").addEventListener('click',()=>jumpNow());
+
+async function load(scroll){
+  const [t,w]=await Promise.all([sb.from('plan_tracks').select('*'),sb.from('plan_weeks').select('track_id,week_start,label,highlight,note')]);
+  if(t.error||w.error){$("#nowGrid").innerHTML=`<div class="empty-state">Couldn't load your plan. Refresh to try again.</div>`;return}
+  tracks=t.data||[]; weeks=w.data||[]; loaded=true; render(scroll);
+}
+revRequireLogin(()=>{
+  load(true);
+  sb.channel('plan-live').on('postgres_changes',{event:'*',schema:'public',table:'plan_weeks'},()=>{clearTimeout(load._t);load._t=setTimeout(()=>load(false),400)})
+    .on('postgres_changes',{event:'*',schema:'public',table:'plan_tracks'},()=>{clearTimeout(load._t);load._t=setTimeout(()=>load(false),400)}).subscribe();
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')load(false)});
+});
+})();
+</script>
+</body>
+</html>
