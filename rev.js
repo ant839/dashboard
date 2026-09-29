@@ -13,7 +13,8 @@
 
   const TABS = [
     { href: 'dashboard.html', label: 'Today' },
-    { href: 'athletes.html', label: 'Athletes' }
+    { href: 'athletes.html', label: 'Athletes' },
+    { href: 'pt.html', label: 'PT' }
   ];
 
   const css = `
