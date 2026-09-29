@@ -41,7 +41,7 @@
       return { level: 'ok', line: target ? `${n}/${target} this week` : `${n} this week`, used: n, total: target, pct: target ? Math.min(100, Math.round(n / target * 100)) : 0 };
     }
     const start = c.period_start || '0000-01-01';
-    const used = mine.filter(x => x.day >= start).length;
+    const used = mine.filter(x => x.day >= start).length + (c.prior_sessions || 0);
     const left = c.period_end ? daysBetween(ref, c.period_end) : null;
     const endTxt = c.period_end ? (left < 0 ? `ended ${fmt(c.period_end)}` : left === 0 ? 'ends today' : `ends ${fmt(c.period_end)}`) : 'no end date';
     if (c.plan === 'period') {

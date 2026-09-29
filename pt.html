@@ -187,6 +187,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
       </div>
       <label class="f" data-for="weekly period">Sessions per week<input id="f-spw" type="number" min="1" max="14" step="1" placeholder="e.g. 2"></label>
       <label class="f" data-for="pack">Sessions in pack<input id="f-pack" type="number" min="1" max="500" step="1" placeholder="e.g. 24"></label>
+      <label class="f" data-for="pack">Already used<input id="f-prior" type="number" min="0" max="500" step="1" placeholder="0"><span class="hint">Sessions done before you started tracking here</span></label>
       <label class="f" data-for="period pack">Start date<input id="f-start" type="date"></label>
       <label class="f" data-for="period pack">End date<input id="f-end" type="date"></label>
       <div class="f full" data-for="period pack"><span>Length</span>
@@ -223,7 +224,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="rev.js?v=8"></script>
-<script src="pt-core.js?v=8"></script>
+<script src="pt-core.js?v=9"></script>
 <script>
 (function(){
 const $=s=>document.querySelector(s);
@@ -303,7 +304,7 @@ function openDrawer(id){
   const c=editing||{name:"",plan:"weekly",sessions_per_week:"",pack_size:"",period_start:iso(today()),period_end:"",days:[],phone:"",notes:"",active:true};
   $("#dTitle").textContent=editing?c.name:"New client";
   $("#f-name").value=c.name; document.querySelectorAll('input[name=plan]').forEach(r=>r.checked=r.value===c.plan);
-  $("#f-spw").value=c.sessions_per_week??""; $("#f-pack").value=c.pack_size??""; $("#f-start").value=c.period_start||iso(today()); $("#f-end").value=c.period_end||"";
+  $("#f-spw").value=c.sessions_per_week??""; $("#f-pack").value=c.pack_size??""; $("#f-prior").value=c.prior_sessions||""; $("#f-start").value=c.period_start||iso(today()); $("#f-end").value=c.period_end||"";
   document.querySelectorAll('input[name=days]').forEach(ch=>ch.checked=(c.days||[]).includes(+ch.value));
   $("#f-phone").value=c.phone||""; $("#f-notes").value=c.notes||"";
   $("#dActive").hidden=!editing; $("#dActive").textContent=c.active?"Make inactive":"Make active";
@@ -325,6 +326,7 @@ $("#dForm").addEventListener("submit",async e=>{
   const row={name:$("#f-name").value.trim(),plan,
     sessions_per_week:plan!=="pack"?num($("#f-spw").value):null,
     pack_size:plan==="pack"?num($("#f-pack").value):null,
+    prior_sessions:plan==="pack"?(num($("#f-prior").value)||0):0,
     period_start:plan!=="weekly"?($("#f-start").value||null):null,
     period_end:plan!=="weekly"?($("#f-end").value||null):null,
     days:[...document.querySelectorAll('input[name=days]:checked')].map(ch=>+ch.value),
@@ -361,7 +363,7 @@ $("#dRenew").addEventListener("click",()=>{if(editing)openRenew(editing)});
 $("#rCancel").addEventListener("click",()=>{$("#renewModal").hidden=true});
 $("#renewForm").addEventListener("submit",async e=>{e.preventDefault();const c=renewing;if(!c)return;
   const patch={period_start:$("#r-start").value,period_end:$("#r-end").value||null,active:true};
-  if(c.plan==="pack") patch.pack_size=parseInt($("#r-pack").value,10)||c.pack_size;
+  if(c.plan==="pack"){ patch.pack_size=parseInt($("#r-pack").value,10)||c.pack_size; patch.prior_sessions=0; }
   try{const {data,error}=await sb.from("pt_clients").update(patch).eq("id",c.id).select().single();if(error)throw error;
     const i=store.clients.findIndex(x=>x.id===c.id);store.clients[i]=data;$("#renewModal").hidden=true;if(editing)closeDrawer();render();toast(`Renewed ${c.name}`)}catch(err){fail(err)}});
 
