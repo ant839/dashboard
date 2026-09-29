@@ -75,6 +75,10 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 .tick-row.skipped .tick-name,.tick-row.skipped .tick-line{opacity:.45}
 .tick-row.skipped .tick{border-style:dashed}
 .skip-tag{color:var(--amber)}
+.move-tag{color:var(--teal,#5ad1c8)}
+.row-btns{display:flex;gap:6px;flex-shrink:0}
+.tick-row.moved .tick-name,.tick-row.moved .tick-line{opacity:.45}
+.tick-row.moved .tick{border-style:dashed}
 .inc-total{font-size:24px;font-weight:300;letter-spacing:-.01em;margin:-4px 0 8px;color:var(--teal)}
 .inc-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
 .inc-row:last-child{border-bottom:0}
@@ -282,7 +286,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="rev.js?v=22"></script>
-<script src="pt-core.js?v=17"></script>
+<script src="pt-core.js?v=18"></script>
 <script>
 (function(){
 const $=s=>document.querySelector(s);
@@ -311,15 +315,17 @@ function render(){
   $("#goToday").hidden=isToday;
   const sched=PT.scheduledOn(day), trained=PT.trainedOn(day);
   const list=[...sched,...trained.filter(c=>!sched.includes(c))].sort((a,b)=>a.name.localeCompare(b.name));
-  const done=list.filter(c=>PT.hasSession(c.id,day)).length, skipped=list.filter(c=>PT.isSkipped(c.id,day)).length;
-  $("#daySub").textContent=list.length?`${done} of ${list.length-skipped} ticked off${skipped?` · ${skipped} skipped`:""}`:"";
+  const done=list.filter(c=>PT.hasSession(c.id,day)).length, skipped=list.filter(c=>PT.isSkipped(c.id,day)).length, movedOut=list.filter(c=>PT.movedTo(c.id,day)).length;
+  $("#daySub").textContent=list.length?`${done} of ${list.length-skipped-movedOut} ticked off${skipped?` · ${skipped} skipped`:""}${movedOut?` · ${movedOut} moved`:""}`:"";
   $("#tickList").innerHTML=list.length?list.map(c=>{
-    const on=PT.hasSession(c.id,day), sk=PT.isSkipped(c.id,day), s=status(c,day), extra=!sched.includes(c);
+    const on=PT.hasSession(c.id,day), sk=PT.isSkipped(c.id,day), mvTo=PT.movedTo(c.id,day), mvFrom=PT.movedFrom(c.id,day), s=status(c,day), extra=!sched.includes(c);
+    const wk=d=>fmt(d,{weekday:"short",day:"numeric",month:"short"});
     const n=PT.sessionsOf(c.id).filter(x=>x.day===day).length;
-    return `<div class="tick-row${sk?" skipped":""}"><button type="button" class="tick${on?" done":""}" data-tick="${c.id}" aria-pressed="${on}" aria-label="${on?"Untick":"Tick off"} ${esc(c.name)}"></button>
-      <div class="tick-body"><div class="tick-name">${esc(c.name)} ${planBadge(c)}${extra?`<span class="extra">Extra session</span>`:""}${n>1?`<span class="extra">×${n}</span>`:""}${sk?`<span class="extra skip-tag">Skipped</span>`:""}</div>
+    return `<div class="tick-row${sk?" skipped":""}${mvTo?" moved":""}"><button type="button" class="tick${on?" done":""}" data-tick="${c.id}" aria-pressed="${on}" aria-label="${on?"Untick":"Tick off"} ${esc(c.name)}"></button>
+      <div class="tick-body"><div class="tick-name">${esc(c.name)} ${planBadge(c)}${extra?`<span class="extra">Extra session</span>`:""}${n>1?`<span class="extra">×${n}</span>`:""}${sk?`<span class="extra skip-tag">Skipped</span>`:""}${mvTo?`<span class="extra move-tag">Moved to ${wk(mvTo)}</span>`:""}${mvFrom&&!mvTo?`<span class="extra move-tag">Moved from ${wk(mvFrom)}</span>`:""}</div>
       <div class="tick-line ${s.level}">${esc(s.line)}</div></div>
-      ${on?"":`<button type="button" class="skip-btn" data-skip="${c.id}">${sk?"Undo skip":"Skip"}</button>`}</div>`;
+      ${on?"":sk?`<button type="button" class="skip-btn" data-skip="${c.id}">Undo skip</button>`:mvTo?`<button type="button" class="skip-btn" data-unmove="${c.id}">Undo move</button>`
+        :`<div class="row-btns"><button type="button" class="skip-btn" data-move="${c.id}">Move</button><button type="button" class="skip-btn" data-skip="${c.id}">Skip</button></div>`}</div>`;
   }).join(""):`<div class="empty">${store.clients.length?"Nobody's scheduled for this day. Use the list below to log a session.":"No clients yet. Tap + Add client to enter your first PT client."}</div>`;
   const others=store.clients.filter(c=>c.active).sort((a,b)=>a.name.localeCompare(b.name));
   $("#otherClient").innerHTML=`<option value="">Log a session for someone else…</option>`+others.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
@@ -387,6 +393,15 @@ async function toggleSkip(id){
     if(PT.isSkipped(id,day)){ await PT.unskip(id,day); render(); toast(`${c.name} is back on for ${fmt(day,{weekday:"long"})}`); }
     else{ await PT.skip(id,day); render(); toast(`Skipped ${c.name}'s ${fmt(day,{weekday:"long"})} session`,async()=>{try{await PT.unskip(id,day);render()}catch(e){fail(e)}}); }
   }catch(e){fail(e)}
+}
+async function doMove(id){
+  const c=store.clients.find(x=>x.id===id); if(!c) return;
+  const from=day, to=await PT.pickMoveDay(c,from); if(!to) return;
+  try{ await PT.move(id,from,to); render(); toast(`Moved ${c.name} to ${fmt(to,{weekday:"long",day:"numeric",month:"short"})}`,async()=>{try{await PT.unmove(id,from);render()}catch(e){fail(e)}}); }catch(e){fail(e)}
+}
+async function undoMove(id){
+  const c=store.clients.find(x=>x.id===id); if(!c) return;
+  try{ await PT.unmove(id,day); render(); toast(`${c.name} is back on for ${fmt(day,{weekday:"long"})}`); }catch(e){fail(e)}
 }
 $("#logOther").addEventListener("submit",async e=>{e.preventDefault();const id=$("#otherClient").value;if(!id)return;const c=store.clients.find(x=>x.id===id);
   try{await PT.tick(id,day);render();toast(`Logged a session for ${c.name}`,async()=>{try{await PT.untick(id,day);render()}catch(err){fail(err)}})}catch(err){fail(err)}});
@@ -487,6 +502,8 @@ document.addEventListener("click",e=>{
   if(e.target.closest(".switch.sm")){e.stopPropagation();return}
   const t=e.target.closest("[data-tick]"); if(t) return toggleTick(t.dataset.tick);
   const sk=e.target.closest("[data-skip]"); if(sk) return toggleSkip(sk.dataset.skip);
+  const mv=e.target.closest("[data-move]"); if(mv) return doMove(mv.dataset.move);
+  const um=e.target.closest("[data-unmove]"); if(um) return undoMove(um.dataset.unmove);
   const r=e.target.closest("[data-renew]"); if(r){e.stopPropagation();return openRenew(store.clients.find(c=>c.id===r.dataset.renew))}
   const ed=e.target.closest("[data-edit]"); if(ed) return openDrawer(ed.dataset.edit);
 });

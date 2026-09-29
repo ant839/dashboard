@@ -20,17 +20,21 @@
     const since = addDays(iso(today()), -sinceDays);
     const [c, s] = await Promise.all([
       sb.from('pt_clients').select('*'),
-      sb.from('pt_sessions').select('id,client_id,day,created_at,status').gte('day', since)
+      sb.from('pt_sessions').select('id,client_id,day,created_at,status,moved_to').gte('day', since)
     ]);
     if (c.error || s.error) throw (c.error || s.error);
     store.clients = c.data || []; store.sessions = s.data || [];
     return store;
   }
 
-  const isDone = x => x.status !== 'skipped';
+  const isDone = x => x.status !== 'skipped' && x.status !== 'moved';
   const sessionsOf = (id) => store.sessions.filter(x => x.client_id === id && isDone(x));
   const hasSession = (id, day) => store.sessions.some(x => x.client_id === id && x.day === day && isDone(x));
   const isSkipped = (id, day) => store.sessions.some(x => x.client_id === id && x.day === day && x.status === 'skipped');
+  /* Moved sessions: a 'moved' row sits on the original day and points at the new day. */
+  const movedRow = (id, day) => store.sessions.find(x => x.client_id === id && x.day === day && x.status === 'moved');
+  const movedTo = (id, day) => (movedRow(id, day) || {}).moved_to || null;
+  const movedFrom = (id, day) => (store.sessions.find(x => x.client_id === id && x.status === 'moved' && x.moved_to === day) || {}).day || null;
   const skipsIn = (id, from, to) => store.sessions.filter(x => x.client_id === id && x.status === 'skipped' && x.day >= from && x.day <= to).length;
 
   /* Fortnightly: period_start is any one payment date; they pay every 14 days from it. */
@@ -81,7 +85,8 @@
 
   function scheduledOn(day) {
     const wd = weekday(day);
-    return store.clients.filter(c => c.active && (c.days || []).includes(wd));
+    const inIds = new Set(store.sessions.filter(x => x.status === 'moved' && x.moved_to === day).map(x => x.client_id));
+    return store.clients.filter(c => (c.active && (c.days || []).includes(wd)) || inIds.has(c.id));
   }
   function trainedOn(day) {
     const ids = new Set(store.sessions.filter(x => x.day === day && isDone(x)).map(x => x.client_id));
@@ -169,13 +174,68 @@
     if (error) throw error;
     store.sessions = store.sessions.filter(x => !ids.includes(x.id));
   }
+  async function clearMove(clientId, day) {
+    const ids = store.sessions.filter(x => x.client_id === clientId && x.day === day && x.status === 'moved').map(x => x.id);
+    if (!ids.length) return;
+    const { error } = await sb.from('pt_sessions').delete().in('id', ids);
+    if (error) throw error;
+    store.sessions = store.sessions.filter(x => !ids.includes(x.id));
+  }
+  async function move(clientId, from, to) {
+    const done = store.sessions.filter(x => x.client_id === clientId && x.day === from && isDone(x)).map(x => x.id);
+    if (done.length) { const r = await sb.from('pt_sessions').delete().in('id', done); if (r.error) throw r.error; store.sessions = store.sessions.filter(x => !done.includes(x.id)); }
+    await clearSkip(clientId, from); await clearMove(clientId, from);
+    if (to === from) return;
+    const { data, error } = await sb.from('pt_sessions').insert({ client_id: clientId, day: from, status: 'moved', moved_to: to }).select('id,client_id,day,created_at,status,moved_to').single();
+    if (error) throw error;
+    store.sessions.push(data);
+  }
+  const unmove = clearMove;
+
+  /* A small sheet to pick the new day: quick chips for the week around, or any date. Resolves to a date or null. */
+  function pickMoveDay(c, from) {
+    return new Promise(resolve => {
+      if (!document.getElementById('ptmv-css')) {
+        const st = document.createElement('style'); st.id = 'ptmv-css';
+        st.textContent = `.ptmv{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.55);display:grid;place-items:end center;padding:16px}
+@media(min-width:600px){.ptmv{place-items:center}}
+.ptmv-card{width:min(380px,100%);background:var(--surface,#161618);border:1px solid var(--border2,rgba(255,255,255,.12));border-radius:14px;padding:18px;display:grid;gap:12px;margin-bottom:env(safe-area-inset-bottom,0px)}
+.ptmv h3{margin:0;font-size:16px;font-weight:500}.ptmv p{margin:0;font-size:12px;color:var(--muted,#888884)}
+.ptmv-days{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ptmv-days button{background:var(--bg,#0e0e0f);border:1px solid var(--border,rgba(255,255,255,.07));border-radius:8px;color:var(--text,#f0efe8);padding:8px 4px;font-size:12px;line-height:1.3;cursor:pointer}
+.ptmv-days button:hover{border-color:var(--accent,#c8f06a)}.ptmv-days button small{display:block;color:var(--muted,#888884);font-size:10px}
+.ptmv-days button.usual{border-color:rgba(200,240,106,.35)}
+.ptmv-row{display:flex;gap:8px;align-items:center}.ptmv-row input{flex:1;padding:8px 10px;background:var(--bg,#0e0e0f);border:1px solid var(--border,rgba(255,255,255,.07));border-radius:8px;color:var(--text,#f0efe8);font-size:14px;color-scheme:dark}
+.ptmv-row button,.ptmv-x{background:var(--accent,#c8f06a);color:#000;border:0;border-radius:8px;padding:9px 14px;font-weight:600;font-size:13px;cursor:pointer}
+.ptmv-x{background:none;color:var(--muted,#888884);font-weight:500}`;
+        document.head.appendChild(st);
+      }
+      const opts = [];
+      for (let i = -2; i <= 7; i++) { if (i === 0) continue; const d = addDays(from, i); if (d >= iso(today()) || i > 0) opts.push(d); }
+      const el = document.createElement('div'); el.className = 'ptmv';
+      el.innerHTML = `<div class="ptmv-card" role="dialog" aria-label="Move session">
+        <h3>Move ${esc(c.name)}'s session</h3><p>From ${fmt(from, { weekday: 'long', day: 'numeric', month: 'short' })}. Pick the new day.</p>
+        <div class="ptmv-days">${opts.slice(0, 8).map(d => `<button type="button" data-d="${d}"${(c.days || []).includes(weekday(d)) ? ' class="usual" title="Already one of their days"' : ''}>${fmt(d, { weekday: 'short' })}<small>${fmt(d)}</small></button>`).join('')}</div>
+        <div class="ptmv-row"><input type="date" value="${addDays(from, 1)}" aria-label="Other date"><button type="button" data-pick>Move</button></div>
+        <button type="button" class="ptmv-x">Cancel</button></div>`;
+      document.body.appendChild(el);
+      const done = v => { el.remove(); resolve(v); };
+      el.addEventListener('click', e => {
+        if (e.target === el || e.target.closest('.ptmv-x')) return done(null);
+        const b = e.target.closest('[data-d]'); if (b) return done(b.dataset.d);
+        if (e.target.closest('[data-pick]')) { const v = el.querySelector('input').value; if (v && v !== from) done(v); }
+      });
+    });
+  }
+
   async function tick(clientId, day) {
-    await clearSkip(clientId, day);
+    await clearSkip(clientId, day); await clearMove(clientId, day);
     const { data, error } = await sb.from('pt_sessions').insert({ client_id: clientId, day }).select('id,client_id,day,created_at,status').single();
     if (error) throw error;
     store.sessions.push(data); return data;
   }
   async function skip(clientId, day) {
+    await clearMove(clientId, day);
     const done = store.sessions.filter(x => x.client_id === clientId && x.day === day && isDone(x)).map(x => x.id);
     if (done.length) { const r = await sb.from('pt_sessions').delete().in('id', done); if (r.error) throw r.error; store.sessions = store.sessions.filter(x => !done.includes(x.id)); }
     if (isSkipped(clientId, day)) return;
@@ -203,6 +263,6 @@
       .subscribe();
   }
 
-  window.PT = { weekAmount, perSession, DAY_LONG, payDayName, anchorFor, isSkipped, skip, unskip, skipsIn, weekForecast, nextFortnightPay, fortnightPayIn, money, weeklyIncome, nextPayment, upcomingPayments, PLAN_LABEL, DAY_SHORT, store, load, status, sessionsOf, hasSession, scheduledOn, trainedOn, needsAttention, tick, untick, removeSession, subscribe,
+  window.PT = { move, unmove, movedTo, movedFrom, pickMoveDay, weekAmount, perSession, DAY_LONG, payDayName, anchorFor, isSkipped, skip, unskip, skipsIn, weekForecast, nextFortnightPay, fortnightPayIn, money, weeklyIncome, nextPayment, upcomingPayments, PLAN_LABEL, DAY_SHORT, store, load, status, sessionsOf, hasSession, scheduledOn, trainedOn, needsAttention, tick, untick, removeSession, subscribe,
     iso, parseD, today, addDays, addMonths, daysBetween, weekday, weekStart, fmt, esc };
 })();
