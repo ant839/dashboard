@@ -150,8 +150,10 @@
         if (n && ((n.date >= ws && n.date <= we) || (ws <= iso(today()) && n.date < ws))) items.push({ c, kind: c.plan === 'pack' ? 'Pack renewal' : 'Period renewal', amount: n.amount || 0, note: (n.estimate ? 'about ' : '') + fmt(n.date, { weekday: 'short', day: 'numeric', month: 'short' }) + (n.amount == null ? ' · no price set' : ''), date: n.date });
       }
     });
-    const order = { 'Weekly': 0, 'Fortnightly': 1, 'Pack renewal': 2, 'Period renewal': 2 };
-    items.sort((a, b) => order[a.kind] - order[b.kind] || (a.date || '').localeCompare(b.date || '') || a.c.name.localeCompare(b.c.name));
+    /* weekly clients first, biggest earners at the top; then everything else by payment date */
+    items.sort((a, b) => ((a.kind === 'Weekly') === (b.kind === 'Weekly') ? 0 : a.kind === 'Weekly' ? -1 : 1)
+      || (a.kind === 'Weekly' ? b.amount - a.amount : (a.date || '9999').localeCompare(b.date || '9999'))
+      || a.c.name.localeCompare(b.c.name));
     return { ws, we, items, total: items.reduce((s, x) => s + x.amount, 0) };
   }
 

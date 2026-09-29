@@ -103,6 +103,9 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 .toggle input{accent-color:var(--accent)}
 .cprice{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;white-space:nowrap}
 .cprice.strong{color:var(--text)}
+.cright{display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0;text-align:right}
+.client.inactive{opacity:.42}
+.client.inactive:hover{opacity:.7}
 .switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;letter-spacing:0;text-transform:none;font-weight:400;font-size:13px;color:var(--text)}
 .switch input{position:absolute;opacity:0;pointer-events:none}
 .switch .slider{width:36px;height:20px;border-radius:20px;background:var(--dim);position:relative;transition:background .15s;flex-shrink:0}
@@ -210,7 +213,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
       <div id="incNext"></div>
     </section>
     <section class="card inc-card">
-      <div class="card-label">All clients <label class="toggle"><input type="checkbox" id="showInactive"> Show inactive</label></div>
+      <div class="card-label">All clients</div>
       <div id="clientList"><div class="empty">Loading…</div></div>
     </section>
     </div>
@@ -274,7 +277,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="rev.js?v=14"></script>
-<script src="pt-core.js?v=13"></script>
+<script src="pt-core.js?v=15"></script>
 <script>
 (function(){
 const $=s=>document.querySelector(s);
@@ -337,19 +340,31 @@ function render(){
   incHtml(PT.weekForecast(t),"#incThisT","#incThis","#incThisD");
   incHtml(PT.weekForecast(addDays(t,7)),"#incNextT","#incNext","#incNextD");
 
-  const shown=store.clients.filter(c=>showInactive||c.active);
-  if(!shown.length){$("#clientList").innerHTML=`<div class="empty">No clients yet. Tap + Add client to get started.</div>`;return}
-  $("#clientList").innerHTML=["weekly","fortnightly","period","pack"].map(p=>{
-    const g=shown.filter(c=>c.plan===p).sort((a,b)=>(b.active-a.active)||a.name.localeCompare(b.name)); if(!g.length) return "";
-    return `<div class="group-h"><span>${PLAN_LABEL[p]}</span><span>${g.length}</span></div>`+g.map(c=>{
-      const s=status(c);
-      return `<div class="client" data-edit="${c.id}" role="button" tabindex="0"${c.active?"":" style=\"opacity:.5\""}>
-        <div class="cbody"><div class="cname">${esc(c.name)}${c.active?"":" · inactive"}</div><div class="cline ${s.level}">${esc(s.line)}</div>${s.pct||s.total?`<div class="bar ${s.level}"><div style="width:${s.pct}%"></div></div>`:""}</div>
-        <span class="cprice">${c.plan==="weekly"?(c.price_session!=null?PT.money(c.price_session)+"/session":""):c.plan==="fortnightly"?(c.price_package!=null?PT.money(c.price_package)+"/fortnight":""):(c.price_package!=null?PT.money(c.price_package):"")}${c.pay_day&&(c.plan==="weekly"||c.plan==="fortnightly")?" · "+PT.payDayName(c):""}</span>
-        <label class="switch sm" title="${c.active?"Active":"Inactive"}"><input type="checkbox" data-active="${c.id}"${c.active?" checked":""} aria-label="${esc(c.name)} active"><span class="slider"></span></label>
-        <div class="cdays" aria-label="Training days">${DAY_SHORT.map((d,i)=>`<span class="${(c.days||[]).includes(i+1)?"on":""}">${d[0]}</span>`).join("")}</div></div>`;
-    }).join("");
-  }).join("");
+  if(!store.clients.length){$("#clientList").innerHTML=`<div class="empty">No clients yet. Tap + Add client to get started.</div>`;return}
+  /* weekly clients by weekly income, then everyone else by next payment date, inactive faded at the bottom */
+  const weeklyAmt=c=>(c.sessions_per_week||(c.days||[]).length||0)*Number(c.price_session||0);
+  const nextDue=c=>{ if(c.plan==="fortnightly"){const d=PT.nextFortnightPay(c);return d?{date:d,amount:c.price_package!=null?Number(c.price_package):null,estimate:false}:null}
+    return PT.nextPayment({...c,active:true}); };
+  const actC=store.clients.filter(c=>c.active), inact=store.clients.filter(c=>!c.active).sort((a,b)=>a.name.localeCompare(b.name));
+  const weekly=actC.filter(c=>c.plan==="weekly").sort((a,b)=>weeklyAmt(b)-weeklyAmt(a)||a.name.localeCompare(b.name));
+  const rest=actC.filter(c=>c.plan!=="weekly").map(c=>({c,n:nextDue(c)})).sort((a,b)=>(a.n?a.n.date:"9999").localeCompare(b.n?b.n.date:"9999")||a.c.name.localeCompare(b.c.name));
+  const row=(c,n)=>{
+    const s=status(c);
+    let right;
+    if(c.plan==="weekly") right=`<span class="cprice strong">${weeklyAmt(c)?PT.money(weeklyAmt(c))+"/wk":"No price"}</span><span class="cprice">${c.price_session!=null?PT.money(c.price_session)+" × "+(c.sessions_per_week||(c.days||[]).length||0):""}${c.pay_day?" · "+PT.payDayName(c):""}</span>`;
+    else if(n) right=`<span class="cprice strong">${n.amount!=null?PT.money(n.amount):"No price"}</span><span class="cprice">${n.date<=t?"Due now":(n.estimate?"~":"")+fmt(n.date,{day:"numeric",month:"short"})}</span>`;
+    else right=`<span class="cprice strong">${c.price_package!=null?PT.money(c.price_package):""}</span><span class="cprice">No date</span>`;
+    return `<div class="client${c.active?"":" inactive"}" data-edit="${c.id}" role="button" tabindex="0">
+      <div class="cbody"><div class="cname">${esc(c.name)} ${planBadge(c)}${c.active?"":` <span class="extra">Inactive</span>`}</div><div class="cline ${c.active?s.level:""}">${esc(s.line)}</div>${c.active&&(s.pct||s.total)?`<div class="bar ${s.level}"><div style="width:${s.pct}%"></div></div>`:""}</div>
+      <div class="cright">${right}</div>
+      <label class="switch sm" title="${c.active?"Active":"Inactive"}"><input type="checkbox" data-active="${c.id}"${c.active?" checked":""} aria-label="${esc(c.name)} active"><span class="slider"></span></label>
+      <div class="cdays" aria-label="Training days">${DAY_SHORT.map((d,i)=>`<span class="${(c.days||[]).includes(i+1)?"on":""}">${d[0]}</span>`).join("")}</div></div>`;
+  };
+  const wkTotal=weekly.reduce((a,c)=>a+weeklyAmt(c),0);
+  $("#clientList").innerHTML=
+    (weekly.length?`<div class="group-h"><span>Weekly · most to least</span><span>${PT.money(wkTotal)}/wk</span></div>`+weekly.map(c=>row(c)).join(""):"")+
+    (rest.length?`<div class="group-h"><span>Packages, periods and fortnightly · next payment first</span><span>${rest.length}</span></div>`+rest.map(x=>row(x.c,x.n)).join(""):"")+
+    (inact.length?`<div class="group-h"><span>Inactive</span><span>${inact.length}</span></div>`+inact.map(c=>row(c,null)).join(""):"");
 }
 
 /* ---- ticking ---- */
@@ -470,7 +485,6 @@ document.addEventListener("keydown",e=>{
   if(e.key==="Escape"){ if(!$("#renewModal").hidden) $("#renewModal").hidden=true; else if(!$("#drawerRoot").hidden) closeDrawer(); }
   if((e.key==="Enter"||e.key===" ")&&e.target.matches?.(".client[data-edit]")){e.preventDefault();openDrawer(e.target.dataset.edit)}
 });
-$("#showInactive").addEventListener("change",e=>{showInactive=e.target.checked;render()});
 $("#addBtn").addEventListener("click",()=>openDrawer(null));
 
 async function refresh(){try{await PT.load();render()}catch(e){$("#tickList").innerHTML=`<div class="empty">Couldn't load PT clients. Refresh to try again.</div>`}}
