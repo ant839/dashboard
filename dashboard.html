@@ -179,6 +179,67 @@ select option { background: var(--surface2); }
 .btn:hover { border-color: var(--border2); background: rgba(255,255,255,0.04); }
 .btn-icon { padding: 7px 9px; font-size: 15px; }
 
+
+/* Projects */
+.proj-card { padding-bottom: 12px; }
+.proj-hdr-actions { display: flex; align-items: center; gap: 8px; }
+.proj-add, .proj-toggle { background: none; border: none; cursor: pointer; font-size: 10px; font-weight: 500; letter-spacing: 0.05em; padding: 0; }
+.proj-add { color: var(--accent); }
+.proj-toggle { color: var(--muted); }
+.proj-toggle:hover { color: var(--text); }
+.proj-strip { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; margin: 0 -2px; padding-left: 2px; padding-right: 2px; }
+.proj-strip::-webkit-scrollbar { height: 3px; }
+.proj { flex: 0 0 210px; scroll-snap-align: start; text-align: left; background: var(--surface2); border: 1px solid var(--border); border-top: 3px solid var(--pc); border-radius: var(--radius-sm); padding: 10px 12px; color: var(--text); cursor: pointer; display: flex; flex-direction: column; gap: 7px; min-height: 118px; transition: border-color 0.15s; }
+.proj:hover { border-color: var(--border2); border-top-color: var(--pc); }
+.proj.is-done { opacity: 0.55; }
+.proj-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.proj-status { font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 20px; white-space: nowrap; }
+.st-planning { background: var(--blue-dim); color: var(--blue); }
+.st-inprogress { background: var(--accent-dim); color: var(--accent); }
+.st-onhold { background: var(--amber-dim); color: var(--amber); }
+.st-done { background: rgba(255,255,255,0.06); color: var(--muted); }
+.proj-due { font-size: 10px; color: var(--muted); white-space: nowrap; }
+.proj-due.soon { color: var(--amber); }
+.proj-due.late { color: var(--red); }
+.proj-title { font-size: 13px; font-weight: 500; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.proj-notes { font-size: 11px; color: var(--muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.proj-foot { margin-top: auto; display: flex; align-items: center; gap: 8px; }
+.proj-bar { flex: 1; height: 4px; background: rgba(255,255,255,0.07); border-radius: 4px; overflow: hidden; }
+.proj-bar div { height: 100%; background: var(--pc); border-radius: 4px; }
+.proj-pct { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); min-width: 32px; text-align: right; }
+.proj-empty { font-size: 12px; color: var(--dim); padding: 14px 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.proj-signin { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--accent); padding: 4px 10px; cursor: pointer; font-size: 12px; }
+.proj-err { font-size: 11px; color: var(--red); margin-bottom: 6px; }
+.proj-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 50; display: grid; place-items: center; padding: 16px; }
+.proj-box { width: min(420px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; padding: 18px; display: grid; gap: 14px; }
+.proj-mhead { display: flex; justify-content: space-between; align-items: center; }
+.proj-mhead h3 { font-size: 18px; font-weight: 400; }
+.proj-x { background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; line-height: 1; }
+.pf { display: grid; gap: 6px; font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.07em; text-transform: uppercase; }
+.pf > span { display: flex; justify-content: space-between; }
+.pf b { color: var(--text); font-family: 'DM Mono', monospace; font-weight: 500; letter-spacing: 0; }
+.pf input[type=text], .pf input:not([type]), .pf input[type=date], .pf textarea { font-size: 14px; text-transform: none; letter-spacing: 0; font-weight: 400; width: 100%; }
+.pf textarea { resize: vertical; }
+.pf input[type=range] { width: 100%; accent-color: var(--accent); padding: 0; background: none; border: none; }
+.proj-swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.sw input { position: absolute; opacity: 0; pointer-events: none; }
+.sw span { display: block; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; box-shadow: 0 0 0 1px var(--border); }
+.sw input:checked + span { border-color: var(--bg); box-shadow: 0 0 0 2px var(--text); }
+.sw input:focus-visible + span { box-shadow: 0 0 0 2px var(--accent); }
+.proj-seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.proj-seg input { position: absolute; opacity: 0; pointer-events: none; }
+.proj-seg span { display: block; text-align: center; padding: 7px 4px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 11px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--muted); cursor: pointer; }
+.proj-seg input:checked + span { background: var(--surface2); border-color: var(--border2); color: var(--text); }
+.proj-seg input:focus-visible + span { border-color: var(--accent); }
+.proj-quick { display: flex; gap: 5px; }
+.proj-quick button { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; color: var(--muted); font-size: 11px; padding: 3px 0; cursor: pointer; }
+.proj-quick button:hover { color: var(--text); border-color: var(--border2); }
+.proj-mfoot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.proj-mfoot div { display: flex; gap: 8px; }
+.proj-del { color: var(--red); }
+.proj-save { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+.proj-save:hover { background: #d6ff70; }
+
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
@@ -208,6 +269,19 @@ select option { background: var(--surface2); }
 
   <!-- Left col: Tasks -->
   <div class="left-col">
+    <div class="card proj-card">
+      <div class="card-label">
+        <div class="card-label-left">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Projects <span class="card-sublabel" id="proj-count"></span>
+        </div>
+        <div class="proj-hdr-actions">
+          <button class="proj-toggle" id="proj-show-done" type="button" hidden>Show done</button>
+          <button class="proj-add" id="proj-add" type="button" hidden>+ Add</button>
+        </div>
+      </div>
+      <div class="proj-strip" id="proj-strip"></div>
+    </div>
     <div class="card" style="flex:1;">
       <div class="card-label">
         <div class="card-label-left">
@@ -317,6 +391,7 @@ select option { background: var(--surface2); }
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="rev.js"></script>
 <script>revRenderNav(document.body);</script>
+<script src="projects.js"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script>
 const CLIENT_ID = '129633223960-8ebr601nsaapd8ojbloivi83k1tbitl6.apps.googleusercontent.com';
