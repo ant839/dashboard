@@ -40,10 +40,11 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 .btn:hover{border-color:var(--border2)}
 .btn.primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
 .btn.danger{color:var(--red)}
-.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:18px}
 .metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;border-left:3px solid var(--dim)}
 .metric .l{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
 .metric .v{display:block;font-size:19px;font-weight:500}
+.m5{border-left-color:var(--teal)} .metric .ms{display:block;font-size:11px;color:var(--muted);margin-top:2px}
 .m1{border-left-color:var(--accent)} .m2{border-left-color:var(--blue)} .m3{border-left-color:var(--amber)} .m4{border-left-color:var(--red)}
 .cols{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
@@ -87,6 +88,18 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 .cdays span.on{color:#000;background:var(--muted)}
 .toggle{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:400}
 .toggle input{accent-color:var(--accent)}
+.cprice{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;white-space:nowrap}
+.cprice.strong{color:var(--text)}
+.switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;letter-spacing:0;text-transform:none;font-weight:400;font-size:13px;color:var(--text)}
+.switch input{position:absolute;opacity:0;pointer-events:none}
+.switch .slider{width:36px;height:20px;border-radius:20px;background:var(--dim);position:relative;transition:background .15s;flex-shrink:0}
+.switch .slider::after{content:'';position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .15s}
+.switch input:checked+.slider{background:var(--accent)}
+.switch input:checked+.slider::after{transform:translateX(16px);background:#000}
+.switch input:focus-visible+.slider{outline:2px solid var(--accent);outline-offset:2px}
+.switch.sm .slider{width:28px;height:16px}
+.switch.sm .slider::after{width:12px;height:12px}
+.switch.sm input:checked+.slider::after{transform:translateX(12px)}
 /* drawer */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--surface);border-left:1px solid var(--border);z-index:21;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -124,6 +137,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 .modal .acts{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--text);color:var(--bg);padding:10px 14px;border-radius:9px;display:flex;gap:14px;align-items:center;z-index:30;font-size:13px;max-width:calc(100% - 32px)}
 .toast button{border:0;background:none;color:inherit;font-weight:600;text-decoration:underline;padding:0}
+@media (max-width:1000px){.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:860px){
   body{padding-left:16px;padding-right:16px}
   .cols{grid-template-columns:1fr}
@@ -143,6 +157,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
   <section class="metrics" aria-label="PT summary">
     <div class="metric m1"><span class="l">Sessions today</span><span class="v" id="mToday">0</span></div>
     <div class="metric m2"><span class="l">Sessions this week</span><span class="v" id="mWeek">0</span></div>
+    <div class="metric m5"><span class="l">Weekly clients income</span><span class="v" id="mIncome">–</span><span class="ms" id="mIncomeSub"></span></div>
     <div class="metric m3"><span class="l">Packs running low</span><span class="v" id="mLow">0</span></div>
     <div class="metric m4"><span class="l">Renewals due</span><span class="v" id="mRenew">0</span></div>
   </section>
@@ -159,6 +174,10 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
           <select id="otherClient" aria-label="Log a session for another client"><option value="">Log a session for someone else…</option></select>
           <button class="btn" type="submit">Log</button>
         </form>
+      </section>
+      <section class="card attn" id="payCard" hidden>
+        <div class="card-label">Upcoming package payments <span id="payTotal" style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--text)"></span></div>
+        <div id="payList"></div>
       </section>
       <section class="card attn" id="attnCard" hidden>
         <div class="card-label">Needs attention</div>
@@ -185,7 +204,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
           <label><input type="radio" name="plan" value="pack"><span>Session pack<small>Set number of sessions</small></span></label>
         </div>
       </div>
-      <label class="f" data-for="weekly period">Sessions per week<input id="f-spw" type="number" min="1" max="14" step="1" placeholder="e.g. 2"></label>
+      <label class="f">Sessions per week<input id="f-spw" type="number" min="1" max="14" step="1" placeholder="e.g. 2"><span class="hint" data-for="pack">Used to estimate when the pack runs out</span></label>
       <label class="f" data-for="pack">Sessions in pack<input id="f-pack" type="number" min="1" max="500" step="1" placeholder="e.g. 24"></label>
       <label class="f" data-for="pack">Already used<input id="f-prior" type="number" min="0" max="500" step="1" placeholder="0"><span class="hint">Sessions done before you started tracking here</span></label>
       <label class="f" data-for="period pack">Start date<input id="f-start" type="date"></label>
@@ -198,12 +217,15 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
         <div class="chips" id="f-days"></div>
         <span class="hint">They show up on these days in your tick-off list. You can still log sessions on other days.</span>
       </div>
+      <label class="f" data-for="weekly period">Cost per session ($)<input id="f-psess" type="number" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 65"></label>
+      <label class="f" data-for="period pack">Package price ($)<input id="f-ppack" type="number" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 1400"></label>
       <label class="f">Phone<input id="f-phone" type="tel"></label>
+      <div class="f"><span>Active</span><label class="switch"><input type="checkbox" id="f-active" checked><span class="slider"></span><span class="switch-txt" id="f-activeTxt">Active</span></label></div>
       <label class="f full">Notes<textarea id="f-notes"></textarea></label>
       <div class="hist" id="hist" hidden></div>
     </form>
     <footer>
-      <div><button class="btn danger" type="button" id="dActive">Make inactive</button><button class="btn" type="button" id="dRenew">Renew</button></div>
+      <div><button class="btn" type="button" id="dRenew">Renew</button></div>
       <div><button class="btn" type="button" id="dCancel">Cancel</button><button class="btn primary" type="submit" form="dForm">Save</button></div>
     </footer>
   </aside>
@@ -224,7 +246,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="rev.js?v=8"></script>
-<script src="pt-core.js?v=9"></script>
+<script src="pt-core.js?v=10"></script>
 <script>
 (function(){
 const $=s=>document.querySelector(s);
@@ -269,6 +291,15 @@ function render(){
   $("#attnCard").hidden=!attn.length;
   $("#attnList").innerHTML=attn.map(({c,s})=>`<div class="client" data-edit="${c.id}"><div class="cbody"><div class="cname">${esc(c.name)} ${planBadge(c)}</div><div class="cline ${s.level}">${esc(s.line)}</div></div><button class="btn" type="button" data-renew="${c.id}">Renew</button></div>`).join("");
 
+  const pays=PT.upcomingPayments().slice(0,8);
+  $("#payCard").hidden=!pays.length;
+  const in30=PT.upcomingPayments().filter(x=>x.n.date<=addDays(t,30)).reduce((s,x)=>s+(x.n.amount||0),0);
+  $("#payTotal").textContent=in30?`${PT.money(in30)} in the next 30 days`:"";
+  $("#payList").innerHTML=pays.map(({c,n})=>`<div class="client" data-edit="${c.id}"><div class="cbody"><div class="cname">${esc(c.name)} ${planBadge(c)}</div><div class="cline">${n.estimate?"About ":""}${fmt(n.date,{weekday:"short",day:"numeric",month:"short"})} · ${esc(n.why)}</div></div><span class="cprice strong">${n.amount!=null?PT.money(n.amount):"No price set"}</span></div>`).join("");
+  const wi=PT.weeklyIncome();
+  $("#mIncome").textContent=wi.priced?PT.money(wi.earned):"–";
+  $("#mIncomeSub").textContent=wi.priced?`of ${PT.money(wi.expected)} expected`:"Add session prices";
+
   const shown=store.clients.filter(c=>showInactive||c.active);
   if(!shown.length){$("#clientList").innerHTML=`<div class="empty">No clients yet. Tap + Add client to get started.</div>`;return}
   $("#clientList").innerHTML=["weekly","period","pack"].map(p=>{
@@ -277,6 +308,8 @@ function render(){
       const s=status(c);
       return `<div class="client" data-edit="${c.id}" role="button" tabindex="0"${c.active?"":" style=\"opacity:.5\""}>
         <div class="cbody"><div class="cname">${esc(c.name)}${c.active?"":" · inactive"}</div><div class="cline ${s.level}">${esc(s.line)}</div>${s.pct||s.total?`<div class="bar ${s.level}"><div style="width:${s.pct}%"></div></div>`:""}</div>
+        <span class="cprice">${c.plan==="weekly"?(c.price_session!=null?PT.money(c.price_session)+"/session":""):(c.price_package!=null?PT.money(c.price_package):"")}</span>
+        <label class="switch sm" title="${c.active?"Active":"Inactive"}"><input type="checkbox" data-active="${c.id}"${c.active?" checked":""} aria-label="${esc(c.name)} active"><span class="slider"></span></label>
         <div class="cdays" aria-label="Training days">${DAY_SHORT.map((d,i)=>`<span class="${(c.days||[]).includes(i+1)?"on":""}">${d[0]}</span>`).join("")}</div></div>`;
     }).join("");
   }).join("");
@@ -307,7 +340,8 @@ function openDrawer(id){
   $("#f-spw").value=c.sessions_per_week??""; $("#f-pack").value=c.pack_size??""; $("#f-prior").value=c.prior_sessions||""; $("#f-start").value=c.period_start||iso(today()); $("#f-end").value=c.period_end||"";
   document.querySelectorAll('input[name=days]').forEach(ch=>ch.checked=(c.days||[]).includes(+ch.value));
   $("#f-phone").value=c.phone||""; $("#f-notes").value=c.notes||"";
-  $("#dActive").hidden=!editing; $("#dActive").textContent=c.active?"Make inactive":"Make active";
+  $("#f-active").checked=c.active!==false; $("#f-activeTxt").textContent=c.active!==false?"Active":"Inactive";
+  $("#f-psess").value=c.price_session??""; $("#f-ppack").value=c.price_package??"";
   renderHist(); showPlanFields();
   $("#drawerRoot").hidden=false; setTimeout(()=>$("#f-name").focus(),30);
 }
@@ -324,13 +358,16 @@ $("#dForm").addEventListener("submit",async e=>{
   e.preventDefault();
   const plan=planVal(), num=v=>v===""?null:parseInt(v,10);
   const row={name:$("#f-name").value.trim(),plan,
-    sessions_per_week:plan!=="pack"?num($("#f-spw").value):null,
+    sessions_per_week:num($("#f-spw").value),
     pack_size:plan==="pack"?num($("#f-pack").value):null,
     prior_sessions:plan==="pack"?(num($("#f-prior").value)||0):0,
     period_start:plan!=="weekly"?($("#f-start").value||null):null,
     period_end:plan!=="weekly"?($("#f-end").value||null):null,
     days:[...document.querySelectorAll('input[name=days]:checked')].map(ch=>+ch.value),
-    phone:$("#f-phone").value.trim(),notes:$("#f-notes").value.trim()};
+    phone:$("#f-phone").value.trim(),notes:$("#f-notes").value.trim(),
+    price_session:plan!=="pack"&&$("#f-psess").value!==""?Number($("#f-psess").value):null,
+    price_package:plan!=="weekly"&&$("#f-ppack").value!==""?Number($("#f-ppack").value):null,
+    active:$("#f-active").checked};
   if(!row.name){$("#f-name").focus();return}
   if(plan==="pack"&&!row.pack_size){$("#f-pack").focus();toast("Enter how many sessions are in the pack.");return}
   if(row.period_start&&row.period_end&&row.period_end<row.period_start){$("#f-end").focus();toast("The end date is before the start date.");return}
@@ -341,8 +378,7 @@ $("#dForm").addEventListener("submit",async e=>{
     closeDrawer(); render(); toast((editing?"Saved ":"Added ")+data.name);
   }catch(err){fail(err)}
 });
-$("#dActive").addEventListener("click",async()=>{if(!editing)return;const to=!editing.active;
-  try{const {error}=await sb.from("pt_clients").update({active:to}).eq("id",editing.id);if(error)throw error;editing.active=to;const n=editing.name;closeDrawer();render();toast(`${n} is now ${to?"active":"inactive"}`)}catch(e){fail(e)}});
+$("#f-active").addEventListener("change",e=>{$("#f-activeTxt").textContent=e.target.checked?"Active":"Inactive"});
 $("#hist").addEventListener("click",async e=>{const b=e.target.closest("[data-delsess]");if(!b)return;
   if(!b.dataset.armed){b.dataset.armed="1";b.textContent="Remove?";b.classList.add("armed");return}
   try{await PT.removeSession(b.dataset.delsess);renderHist();render()}catch(err){fail(err)}});
@@ -368,7 +404,10 @@ $("#renewForm").addEventListener("submit",async e=>{e.preventDefault();const c=r
     const i=store.clients.findIndex(x=>x.id===c.id);store.clients[i]=data;$("#renewModal").hidden=true;if(editing)closeDrawer();render();toast(`Renewed ${c.name}`)}catch(err){fail(err)}});
 
 /* ---- clicks ---- */
+document.addEventListener("change",async e=>{const a=e.target.closest("[data-active]");if(!a)return;const c=store.clients.find(x=>x.id===a.dataset.active);if(!c)return;
+  try{const {error}=await sb.from("pt_clients").update({active:a.checked}).eq("id",c.id);if(error)throw error;c.active=a.checked;render();toast(`${c.name} is now ${c.active?"active":"inactive"}`)}catch(err){a.checked=!a.checked;fail(err)}});
 document.addEventListener("click",e=>{
+  if(e.target.closest(".switch.sm")){e.stopPropagation();return}
   const t=e.target.closest("[data-tick]"); if(t) return toggleTick(t.dataset.tick);
   const r=e.target.closest("[data-renew]"); if(r){e.stopPropagation();return openRenew(store.clients.find(c=>c.id===r.dataset.renew))}
   const ed=e.target.closest("[data-edit]"); if(ed) return openDrawer(ed.dataset.edit);

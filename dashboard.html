@@ -321,6 +321,19 @@ select option { background: var(--surface2); }
 .ptb-attn a { color: var(--text); text-decoration: none; font-size: 12px; }
 .ptb-attn a:hover { color: var(--accent); }
 .ptb-attn.warn span { color: var(--amber); } .ptb-attn.bad span { color: var(--red); }
+.ptb-income { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; margin-bottom: 6px; display: grid; grid-template-columns: 1fr auto; gap: 1px 8px; align-items: baseline; }
+.ptb-inc-l { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
+.ptb-inc-v { font-size: 17px; font-weight: 500; color: var(--teal); grid-row: span 2; align-self: center; }
+.ptb-inc-s { font-size: 11px; color: var(--dim); }
+.ptb-inc-bar { grid-column: 1 / -1; height: 2px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; margin-top: 5px; }
+.ptb-inc-bar div { height: 100%; background: var(--teal); }
+.ptb-pay { border-top: 1px solid var(--border2); margin-top: 6px; flex-shrink: 0; }
+.ptb-pay:empty { display: none; }
+.ptb-pay-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; }
+.ptb-pay-row a { flex: 1; min-width: 0; color: var(--text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ptb-pay-row a:hover { color: var(--accent); }
+.ptb-pay-d { color: var(--muted); font-size: 11px; white-space: nowrap; }
+.ptb-pay-a { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--teal); min-width: 52px; text-align: right; }
 .ptb-more { display: block; font-size: 11px; color: var(--muted); padding-top: 6px; text-decoration: none; }
 
 ::-webkit-scrollbar { width: 4px; }
@@ -462,6 +475,7 @@ select option { background: var(--surface2); }
         <a class="pd-open" href="pt.html">All clients</a>
       </div>
       <div class="rt-body" id="ptb-body"></div>
+      <div class="ptb-pay" id="ptb-pay"></div>
     </div>
 
   </div>
@@ -497,8 +511,8 @@ select option { background: var(--surface2); }
 <script src="projects.js?v=3"></script>
 <script src="routine.js?v=7"></script>
 <script src="programs-due.js?v=5"></script>
-<script src="pt-core.js?v=9"></script>
-<script src="pt-box.js?v=8"></script>
+<script src="pt-core.js?v=10"></script>
+<script src="pt-box.js?v=10"></script>
 <script src="layout.js?v=6"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script>

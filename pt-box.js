@@ -5,14 +5,15 @@
 
   function render() {
     const body = $('ptb-body'); if (!body) return;
-    if (!signedIn) { body.innerHTML = '<div class="rt-empty">Sign in to see PT sessions.</div>'; $('ptb-count').textContent = ''; return; }
+    if (!signedIn) { body.innerHTML = '<div class="rt-empty">Sign in to see PT sessions.</div>'; $('ptb-count').textContent = ''; $('ptb-pay').innerHTML = ''; return; }
     const { esc, iso, today, status, scheduledOn, trainedOn, hasSession, needsAttention, PLAN_LABEL } = PT;
     const day = iso(today());
     const sched = scheduledOn(day), trained = trainedOn(day);
     const list = [...sched, ...trained.filter(c => !sched.includes(c))].sort((a, b) => a.name.localeCompare(b.name));
     const done = list.filter(c => hasSession(c.id, day)).length;
     $('ptb-count').textContent = list.length ? `${done}/${list.length}` : '';
-    let html = '';
+    const wi = PT.weeklyIncome();
+    let html = wi.priced ? `<div class="ptb-income"><span class="ptb-inc-l">Weekly income</span><span class="ptb-inc-v">${PT.money(wi.earned)}</span><span class="ptb-inc-s">of ${PT.money(wi.expected)} this week</span><div class="ptb-inc-bar"><div style="width:${wi.expected ? Math.min(100, Math.round(wi.earned / wi.expected * 100)) : 0}%"></div></div></div>` : '';
     if (!PT.store.clients.length) html = '<div class="rt-empty">No PT clients yet. Add them on the PT tab.</div>';
     else if (!list.length) html = '<div class="rt-empty">No PT sessions scheduled today.</div>';
     else html = list.map(c => {
@@ -21,11 +22,13 @@
         <button type="button" class="task-check${on ? ' done' : ''}" data-pttick="${c.id}" aria-pressed="${on}" aria-label="${on ? 'Untick' : 'Tick off'} ${esc(c.name)}"></button>
         <div class="ptb-text"><span class="task-text${on ? ' done' : ''}">${esc(c.name)}</span><span class="ptb-line ${s.level}">${esc(s.line)}</span></div></div>`;
     }).join('');
-    const attn = needsAttention();
-    if (attn.length) html += `<div class="rt-sec">Needs attention</div>` + attn.slice(0, 5).map(({ c, s }) =>
-      `<div class="ptb-attn ${s.level}"><a href="pt.html">${esc(c.name)}</a><span>${esc(s.line)}</span></div>`).join('') +
-      (attn.length > 5 ? `<a class="ptb-more" href="pt.html">+${attn.length - 5} more</a>` : '');
+    const attn = needsAttention().filter(x => x.s.level === 'bad');
+    if (attn.length) html += `<div class="rt-sec">Needs attention</div>` + attn.slice(0, 3).map(({ c, s }) =>
+      `<div class="ptb-attn ${s.level}"><a href="pt.html">${esc(c.name)}</a><span>${esc(s.line)}</span></div>`).join('');
     body.innerHTML = html;
+    const pays = PT.upcomingPayments().slice(0, 4);
+    $('ptb-pay').innerHTML = pays.length ? `<div class="rt-sec">Next package payments</div>` + pays.map(({ c, n }) =>
+      `<div class="ptb-pay-row"><a href="pt.html" title="${esc(n.why)}">${esc(c.name)}</a><span class="ptb-pay-d">${n.date <= iso(today()) ? 'Due now' : (n.estimate ? '~' : '') + PT.fmt(n.date, { day: 'numeric', month: 'short' })}</span><span class="ptb-pay-a">${n.amount != null ? PT.money(n.amount) : '–'}</span></div>`).join('') : '';
   }
 
   async function refresh() { try { await PT.load(); render(); } catch (e) { $('ptb-body').innerHTML = '<div class="rt-empty">Could not load PT. Refresh to try again.</div>'; } }

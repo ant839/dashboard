@@ -69,6 +69,43 @@
       .sort((a, b) => (a.s.level === 'bad' ? 0 : 1) - (b.s.level === 'bad' ? 0 : 1) || a.c.name.localeCompare(b.c.name));
   }
 
+
+  const money = n => '$' + Number(n || 0).toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+  /* Weekly clients this week: earned from ticked sessions, and expected from their usual sessions per week. */
+  function weeklyIncome(onDay) {
+    const ref = onDay || iso(today()), ws = weekStart(ref), we = addDays(ws, 6);
+    let earned = 0, expected = 0, priced = 0;
+    store.clients.filter(c => c.active && c.plan === 'weekly').forEach(c => {
+      const p = Number(c.price_session || 0); if (!p) return; priced++;
+      earned += store.sessions.filter(x => x.client_id === c.id && x.day >= ws && x.day <= we).length * p;
+      expected += (c.sessions_per_week || (c.days || []).length || 0) * p;
+    });
+    return { earned, expected, priced };
+  }
+
+  /* Roughly when a package client pays next: the day after their period or pack ends,
+     or sooner if a pack will run out of sessions first at their usual pace. */
+  function nextPayment(c) {
+    if (!c.active || c.plan === 'weekly') return null;
+    const t = iso(today());
+    let date = c.period_end ? addDays(c.period_end, 1) : null, why = c.period_end ? `${c.plan === 'pack' ? 'pack' : 'period'} ends ${fmt(c.period_end)}` : '', estimate = false;
+    if (c.plan === 'pack') {
+      const s = status(c), rate = c.sessions_per_week || (c.days || []).length;
+      if (s.remaining <= 0) { date = t; why = 'pack finished'; }
+      else if (rate) {
+        const proj = addDays(t, Math.ceil(s.remaining / rate * 7));
+        if (!date || proj < date) { date = proj; why = `${s.remaining} left at ${rate} a week`; estimate = true; }
+      }
+    }
+    if (!date) return null;
+    if (date < t) { why = 'overdue · ' + why; }
+    return { date, amount: c.price_package != null ? Number(c.price_package) : null, why, estimate };
+  }
+  function upcomingPayments() {
+    return store.clients.map(c => ({ c, n: nextPayment(c) })).filter(x => x.n).sort((a, b) => a.n.date.localeCompare(b.n.date));
+  }
+
   async function tick(clientId, day) {
     const { data, error } = await sb.from('pt_sessions').insert({ client_id: clientId, day }).select('id,client_id,day,created_at').single();
     if (error) throw error;
@@ -93,6 +130,6 @@
       .subscribe();
   }
 
-  window.PT = { PLAN_LABEL, DAY_SHORT, store, load, status, sessionsOf, hasSession, scheduledOn, trainedOn, needsAttention, tick, untick, removeSession, subscribe,
+  window.PT = { money, weeklyIncome, nextPayment, upcomingPayments, PLAN_LABEL, DAY_SHORT, store, load, status, sessionsOf, hasSession, scheduledOn, trainedOn, needsAttention, tick, untick, removeSession, subscribe,
     iso, parseD, today, addDays, addMonths, daysBetween, weekday, weekStart, fmt, esc };
 })();
