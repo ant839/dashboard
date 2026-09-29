@@ -66,8 +66,21 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 .tick-line{font-size:12px;color:var(--muted);margin-top:2px}
 .tick-line.warn{color:var(--amber)} .tick-line.bad{color:var(--red)}
 .extra{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+.skip-btn{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:11px;padding:4px 9px;white-space:nowrap}
+.skip-btn:hover{color:var(--text);border-color:var(--border2)}
+.tick-row.skipped .tick-name,.tick-row.skipped .tick-line{opacity:.45}
+.tick-row.skipped .tick{border-style:dashed}
+.skip-tag{color:var(--amber)}
+.inc-total{font-size:24px;font-weight:300;letter-spacing:-.01em;margin:-4px 0 8px;color:var(--teal)}
+.inc-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.inc-row:last-child{border-bottom:0}
+.inc-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inc-note{font-size:11px;color:var(--muted);white-space:nowrap}
+.inc-amt{font-family:'DM Mono',monospace;font-size:12px;min-width:64px;text-align:right}
+.inc-amt.zero{color:var(--dim)}
+.inc-card+.inc-card{margin-top:16px}
 .plan{font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:20px;white-space:nowrap}
-.p-weekly{background:var(--blue-dim);color:var(--blue)} .p-period{background:var(--purple-dim);color:var(--purple)} .p-pack{background:var(--teal-dim);color:var(--teal)}
+.p-weekly{background:var(--blue-dim);color:var(--blue)} .p-fortnightly{background:var(--amber-dim);color:var(--amber)} .p-period{background:var(--purple-dim);color:var(--purple)} .p-pack{background:var(--teal-dim);color:var(--teal)}
 .log-other{display:flex;gap:6px;margin-top:12px}
 .log-other select{flex:1;min-width:0}
 .empty{font-size:12px;color:var(--dim);padding:16px 0;text-align:center;line-height:1.5}
@@ -111,7 +124,8 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 .f input,.f textarea,.f select{font-size:14px;width:100%;min-width:0;letter-spacing:0;text-transform:none;font-weight:400}
 .f textarea{resize:vertical;min-height:70px}
 .hint{font-size:11px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--dim);line-height:1.4}
-.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+@media (max-width:420px){.seg{grid-template-columns:repeat(2,1fr)}}
 .seg input,.chips input{position:absolute;opacity:0;pointer-events:none}
 .seg span{display:block;text-align:center;padding:9px 4px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--muted);cursor:pointer;line-height:1.3}
 .seg span small{display:block;font-size:10px;font-weight:400;color:var(--dim);margin-top:2px}
@@ -184,10 +198,22 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
         <div id="attnList"></div>
       </section>
     </div>
-    <section class="card">
+    <div>
+    <section class="card inc-card" aria-labelledby="incThisH">
+      <div class="card-label"><span id="incThisH">Expected income · this week</span><span id="incThisD" style="text-transform:none;letter-spacing:0"></span></div>
+      <div class="inc-total" id="incThisT">–</div>
+      <div id="incThis"></div>
+    </section>
+    <section class="card inc-card" aria-labelledby="incNextH">
+      <div class="card-label"><span id="incNextH">Expected income · next week</span><span id="incNextD" style="text-transform:none;letter-spacing:0"></span></div>
+      <div class="inc-total" id="incNextT">–</div>
+      <div id="incNext"></div>
+    </section>
+    <section class="card inc-card">
       <div class="card-label">All clients <label class="toggle"><input type="checkbox" id="showInactive"> Show inactive</label></div>
       <div id="clientList"><div class="empty">Loading…</div></div>
     </section>
+    </div>
   </div>
 </div>
 
@@ -200,6 +226,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
       <div class="f full"><span>How they pay</span>
         <div class="seg" id="f-plan">
           <label><input type="radio" name="plan" value="weekly"><span>Weekly<small>Pays each week</small></span></label>
+          <label><input type="radio" name="plan" value="fortnightly"><span>Fortnightly<small>Pays every 2 weeks</small></span></label>
           <label><input type="radio" name="plan" value="period"><span>Time period<small>Monthly, 6-monthly</small></span></label>
           <label><input type="radio" name="plan" value="pack"><span>Session pack<small>Set number of sessions</small></span></label>
         </div>
@@ -207,7 +234,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
       <label class="f">Sessions per week<input id="f-spw" type="number" min="1" max="14" step="1" placeholder="e.g. 2"><span class="hint" data-for="pack">Used to estimate when the pack runs out</span></label>
       <label class="f" data-for="pack">Sessions in pack<input id="f-pack" type="number" min="1" max="500" step="1" placeholder="e.g. 24"></label>
       <label class="f" data-for="pack">Already used<input id="f-prior" type="number" min="0" max="500" step="1" placeholder="0"><span class="hint">Sessions done before you started tracking here</span></label>
-      <label class="f" data-for="period pack">Start date<input id="f-start" type="date"></label>
+      <label class="f" data-for="period pack fortnightly"><span id="l-start">Start date</span><input id="f-start" type="date"><span class="hint" data-for="fortnightly">Any one of their payment days. They pay every 2 weeks from it.</span></label>
       <label class="f" data-for="period pack">End date<input id="f-end" type="date"></label>
       <div class="f full" data-for="period pack"><span>Length</span>
         <div class="quick" id="lenQuick"><button type="button" data-m="1">1 month</button><button type="button" data-m="3">3 months</button><button type="button" data-m="6">6 months</button><button type="button" data-m="12">12 months</button></div>
@@ -218,7 +245,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
         <span class="hint">They show up on these days in your tick-off list. You can still log sessions on other days.</span>
       </div>
       <label class="f" data-for="weekly period">Cost per session ($)<input id="f-psess" type="number" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 65"></label>
-      <label class="f" data-for="period pack">Package price ($)<input id="f-ppack" type="number" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 1400"></label>
+      <label class="f" data-for="period pack fortnightly"><span id="l-ppack">Package price ($)</span><input id="f-ppack" type="number" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 1400"></label>
       <label class="f">Phone<input id="f-phone" type="tel"></label>
       <div class="f"><span>Active</span><label class="switch"><input type="checkbox" id="f-active" checked><span class="slider"></span><span class="switch-txt" id="f-activeTxt">Active</span></label></div>
       <label class="f full">Notes<textarea id="f-notes"></textarea></label>
@@ -246,7 +273,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="rev.js?v=8"></script>
-<script src="pt-core.js?v=11"></script>
+<script src="pt-core.js?v=12"></script>
 <script>
 (function(){
 const $=s=>document.querySelector(s);
@@ -274,14 +301,15 @@ function render(){
   $("#goToday").hidden=isToday;
   const sched=PT.scheduledOn(day), trained=PT.trainedOn(day);
   const list=[...sched,...trained.filter(c=>!sched.includes(c))].sort((a,b)=>a.name.localeCompare(b.name));
-  const done=list.filter(c=>PT.hasSession(c.id,day)).length;
-  $("#daySub").textContent=list.length?`${done} of ${list.length} ticked off`:"";
+  const done=list.filter(c=>PT.hasSession(c.id,day)).length, skipped=list.filter(c=>PT.isSkipped(c.id,day)).length;
+  $("#daySub").textContent=list.length?`${done} of ${list.length-skipped} ticked off${skipped?` · ${skipped} skipped`:""}`:"";
   $("#tickList").innerHTML=list.length?list.map(c=>{
-    const on=PT.hasSession(c.id,day), s=status(c,day), extra=!sched.includes(c);
+    const on=PT.hasSession(c.id,day), sk=PT.isSkipped(c.id,day), s=status(c,day), extra=!sched.includes(c);
     const n=PT.sessionsOf(c.id).filter(x=>x.day===day).length;
-    return `<div class="tick-row"><button type="button" class="tick${on?" done":""}" data-tick="${c.id}" aria-pressed="${on}" aria-label="${on?"Untick":"Tick off"} ${esc(c.name)}"></button>
-      <div class="tick-body"><div class="tick-name">${esc(c.name)} ${planBadge(c)}${extra?`<span class="extra">Extra session</span>`:""}${n>1?`<span class="extra">×${n}</span>`:""}</div>
-      <div class="tick-line ${s.level}">${esc(s.line)}</div></div></div>`;
+    return `<div class="tick-row${sk?" skipped":""}"><button type="button" class="tick${on?" done":""}" data-tick="${c.id}" aria-pressed="${on}" aria-label="${on?"Untick":"Tick off"} ${esc(c.name)}"></button>
+      <div class="tick-body"><div class="tick-name">${esc(c.name)} ${planBadge(c)}${extra?`<span class="extra">Extra session</span>`:""}${n>1?`<span class="extra">×${n}</span>`:""}${sk?`<span class="extra skip-tag">Skipped</span>`:""}</div>
+      <div class="tick-line ${s.level}">${esc(s.line)}</div></div>
+      ${on?"":`<button type="button" class="skip-btn" data-skip="${c.id}">${sk?"Undo skip":"Skip"}</button>`}</div>`;
   }).join(""):`<div class="empty">${store.clients.length?"Nobody's scheduled for this day. Use the list below to log a session.":"No clients yet. Tap + Add client to enter your first PT client."}</div>`;
   const others=store.clients.filter(c=>c.active).sort((a,b)=>a.name.localeCompare(b.name));
   $("#otherClient").innerHTML=`<option value="">Log a session for someone else…</option>`+others.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
@@ -300,15 +328,23 @@ function render(){
   $("#mIncome").textContent=wi.priced?PT.money(wi.earned):"–";
   $("#mIncomeSub").textContent=wi.priced?`of ${PT.money(wi.expected)} expected`:"Add session prices";
 
+  const incHtml=(w,elT,elL,elD)=>{
+    $(elD).textContent=`${fmt(w.ws)} to ${fmt(w.we)}`;
+    $(elT).textContent=PT.money(w.total);
+    $(elL).innerHTML=w.items.length?w.items.map(i=>`<div class="inc-row"><span class="inc-name">${esc(i.c.name)} <span class="plan p-${i.c.plan}">${esc(i.kind)}</span></span><span class="inc-note">${esc(i.note)}</span><span class="inc-amt${i.amount?"":" zero"}">${PT.money(i.amount)}</span></div>`).join(""):`<div class="empty">Nothing expected this week.</div>`;
+  };
+  incHtml(PT.weekForecast(t),"#incThisT","#incThis","#incThisD");
+  incHtml(PT.weekForecast(addDays(t,7)),"#incNextT","#incNext","#incNextD");
+
   const shown=store.clients.filter(c=>showInactive||c.active);
   if(!shown.length){$("#clientList").innerHTML=`<div class="empty">No clients yet. Tap + Add client to get started.</div>`;return}
-  $("#clientList").innerHTML=["weekly","period","pack"].map(p=>{
+  $("#clientList").innerHTML=["weekly","fortnightly","period","pack"].map(p=>{
     const g=shown.filter(c=>c.plan===p).sort((a,b)=>(b.active-a.active)||a.name.localeCompare(b.name)); if(!g.length) return "";
     return `<div class="group-h"><span>${PLAN_LABEL[p]}</span><span>${g.length}</span></div>`+g.map(c=>{
       const s=status(c);
       return `<div class="client" data-edit="${c.id}" role="button" tabindex="0"${c.active?"":" style=\"opacity:.5\""}>
         <div class="cbody"><div class="cname">${esc(c.name)}${c.active?"":" · inactive"}</div><div class="cline ${s.level}">${esc(s.line)}</div>${s.pct||s.total?`<div class="bar ${s.level}"><div style="width:${s.pct}%"></div></div>`:""}</div>
-        <span class="cprice">${c.plan==="weekly"?(c.price_session!=null?PT.money(c.price_session)+"/session":""):(c.price_package!=null?PT.money(c.price_package):"")}</span>
+        <span class="cprice">${c.plan==="weekly"?(c.price_session!=null?PT.money(c.price_session)+"/session":""):c.plan==="fortnightly"?(c.price_package!=null?PT.money(c.price_package)+"/fortnight":""):(c.price_package!=null?PT.money(c.price_package):"")}</span>
         <label class="switch sm" title="${c.active?"Active":"Inactive"}"><input type="checkbox" data-active="${c.id}"${c.active?" checked":""} aria-label="${esc(c.name)} active"><span class="slider"></span></label>
         <div class="cdays" aria-label="Training days">${DAY_SHORT.map((d,i)=>`<span class="${(c.days||[]).includes(i+1)?"on":""}">${d[0]}</span>`).join("")}</div></div>`;
     }).join("");
@@ -323,6 +359,13 @@ async function toggleTick(id){
     else{ await PT.tick(id,day); render(); const s=status(c,day); toast(`${c.name}: ${s.line}`,async()=>{try{await PT.untick(id,day);render()}catch(e){fail(e)}}); }
   }catch(e){fail(e)}
 }
+async function toggleSkip(id){
+  const c=store.clients.find(x=>x.id===id); if(!c) return;
+  try{
+    if(PT.isSkipped(id,day)){ await PT.unskip(id,day); render(); toast(`${c.name} is back on for ${fmt(day,{weekday:"long"})}`); }
+    else{ await PT.skip(id,day); render(); toast(`Skipped ${c.name}'s ${fmt(day,{weekday:"long"})} session`,async()=>{try{await PT.unskip(id,day);render()}catch(e){fail(e)}}); }
+  }catch(e){fail(e)}
+}
 $("#logOther").addEventListener("submit",async e=>{e.preventDefault();const id=$("#otherClient").value;if(!id)return;const c=store.clients.find(x=>x.id===id);
   try{await PT.tick(id,day);render();toast(`Logged a session for ${c.name}`,async()=>{try{await PT.untick(id,day);render()}catch(err){fail(err)}})}catch(err){fail(err)}});
 $("#prevDay").addEventListener("click",()=>{day=addDays(day,-1);render()});
@@ -331,7 +374,7 @@ $("#goToday").addEventListener("click",()=>{day=iso(today());render()});
 
 /* ---- drawer ---- */
 function planVal(){return (document.querySelector('input[name=plan]:checked')||{}).value||"weekly"}
-function showPlanFields(){const p=planVal();document.querySelectorAll('[data-for]').forEach(el=>el.hidden=!el.dataset.for.split(" ").includes(p));$("#dRenew").hidden=!editing||p==="weekly"}
+function showPlanFields(){const p=planVal();$("#l-start").textContent=p==="fortnightly"?"Next payment date":"Start date";$("#l-ppack").textContent=p==="fortnightly"?"Amount each fortnight ($)":"Package price ($)";document.querySelectorAll('[data-for]').forEach(el=>el.hidden=!el.dataset.for.split(" ").includes(p));$("#dRenew").hidden=!editing||p==="weekly"||p==="fortnightly"}
 function openDrawer(id){
   editing=id?store.clients.find(c=>c.id===id):null;
   const c=editing||{name:"",plan:"weekly",sessions_per_week:"",pack_size:"",period_start:iso(today()),period_end:"",days:[],phone:"",notes:"",active:true};
@@ -362,10 +405,10 @@ $("#dForm").addEventListener("submit",async e=>{
     pack_size:plan==="pack"?num($("#f-pack").value):null,
     prior_sessions:plan==="pack"?(num($("#f-prior").value)||0):0,
     period_start:plan!=="weekly"?($("#f-start").value||null):null,
-    period_end:plan!=="weekly"?($("#f-end").value||null):null,
+    period_end:(plan==="period"||plan==="pack")?($("#f-end").value||null):null,
     days:[...document.querySelectorAll('input[name=days]:checked')].map(ch=>+ch.value),
     phone:$("#f-phone").value.trim(),notes:$("#f-notes").value.trim(),
-    price_session:plan!=="pack"&&$("#f-psess").value!==""?Number($("#f-psess").value):null,
+    price_session:(plan==="weekly"||plan==="period")&&$("#f-psess").value!==""?Number($("#f-psess").value):null,
     price_package:plan!=="weekly"&&$("#f-ppack").value!==""?Number($("#f-ppack").value):null,
     active:$("#f-active").checked};
   if(!row.name){$("#f-name").focus();return}
@@ -409,6 +452,7 @@ document.addEventListener("change",async e=>{const a=e.target.closest("[data-act
 document.addEventListener("click",e=>{
   if(e.target.closest(".switch.sm")){e.stopPropagation();return}
   const t=e.target.closest("[data-tick]"); if(t) return toggleTick(t.dataset.tick);
+  const sk=e.target.closest("[data-skip]"); if(sk) return toggleSkip(sk.dataset.skip);
   const r=e.target.closest("[data-renew]"); if(r){e.stopPropagation();return openRenew(store.clients.find(c=>c.id===r.dataset.renew))}
   const ed=e.target.closest("[data-edit]"); if(ed) return openDrawer(ed.dataset.edit);
 });

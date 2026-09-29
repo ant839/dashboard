@@ -10,17 +10,18 @@
     const day = iso(today());
     const sched = scheduledOn(day), trained = trainedOn(day);
     const list = [...sched, ...trained.filter(c => !sched.includes(c))].sort((a, b) => a.name.localeCompare(b.name));
-    const done = list.filter(c => hasSession(c.id, day)).length;
-    $('ptb-count').textContent = list.length ? `${done}/${list.length}` : '';
+    const done = list.filter(c => hasSession(c.id, day)).length, skipped = list.filter(c => PT.isSkipped(c.id, day)).length;
+    $('ptb-count').textContent = list.length ? `${done}/${list.length - skipped}` : '';
     const wi = PT.weeklyIncome();
     let html = wi.priced ? `<div class="ptb-income"><span class="ptb-inc-l">Weekly income</span><span class="ptb-inc-v">${PT.money(wi.earned)}</span><span class="ptb-inc-s">of ${PT.money(wi.expected)} this week</span><div class="ptb-inc-bar"><div style="width:${wi.expected ? Math.min(100, Math.round(wi.earned / wi.expected * 100)) : 0}%"></div></div></div>` : '';
     if (!PT.store.clients.length) html = '<div class="rt-empty">No PT clients yet. Add them on the PT tab.</div>';
     else if (!list.length) html = '<div class="rt-empty">No PT sessions scheduled today.</div>';
     else html = list.map(c => {
-      const on = hasSession(c.id, day), s = status(c);
-      return `<div class="rt-item ptb-item">
+      const on = hasSession(c.id, day), sk = PT.isSkipped(c.id, day), s = status(c);
+      return `<div class="rt-item ptb-item${sk ? ' ptb-skipped' : ''}">
         <button type="button" class="task-check${on ? ' done' : ''}" data-pttick="${c.id}" aria-pressed="${on}" aria-label="${on ? 'Untick' : 'Tick off'} ${esc(c.name)}"></button>
-        <div class="ptb-text"><span class="task-text${on ? ' done' : ''}">${esc(c.name)}</span><span class="ptb-line ${s.level}">${esc(s.line)}</span></div></div>`;
+        <div class="ptb-text"><span class="task-text${on ? ' done' : ''}">${esc(c.name)}</span><span class="ptb-line ${sk ? '' : s.level}">${sk ? 'Skipped today' : esc(s.line)}</span></div>
+        ${on ? '' : `<button type="button" class="ptb-skip" data-ptskip="${c.id}">${sk ? 'Undo' : 'Skip'}</button>`}</div>`;
     }).join('');
     const attn = needsAttention().filter(x => x.s.level === 'bad');
     if (attn.length) html += `<div class="rt-sec">Needs attention</div>` + attn.slice(0, 3).map(({ c, s }) =>
@@ -36,6 +37,8 @@
   function init() {
     if (!$('ptb-card') || !window.PT) return;
     $('ptb-body').addEventListener('click', async e => {
+      const k = e.target.closest('[data-ptskip]');
+      if (k) { const id = k.dataset.ptskip, day = PT.iso(PT.today()); try { PT.isSkipped(id, day) ? await PT.unskip(id, day) : await PT.skip(id, day); render(); } catch (err) { refresh(); } return; }
       const b = e.target.closest('[data-pttick]'); if (!b) return;
       const id = b.dataset.pttick, day = PT.iso(PT.today());
       try { PT.hasSession(id, day) ? await PT.untick(id, day) : await PT.tick(id, day); render(); } catch (err) { refresh(); }

@@ -1,6 +1,6 @@
 /* Shared PT logic: loading clients and sessions, working out where each client is up to, and ticking sessions. */
 (function () {
-  const PLAN_LABEL = { weekly: 'Weekly', period: 'Time period', pack: 'Session pack' };
+  const PLAN_LABEL = { weekly: 'Weekly', fortnightly: 'Fortnightly', period: 'Time period', pack: 'Session pack' };
   const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -20,15 +20,27 @@
     const since = addDays(iso(today()), -sinceDays);
     const [c, s] = await Promise.all([
       sb.from('pt_clients').select('*'),
-      sb.from('pt_sessions').select('id,client_id,day,created_at').gte('day', since)
+      sb.from('pt_sessions').select('id,client_id,day,created_at,status').gte('day', since)
     ]);
     if (c.error || s.error) throw (c.error || s.error);
     store.clients = c.data || []; store.sessions = s.data || [];
     return store;
   }
 
-  const sessionsOf = (id) => store.sessions.filter(x => x.client_id === id);
-  const hasSession = (id, day) => store.sessions.some(x => x.client_id === id && x.day === day);
+  const isDone = x => x.status !== 'skipped';
+  const sessionsOf = (id) => store.sessions.filter(x => x.client_id === id && isDone(x));
+  const hasSession = (id, day) => store.sessions.some(x => x.client_id === id && x.day === day && isDone(x));
+  const isSkipped = (id, day) => store.sessions.some(x => x.client_id === id && x.day === day && x.status === 'skipped');
+  const skipsIn = (id, from, to) => store.sessions.filter(x => x.client_id === id && x.status === 'skipped' && x.day >= from && x.day <= to).length;
+
+  /* Fortnightly: period_start is any one payment date; they pay every 14 days from it. */
+  function fortnightPayIn(c, from, to) {
+    if (!c.period_start) return null;
+    const k = Math.ceil(daysBetween(c.period_start, from) / 14);
+    const d = addDays(c.period_start, k * 14);
+    return d <= to ? d : null;
+  }
+  const nextFortnightPay = (c, onDay) => fortnightPayIn(c, onDay || iso(today()), '9999-12-31');
 
   /* Where a client is up to. level: ok | warn | bad */
   function status(c, onDay) {
@@ -39,6 +51,12 @@
       const n = mine.filter(x => x.day >= ws && x.day <= we).length;
       const target = c.sessions_per_week || 0;
       return { level: 'ok', line: target ? `${n}/${target} this week` : `${n} this week`, used: n, total: target, pct: target ? Math.min(100, Math.round(n / target * 100)) : 0 };
+    }
+    if (c.plan === 'fortnightly') {
+      const ws = weekStart(ref), we = addDays(ws, 6);
+      const n = mine.filter(x => x.day >= ws && x.day <= we).length;
+      const nx = nextFortnightPay(c, ref);
+      return { level: c.period_start ? 'ok' : 'warn', line: `${n} this week · ${nx ? (nx === ref ? 'pays today' : 'pays ' + fmt(nx)) : 'payment date not set'}`, used: n, total: c.sessions_per_week || 0, pct: 0 };
     }
     const start = c.period_start || '0000-01-01';
     const used = mine.filter(x => x.day >= start).length + (c.prior_sessions || 0);
@@ -62,11 +80,11 @@
     return store.clients.filter(c => c.active && (c.days || []).includes(wd));
   }
   function trainedOn(day) {
-    const ids = new Set(store.sessions.filter(x => x.day === day).map(x => x.client_id));
+    const ids = new Set(store.sessions.filter(x => x.day === day && isDone(x)).map(x => x.client_id));
     return store.clients.filter(c => ids.has(c.id));
   }
   function needsAttention() {
-    return store.clients.filter(c => c.active && c.plan !== 'weekly').map(c => ({ c, s: status(c) })).filter(x => x.s.level !== 'ok')
+    return store.clients.filter(c => c.active && (c.plan === 'period' || c.plan === 'pack')).map(c => ({ c, s: status(c) })).filter(x => x.s.level !== 'ok')
       .sort((a, b) => (a.s.level === 'bad' ? 0 : 1) - (b.s.level === 'bad' ? 0 : 1) || a.c.name.localeCompare(b.c.name));
   }
 
@@ -79,8 +97,12 @@
     let earned = 0, expected = 0, priced = 0;
     store.clients.filter(c => c.active && c.plan === 'weekly').forEach(c => {
       const p = Number(c.price_session || 0); if (!p) return; priced++;
-      earned += store.sessions.filter(x => x.client_id === c.id && x.day >= ws && x.day <= we).length * p;
-      expected += (c.sessions_per_week || (c.days || []).length || 0) * p;
+      earned += store.sessions.filter(x => x.client_id === c.id && isDone(x) && x.day >= ws && x.day <= we).length * p;
+      expected += Math.max(0, (c.sessions_per_week || (c.days || []).length || 0) - skipsIn(c.id, ws, we)) * p;
+    });
+    store.clients.filter(c => c.active && c.plan === 'fortnightly').forEach(c => {
+      const amt = Number(c.price_package || 0), d = fortnightPayIn(c, ws, we); if (!amt) return; priced++;
+      if (d) { expected += amt; if (d <= ref) earned += amt; }
     });
     return { earned, expected, priced };
   }
@@ -88,7 +110,7 @@
   /* Roughly when a package client pays next: the day after their period or pack ends,
      or sooner if a pack will run out of sessions first at their usual pace. */
   function nextPayment(c) {
-    if (!c.active || c.plan === 'weekly') return null;
+    if (!c.active || c.plan === 'weekly' || c.plan === 'fortnightly') return null;
     const t = iso(today());
     let date = c.period_end ? addDays(c.period_end, 1) : null, why = c.period_end ? `${c.plan === 'pack' ? 'pack' : 'period'} ends ${fmt(c.period_end)}` : '', estimate = false;
     if (c.plan === 'pack') {
@@ -108,13 +130,50 @@
     return store.clients.map(c => ({ c, n: nextPayment(c) })).filter(x => x.n).sort((a, b) => a.n.date.localeCompare(b.n.date));
   }
 
+  /* Everything expected to come in during the Mon-Sun week containing `anyDay`. */
+  function weekForecast(anyDay) {
+    const ws = weekStart(anyDay), we = addDays(ws, 6), items = [];
+    store.clients.filter(c => c.active).forEach(c => {
+      if (c.plan === 'weekly') {
+        const usual = c.sessions_per_week || (c.days || []).length || 0, sk = skipsIn(c.id, ws, we), n = Math.max(0, usual - sk), p = Number(c.price_session || 0);
+        items.push({ c, kind: 'Weekly', amount: n * p, note: (p ? `${n} × ${money(p)}` : 'no price set') + (sk ? ` · ${sk} skipped` : ''), date: null });
+      } else if (c.plan === 'fortnightly') {
+        const d = fortnightPayIn(c, ws, we);
+        if (d) items.push({ c, kind: 'Fortnightly', amount: Number(c.price_package || 0), note: 'pays ' + fmt(d, { weekday: 'short', day: 'numeric', month: 'short' }), date: d });
+      } else {
+        const n = nextPayment(c);
+        if (n && ((n.date >= ws && n.date <= we) || (ws <= iso(today()) && n.date < ws))) items.push({ c, kind: c.plan === 'pack' ? 'Pack renewal' : 'Period renewal', amount: n.amount || 0, note: (n.estimate ? 'about ' : '') + fmt(n.date, { weekday: 'short', day: 'numeric', month: 'short' }) + (n.amount == null ? ' · no price set' : ''), date: n.date });
+      }
+    });
+    const order = { 'Weekly': 0, 'Fortnightly': 1, 'Pack renewal': 2, 'Period renewal': 2 };
+    items.sort((a, b) => order[a.kind] - order[b.kind] || (a.date || '').localeCompare(b.date || '') || a.c.name.localeCompare(b.c.name));
+    return { ws, we, items, total: items.reduce((s, x) => s + x.amount, 0) };
+  }
+
+  async function clearSkip(clientId, day) {
+    const ids = store.sessions.filter(x => x.client_id === clientId && x.day === day && x.status === 'skipped').map(x => x.id);
+    if (!ids.length) return;
+    const { error } = await sb.from('pt_sessions').delete().in('id', ids);
+    if (error) throw error;
+    store.sessions = store.sessions.filter(x => !ids.includes(x.id));
+  }
   async function tick(clientId, day) {
-    const { data, error } = await sb.from('pt_sessions').insert({ client_id: clientId, day }).select('id,client_id,day,created_at').single();
+    await clearSkip(clientId, day);
+    const { data, error } = await sb.from('pt_sessions').insert({ client_id: clientId, day }).select('id,client_id,day,created_at,status').single();
     if (error) throw error;
     store.sessions.push(data); return data;
   }
+  async function skip(clientId, day) {
+    const done = store.sessions.filter(x => x.client_id === clientId && x.day === day && isDone(x)).map(x => x.id);
+    if (done.length) { const r = await sb.from('pt_sessions').delete().in('id', done); if (r.error) throw r.error; store.sessions = store.sessions.filter(x => !done.includes(x.id)); }
+    if (isSkipped(clientId, day)) return;
+    const { data, error } = await sb.from('pt_sessions').insert({ client_id: clientId, day, status: 'skipped' }).select('id,client_id,day,created_at,status').single();
+    if (error) throw error;
+    store.sessions.push(data);
+  }
+  const unskip = clearSkip;
   async function untick(clientId, day) {
-    const s = store.sessions.filter(x => x.client_id === clientId && x.day === day).sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+    const s = store.sessions.filter(x => x.client_id === clientId && x.day === day && isDone(x)).sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
     if (!s) return;
     const { error } = await sb.from('pt_sessions').delete().eq('id', s.id);
     if (error) throw error;
@@ -132,6 +191,6 @@
       .subscribe();
   }
 
-  window.PT = { money, weeklyIncome, nextPayment, upcomingPayments, PLAN_LABEL, DAY_SHORT, store, load, status, sessionsOf, hasSession, scheduledOn, trainedOn, needsAttention, tick, untick, removeSession, subscribe,
+  window.PT = { isSkipped, skip, unskip, skipsIn, weekForecast, nextFortnightPay, fortnightPayIn, money, weeklyIncome, nextPayment, upcomingPayments, PLAN_LABEL, DAY_SHORT, store, load, status, sessionsOf, hasSession, scheduledOn, trainedOn, needsAttention, tick, untick, removeSession, subscribe,
     iso, parseD, today, addDays, addMonths, daysBetween, weekday, weekStart, fmt, esc };
 })();
