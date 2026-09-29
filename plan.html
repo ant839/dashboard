@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0e0e0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Programming · Rev</title>
+<title>Periodisation · Rev</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
@@ -81,6 +81,29 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 .seg button[aria-pressed="true"]{background:var(--surface3);color:var(--text)}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);align-items:center}
 .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+.phase-chips{display:flex;gap:5px;flex-wrap:wrap}
+.pchip{display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 10px 4px 5px;font-size:12px;color:var(--text)}
+.pchip i{width:14px;height:14px;border-radius:50%;background:var(--pc);flex-shrink:0}
+.pchip.deload i{background:repeating-linear-gradient(135deg,var(--pc) 0 3px,color-mix(in srgb,var(--pc) 65%,#000) 3px 6px)}
+.pchip:hover{border-color:var(--border2)}
+.pchip[aria-pressed="true"]{background:var(--pc);color:var(--pt);border-color:var(--pc);font-weight:600}
+.paint-hint{font-size:12px;color:var(--text);background:var(--surface2);border:1px dashed var(--border2);border-radius:8px;padding:7px 10px;margin-bottom:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.paint-hint b{color:var(--pc)}
+body.painting .cell{cursor:crosshair}
+body.painting .tl-scroll,body.painting .tb-scroll{touch-action:none}
+.phase-pick{display:flex;flex-wrap:wrap;gap:5px}
+.phase-pick input{position:absolute;opacity:0;pointer-events:none}
+.phase-pick span{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:20px;padding:5px 10px 5px 5px;font-size:12px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--text);cursor:pointer}
+.phase-pick span i{width:14px;height:14px;border-radius:50%;background:var(--pc)}
+.phase-pick input:checked+span{background:var(--pc);color:var(--pt);border-color:var(--pc)}
+.phase-pick input:focus-visible+span{outline:2px solid var(--accent)}
+.seq-row{display:grid;grid-template-columns:1fr 80px 30px;gap:6px;margin-bottom:6px}
+.seq-row button{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--muted)}
+.seq-row button:hover{color:var(--red)}
+.tc-phase{align-self:flex-start;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:10px;background:var(--pc);color:var(--pt)}
+.tc-segs span.ph{background:var(--pc);opacity:.22}
+.tc-segs span.ph.done{opacity:.55}
+.tc-segs span.ph.cur{opacity:1;box-shadow:0 0 0 1px var(--text)}
 .lg-hl{background:rgba(255,255,255,.1);box-shadow:inset 0 3px 0 var(--hl)}
 .lg-dtm{background:repeating-linear-gradient(135deg,#2c2c30 0 3px,#1c1c1f 3px 6px);border:1px solid var(--border2)}
 .lg-comp{background:var(--gold)}
@@ -108,6 +131,9 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 .cell.txt{background:var(--surface3);color:var(--text);font-size:11px;letter-spacing:.02em}
 .cell.empty{color:transparent}
 .cell.empty:hover{color:var(--dim);background:rgba(255,255,255,.03)}
+.cell.ph{background:var(--pc);color:var(--pt)}
+.cell.ph.deload{background:repeating-linear-gradient(135deg,var(--pc) 0 5px,color-mix(in srgb,var(--pc) 72%,#000) 5px 10px)}
+.cell.ph.lbl{font-size:13px;letter-spacing:.06em}
 .cell.past{opacity:.42}
 .cell .note-dot{position:absolute;top:3px;right:3px;width:5px;height:5px;border-radius:50%;background:var(--text)}
 .now-col{position:absolute;top:0;bottom:0;border:2px solid var(--accent);border-radius:7px;pointer-events:none;z-index:2}
@@ -176,7 +202,7 @@ table.tb{border-collapse:separate;border-spacing:0;width:100%;min-width:640px;ta
 <body>
 <div class="wrap" id="app">
   <div class="head">
-    <div><div class="eyebrow">Periodisation</div><h1>Programming</h1></div>
+    <div><div class="eyebrow">Season planning</div><h1>Periodisation</h1></div>
     <div class="head-acts">
       <button class="btn" type="button" id="tracksBtn">Tracks</button>
       <button class="btn primary" type="button" id="blockBtn">+ Plan a block</button>
@@ -195,16 +221,15 @@ table.tb{border-collapse:separate;border-spacing:0;width:100%;min-width:640px;ta
   <section class="plan">
     <div class="plan-top">
       <div class="plan-title">Season plan</div>
-      <div class="legend">
-        <span><i class="lg-hl"></i>Highlighted weeks</span><span><i class="lg-dtm"></i>DTM</span><span><i class="lg-comp"></i>Comp</span><span><i class="lg-now"></i>This week</span>
-      </div>
+      <div class="phase-chips" id="phaseChips" role="group" aria-label="Paint weeks with a phase"></div>
       <div style="display:flex;gap:8px;align-items:center">
         <button class="btn" type="button" id="jumpNow">Jump to now</button>
         <div class="seg" role="group" aria-label="View"><button type="button" data-view="timeline" aria-pressed="true">Timeline</button><button type="button" data-view="table" aria-pressed="false">Table</button></div>
       </div>
     </div>
+    <div class="paint-hint" id="paintHint" hidden></div>
     <div id="planBody"></div>
-    <p style="font-size:11px;color:var(--dim);margin-top:10px">Tap any week to change it. Tap an empty square to add one.</p>
+    <p style="font-size:11px;color:var(--dim);margin-top:10px">Tap any week to change it, or tap a phase above and then tap or drag across weeks to colour them.</p>
   </section>
 </div>
 
@@ -215,7 +240,7 @@ table.tb{border-collapse:separate;border-spacing:0;width:100%;min-width:640px;ta
     <p id="cmSub"></p>
     <div class="f">Week<input id="cmLabel" placeholder="Week number, DTM, COMP or a short label" maxlength="12"></div>
     <div class="quick" id="cmQuick"></div>
-    <label class="chk"><input type="checkbox" id="cmHl"> Highlight this week</label>
+    <div class="f">Phase<div class="phase-pick" id="cmPhase"></div></div>
     <div class="f">Note<input id="cmNote" placeholder="Optional, e.g. travel, test day" maxlength="80"></div>
     <div class="acts"><button class="btn danger" type="button" id="cmClear">Clear week</button><div><button class="btn" type="button" id="cmCancel">Cancel</button><button class="btn primary" type="submit">Save</button></div></div>
   </form>
@@ -229,12 +254,9 @@ table.tb{border-collapse:separate;border-spacing:0;width:100%;min-width:640px;ta
     <div class="f">Track<select id="bmTrack"></select></div>
     <div class="f2">
       <div class="f">First week (Monday)<input id="bmStart" type="date" required></div>
-      <div class="f">Training weeks<input id="bmLen" type="number" min="1" max="30" value="12" required></div>
-    </div>
-    <div class="f2">
-      <div class="f">Highlight first<input id="bmHl" type="number" min="0" max="30" value="4"></div>
       <div class="f">Start numbering at<input id="bmFrom" type="number" min="1" max="30" value="1"></div>
     </div>
+    <div class="f">Phases, in order<div id="bmSeq"></div><button class="btn" type="button" id="bmAddPh" style="justify-self:start;font-weight:500;letter-spacing:0;text-transform:none">+ Add phase</button></div>
     <label class="chk"><input type="checkbox" id="bmDtm" checked> Add a DTM week after</label>
     <label class="chk"><input type="checkbox" id="bmComp"> Then a COMP week</label>
     <div class="f">Preview<div class="preview" id="bmPreview"></div><span id="bmRange" style="font-weight:400;letter-spacing:0;text-transform:none;color:var(--muted);font-size:12px"></span></div>
@@ -259,11 +281,16 @@ table.tb{border-collapse:separate;border-spacing:0;width:100%;min-width:640px;ta
 <div class="toast" id="toast" hidden role="status"><span id="toastMsg"></span><button type="button" id="toastUndo" hidden>Undo</button></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
-<script src="rev.js?v=14"></script>
+<script src="rev.js?v=16"></script>
 <script>
 (function(){
 const $=s=>document.querySelector(s);
 const COLORS={blue:'#5ab4ff',purple:'#b08fff',amber:'#f5a623',red:'#ff5a5a',teal:'#3dd6b5',pink:'#ff7ac6',lime:'#c8f06a',orange:'#ff8a4c',grey:'#9a9a95'};
+const PHASES=[['accumulation','Accumulation','#ff8a3d','#241100'],['volume','Volume','#ffd84d','#221c00'],['strength','Strength','#4d9fff','#051a36'],['intensity','Intensity','#ff5252','#ffffff'],['dtm','DTM','#34c96a','#03220f'],['comp','Comp','#d4a72c','#1e1600'],['deload','Deload','#34c96a','#03220f']];
+const PH=Object.fromEntries(PHASES.map(([k,n,c,t])=>[k,{k,n,c,t}]));
+const phStyle=k=>PH[k]?`--pc:${PH[k].c};--pt:${PH[k].t}`:'';
+const TRAINING=['accumulation','volume','strength','intensity','deload'];
+let paint=null, painting=false, pending={}, paintBefore={};
 const TROPHY='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z"/></svg>';
 let tracks=[], weeks=[], loaded=false, view='timeline';
 try{ const v=localStorage.getItem('rev_plan_view'); if(v) view=v; }catch(e){}
@@ -322,15 +349,15 @@ function renderTop(){
     else if(k==='w'){
       const b=blockInfo(t.id,now);
       big=`<span class="tc-wk">WK ${esc(c.label)}</span><span class="tc-of">of ${b.last}${b.after?` then ${esc(b.after.label)}`:''}</span>`;
-      segs=`<div class="tc-segs" aria-hidden="true">${b.run.map(x=>`<span class="${x.week_start<now?'done':x.week_start===now?'cur':''}${x.highlight?' hl':''}"></span>`).join('')}</div>`;
-      if(c.highlight) hl=`<span class="tc-hl">Highlighted</span>`;
+      segs=`<div class="tc-segs" aria-hidden="true">${b.run.map(x=>`<span class="${x.phase?'ph ':''}${x.week_start<now?'done':x.week_start===now?'cur':''}" style="${phStyle(x.phase)}"></span>`).join('')}</div>`;
     }
     else if(k==='dtm') big=`<span class="tc-tag dtm">DTM WEEK</span>`;
     else if(k==='comp') big=`<span class="tc-tag comp">COMP WEEK</span>`;
     else big=`<span class="tc-tag dtm" style="font-size:24px">${esc(c.label)}</span>`;
     const nxt=comp&&k!=='comp'?`Comp in <b>${weeksBetween(now,comp.week_start)} week${weeksBetween(now,comp.week_start)===1?'':'s'}</b> · ${fmt(comp.week_start)}`:k==='comp'?'Good luck this week':'No comp planned yet';
-    return `<button type="button" class="tcard" style="--tc:${col(t)}" data-cell="${t.id}|${now}" aria-label="${esc(t.name)} this week">
-      ${hl}<div class="tc-name">${esc(t.name)}</div><div class="tc-big">${big}</div>${segs}<div class="tc-next">${nxt}${c&&c.note?` · ${esc(c.note)}`:''}</div></button>`;
+    const pill=c&&PH[c.phase]&&k==='w'?`<span class="tc-phase" style="${phStyle(c.phase)}">${PH[c.phase].n}</span>`:'';
+    return `<button type="button" class="tcard" style="--tc:${c&&PH[c.phase]?PH[c.phase].c:col(t)}" data-cell="${t.id}|${now}" aria-label="${esc(t.name)} this week">
+      <div class="tc-name">${esc(t.name)}</div><div class="tc-big">${big}</div>${pill}${segs}<div class="tc-next">${nxt}${c&&c.note?` · ${esc(c.note)}`:''}</div></button>`;
   }).join('');
 }
 
@@ -345,9 +372,11 @@ function cellHtml(t,w,now){
   const c=cellOf(t.id,w); const past=w<now?' past':'';
   const title=`${t.name} · week of ${fmt(w,{day:'numeric',month:'short',year:'numeric'})}${c?` · ${c.label}${c.note?' · '+c.note:''}`:''}`;
   if(!c) return `<button type="button" class="cell empty${past}" data-cell="${t.id}|${w}" title="${esc(title)}" aria-label="${esc(title)}, empty">+</button>`;
-  const k=kindOf(c.label);
-  const inner=k==='comp'?`${TROPHY}${view==='table'?'<span>COMP</span>':''}`:esc(c.label);
-  return `<button type="button" class="cell ${k}${c.highlight&&k==='w'?' hl':''}${past}" style="--tc:${col(t)}" data-cell="${t.id}|${w}" title="${esc(title)}" aria-label="${esc(title)}">${inner}${c.note?'<span class="note-dot"></span>':''}</button>`;
+  const k=kindOf(c.label), ph=PH[c.phase];
+  const inner=(c.phase==='comp'||k==='comp')?`${TROPHY}${view==='table'?'<span>COMP</span>':''}`:esc(c.label);
+  const title2=title+(ph?` · ${ph.n}`:'');
+  if(ph) return `<button type="button" class="cell ph ${c.phase}${k!=='w'?' lbl':''}${past}" style="${phStyle(c.phase)}" data-cell="${t.id}|${w}" title="${esc(title2)}" aria-label="${esc(title2)}">${inner}${c.note?'<span class="note-dot"></span>':''}</button>`;
+  return `<button type="button" class="cell ${k}${past}" style="--tc:${col(t)}" data-cell="${t.id}|${w}" title="${esc(title)}" aria-label="${esc(title)}">${inner}${c.note?'<span class="note-dot"></span>':''}</button>`;
 }
 function renderTimeline(){
   const ts=activeTracks(), ws=range(), now=thisWeek();
@@ -371,14 +400,22 @@ function renderTable(){
 function renderPlan(scroll){
   document.querySelectorAll('.seg [data-view]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===view));
   if(!activeTracks().length){$("#planBody").innerHTML=`<div class="empty-state">Nothing planned yet.</div>`;return}
+  const old=$("#tlScroll")||$("#tbScroll"), keep=old?{l:old.scrollLeft,t:old.scrollTop,v:view,id:old.id}:null;
   view==='table'?renderTable():renderTimeline();
   if(scroll) jumpNow(false);
+  else if(keep){ const nw=$("#tlScroll")||$("#tbScroll"); if(nw&&nw.id===keep.id){ nw.style.scrollBehavior='auto'; nw.scrollLeft=keep.l; nw.scrollTop=keep.t; nw.style.scrollBehavior=''; } }
 }
 function jumpNow(smooth=true){
   if(view==='table'){const r=$("#nowRow"),s=$("#tbScroll"); if(r&&s) s.scrollTo({top:r.offsetTop-s.clientHeight/3,behavior:smooth?'smooth':'auto'});}
   else{const s=$("#tlScroll"),n=s&&s.querySelector('.now-col'); if(n) s.scrollTo({left:Math.max(0,n.offsetLeft-s.clientWidth*0.3),behavior:smooth?'smooth':'auto'});}
 }
-function render(scroll){ if(!loaded) return; renderTop(); renderPlan(scroll); }
+function renderChips(){
+  $("#phaseChips").innerHTML=PHASES.map(([k,n])=>`<button type="button" class="pchip ${k}" style="${phStyle(k)}" data-paint="${k}" aria-pressed="${paint===k}" title="Colour weeks as ${n}"><i></i>${n}</button>`).join('');
+  const hint=$("#paintHint");
+  if(paint){ hint.hidden=false; hint.style.cssText=phStyle(paint); hint.innerHTML=`<span>Painting <b>${PH[paint].n}</b>: tap or drag across weeks.${paint==='dtm'||paint==='comp'?' Empty squares get added too.':''}</span><button class="btn" type="button" data-paint="${paint}">Done</button>`; document.body.classList.add('painting'); }
+  else { hint.hidden=true; document.body.classList.remove('painting'); }
+}
+function render(scroll){ if(!loaded) return; renderTop(); renderChips(); renderPlan(scroll); }
 
 /* ---- edit one week ---- */
 let editing=null;
@@ -391,17 +428,22 @@ function openCell(tid,w){
   const prev=cellOf(tid,addDays(w,-7)), suggest=prev&&kindOf(prev.label)==='w'?+prev.label+1:1;
   const nums=[...new Set([suggest,...Array.from({length:12},(_,i)=>i+1)])].slice(0,12).sort((a,b)=>a-b);
   $("#cmQuick").innerHTML=nums.map(n=>`<button type="button" data-q="${n}">${n}</button>`).join('')+`<button type="button" class="dtmq" data-q="DTM">DTM</button><button type="button" class="compq" data-q="COMP">COMP</button>`;
-  $("#cmLabel").value=c?c.label:''; $("#cmHl").checked=c?c.highlight:false; $("#cmNote").value=c?c.note:'';
+  $("#cmLabel").value=c?c.label:(suggest?String(suggest):''); $("#cmNote").value=c?c.note:'';
+  const defPh=c?c.phase:(prev&&TRAINING.includes(prev.phase)?prev.phase:null);
+  $("#cmPhase").innerHTML=PHASES.map(([k,n])=>`<label style="${phStyle(k)}"><input type="radio" name="cmph" value="${k}"${defPh===k?' checked':''}><span><i></i>${n}</span></label>`).join('')+`<label><input type="radio" name="cmph" value=""${defPh?'':' checked'}><span style="padding-left:10px">None</span></label>`;
   $("#cmClear").hidden=!c;
   $("#cellModal").hidden=false; setTimeout(()=>$("#cmLabel").focus(),30);
 }
-$("#cmQuick").addEventListener('click',e=>{const b=e.target.closest('[data-q]'); if(b){$("#cmLabel").value=b.dataset.q; $("#cmLabel").focus();}});
+$("#cmQuick").addEventListener('click',e=>{const b=e.target.closest('[data-q]'); if(!b) return; $("#cmLabel").value=b.dataset.q;
+  const q=b.dataset.q.toLowerCase(); if(q==='dtm'||q==='comp'){const r=document.querySelector(`input[name=cmph][value="${q}"]`); if(r) r.checked=true;} $("#cmLabel").focus();});
+$("#cmPhase").addEventListener('change',e=>{const v=e.target.value; if(v==='dtm'||v==='comp') $("#cmLabel").value=v.toUpperCase(); else if(/^(DTM|COMP)$/i.test($("#cmLabel").value)){const tid=editing.tid,p=cellOf(tid,addDays(editing.w,-7)); $("#cmLabel").value=p&&kindOf(p.label)==='w'?String(+p.label+1):'1';}});
 $("#cmCancel").addEventListener('click',()=>{$("#cellModal").hidden=true});
 $("#cellForm").addEventListener('submit',async e=>{
   e.preventDefault(); const {tid,w,had}=editing;
-  let label=$("#cmLabel").value.trim(); if(!label){ return clearCell(); }
+  const phase=(document.querySelector('input[name=cmph]:checked')||{}).value||null;
+  let label=$("#cmLabel").value.trim(); if(!label&&(phase==='dtm'||phase==='comp')) label=phase.toUpperCase(); if(!label){ return clearCell(); }
   if(/^(dtm|comp)$/i.test(label)) label=label.toUpperCase();
-  const row={track_id:tid,week_start:w,label,highlight:$("#cmHl").checked,note:$("#cmNote").value.trim()};
+  const row={track_id:tid,week_start:w,label,highlight:false,note:$("#cmNote").value.trim(),phase:phase||(label==='DTM'?'dtm':label==='COMP'?'comp':null)};
   try{ const {error}=await sb.from('plan_weeks').upsert(row); if(error) throw error;
     weeks=weeks.filter(x=>!(x.track_id===tid&&x.week_start===w)); weeks.push(row); $("#cellModal").hidden=true; render();
     toast('Saved',async()=>{ try{ if(had){await sb.from('plan_weeks').upsert(had)} else {await sb.from('plan_weeks').delete().eq('track_id',tid).eq('week_start',w)} load(); }catch(err){fail(err)} });
@@ -417,20 +459,25 @@ async function clearCell(){
 $("#cmClear").addEventListener('click',clearCell);
 
 /* ---- plan a block ---- */
+let seq=[['volume',4],['strength',4],['accumulation',4]];
+function renderSeq(){
+  const opts=k=>TRAINING.map(p=>`<option value="${p}"${p===k?' selected':''}>${PH[p].n}</option>`).join('');
+  $("#bmSeq").innerHTML=seq.map(([k,n],i)=>`<div class="seq-row"><select data-si="${i}" aria-label="Phase ${i+1}">${opts(k)}</select><input type="number" min="1" max="20" value="${n}" data-sn="${i}" aria-label="Weeks of ${PH[k].n}"><button type="button" data-sx="${i}" aria-label="Remove">×</button></div>`).join('');
+}
 function blockRows(){
-  const tid=$("#bmTrack").value, start=monday($("#bmStart").value||thisWeek()), len=Math.max(1,Math.min(30,+$("#bmLen").value||1)),
-        hlN=Math.max(0,+$("#bmHl").value||0), from=Math.max(1,+$("#bmFrom").value||1), rows=[];
-  for(let i=0;i<len;i++) rows.push({track_id:tid,week_start:addDays(start,i*7),label:String(from+i),highlight:i<hlN,note:''});
-  let d=addDays(start,len*7);
-  if($("#bmDtm").checked){rows.push({track_id:tid,week_start:d,label:'DTM',highlight:false,note:''}); d=addDays(d,7);}
-  if($("#bmComp").checked) rows.push({track_id:tid,week_start:d,label:'COMP',highlight:false,note:''});
+  const tid=$("#bmTrack").value, start=monday($("#bmStart").value||thisWeek()), from=Math.max(1,+$("#bmFrom").value||1), rows=[];
+  let i=0; seq.forEach(([k,n])=>{ for(let j=0;j<Math.max(0,Math.min(20,n));j++){ rows.push({track_id:tid,week_start:addDays(start,i*7),label:String(from+i),highlight:false,note:'',phase:k}); i++; } });
+  let d=addDays(start,i*7);
+  if($("#bmDtm").checked){rows.push({track_id:tid,week_start:d,label:'DTM',highlight:false,note:'',phase:'dtm'}); d=addDays(d,7);}
+  if($("#bmComp").checked) rows.push({track_id:tid,week_start:d,label:'COMP',highlight:false,note:'',phase:'comp'});
   return rows;
 }
 function previewBlock(){
   const t=tracks.find(x=>x.id===$("#bmTrack").value); if(!t) return;
   $("#blockForm").style.setProperty('--tc',col(t)); $("#bmDot").style.background=col(t);
   const rows=blockRows();
-  $("#bmPreview").innerHTML=rows.map(r=>{const k=kindOf(r.label);return `<span class="${k==='w'?'':k}${r.highlight?' hl':''}">${k==='comp'?'COMP':esc(r.label)}</span>`}).join('');
+  if(!rows.length){$("#bmPreview").innerHTML='';$("#bmRange").textContent='Add at least one phase or a DTM/COMP week.';return}
+  $("#bmPreview").innerHTML=rows.map(r=>`<span style="background:${PH[r.phase].c};color:${PH[r.phase].t};padding:0 4px">${r.phase==='comp'?'COMP':esc(r.label)}</span>`).join('');
   const clash=rows.filter(r=>cellOf(r.track_id,r.week_start)).length;
   $("#bmRange").textContent=`${fmt(rows[0].week_start)} to ${fmt(addDays(rows.at(-1).week_start,6))}${clash?` · replaces ${clash} planned week${clash>1?'s':''}`:''}`;
 }
@@ -441,9 +488,12 @@ function openBlock(tid){
   /* start the week after this track's last planned week */
   const last=weeks.filter(x=>x.track_id===$("#bmTrack").value).map(x=>x.week_start).sort().at(-1);
   $("#bmStart").value=last&&last>=thisWeek()?addDays(last,7):thisWeek();
-  $("#blockModal").hidden=false; previewBlock();
+  renderSeq(); $("#blockModal").hidden=false; previewBlock();
 }
-["#bmTrack","#bmStart","#bmLen","#bmHl","#bmFrom","#bmDtm","#bmComp"].forEach(s=>$(s).addEventListener('input',previewBlock));
+["#bmTrack","#bmStart","#bmFrom","#bmDtm","#bmComp"].forEach(s=>$(s).addEventListener('input',previewBlock));
+$("#bmSeq").addEventListener('input',e=>{const si=e.target.dataset.si,sn=e.target.dataset.sn; if(si!==undefined) seq[+si][0]=e.target.value; if(sn!==undefined) seq[+sn][1]=+e.target.value||0; previewBlock();});
+$("#bmSeq").addEventListener('click',e=>{const x=e.target.closest('[data-sx]'); if(!x) return; seq.splice(+x.dataset.sx,1); renderSeq(); previewBlock();});
+$("#bmAddPh").addEventListener('click',()=>{seq.push(['intensity',4]); renderSeq(); previewBlock();});
 $("#bmTrack").addEventListener('change',()=>{const last=weeks.filter(x=>x.track_id===$("#bmTrack").value).map(x=>x.week_start).sort().at(-1);$("#bmStart").value=last&&last>=thisWeek()?addDays(last,7):thisWeek();previewBlock()});
 $("#bmCancel").addEventListener('click',()=>{$("#blockModal").hidden=true});
 $("#blockForm").addEventListener('submit',async e=>{
@@ -452,7 +502,7 @@ $("#blockForm").addEventListener('submit',async e=>{
     rows.forEach(r=>{weeks=weeks.filter(x=>!(x.track_id===r.track_id&&x.week_start===r.week_start)); weeks.push(r)});
     $("#blockModal").hidden=true; render(); jumpNow();
     const t=tracks.find(x=>x.id===rows[0].track_id);
-    toast(`Added a ${rows.filter(r=>kindOf(r.label)==='w').length}-week block for ${t.name}`,async()=>{
+    toast(`Added a ${rows.filter(r=>TRAINING.includes(r.phase)).length}-week block for ${t.name}`,async()=>{
       try{ await sb.from('plan_weeks').delete().eq('track_id',rows[0].track_id).in('week_start',rows.map(r=>r.week_start)); if(before.length) await sb.from('plan_weeks').upsert(before); load(); }catch(err){fail(err)} });
   }catch(err){fail(err)}
 });
@@ -496,19 +546,53 @@ $("#trkDelete").addEventListener('click',async()=>{
 });
 $("#trkCancel").addEventListener('click',()=>{$("#trackModal").hidden=true});
 
+/* ---- paint mode: tap or drag across weeks to set their phase ---- */
+function applyPaint(el){
+  const [tid,w]=el.dataset.cell.split('|'), key=tid+'|'+w; if(pending[key]) return;
+  let c=cellOf(tid,w);
+  if(!c&&paint!=='dtm'&&paint!=='comp') return;
+  paintBefore[key]=c?{...c}:null;
+  if(!c){ c={track_id:tid,week_start:w,label:paint.toUpperCase(),highlight:false,note:'',phase:paint}; weeks.push(c); }
+  else{
+    c.phase=paint;
+    if(paint==='dtm'||paint==='comp') c.label=paint.toUpperCase();
+    else if(/^(DTM|COMP)$/.test(c.label)){ const p=cellOf(tid,addDays(w,-7)); c.label=p&&kindOf(p.label)==='w'?String(+p.label+1):'1'; }
+  }
+  pending[key]={...c};
+  const t=tracks.find(x=>x.id===tid), tmp=document.createElement('div'); tmp.innerHTML=cellHtml(t,w,view==='table'?'0000':thisWeek());
+  el.replaceWith(tmp.firstElementChild);
+}
+async function flushPaint(){
+  const rows=Object.values(pending), before=Object.entries(paintBefore); pending={}; paintBefore={};
+  if(!rows.length) return;
+  renderTop();
+  try{ const {error}=await sb.from('plan_weeks').upsert(rows); if(error) throw error;
+    toast(`Coloured ${rows.length} week${rows.length>1?'s':''} ${PH[rows[0].phase].n}`,async()=>{ try{
+      const back=before.filter(([,v])=>v).map(([,v])=>v), gone=before.filter(([,v])=>!v).map(([k])=>k.split('|'));
+      if(back.length) await sb.from('plan_weeks').upsert(back);
+      for(const [tid,w] of gone) await sb.from('plan_weeks').delete().eq('track_id',tid).eq('week_start',w);
+      load(); }catch(err){fail(err)} });
+  }catch(err){fail(err)}
+}
+document.addEventListener('pointerdown',e=>{ if(!paint) return; const c=e.target.closest('.cell[data-cell]'); if(!c) return; e.preventDefault(); painting=true; applyPaint(c); });
+document.addEventListener('pointermove',e=>{ if(!painting) return; const el=document.elementFromPoint(e.clientX,e.clientY), c=el&&el.closest('.cell[data-cell]'); if(c) applyPaint(c); });
+['pointerup','pointercancel'].forEach(ev=>document.addEventListener(ev,()=>{ if(painting){ painting=false; flushPaint(); } }));
+
 /* ---- wiring ---- */
 document.addEventListener('click',e=>{
+  const pb=e.target.closest('[data-paint]'); if(pb){ paint=paint===pb.dataset.paint?null:pb.dataset.paint; renderChips(); return; }
+  if(paint&&e.target.closest('.cell[data-cell]')) return;
   const c=e.target.closest('[data-cell]'); if(c){const [tid,w]=c.dataset.cell.split('|'); return openCell(tid,w);}
   const v=e.target.closest('[data-view]'); if(v){view=v.dataset.view; try{localStorage.setItem('rev_plan_view',view)}catch(err){} renderPlan(true);}
 });
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m) m.hidden=true}));
-document.addEventListener('keydown',e=>{if(e.key==='Escape') document.querySelectorAll('.modal').forEach(m=>m.hidden=true)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){ document.querySelectorAll('.modal').forEach(m=>m.hidden=true); if(paint){paint=null;renderChips();} }});
 $("#blockBtn").addEventListener('click',()=>openBlock());
 $("#tracksBtn").addEventListener('click',openTracks);
 $("#jumpNow").addEventListener('click',()=>jumpNow());
 
 async function load(scroll){
-  const [t,w]=await Promise.all([sb.from('plan_tracks').select('*'),sb.from('plan_weeks').select('track_id,week_start,label,highlight,note')]);
+  const [t,w]=await Promise.all([sb.from('plan_tracks').select('*'),sb.from('plan_weeks').select('track_id,week_start,label,highlight,note,phase')]);
   if(t.error||w.error){$("#nowGrid").innerHTML=`<div class="empty-state">Couldn't load your plan. Refresh to try again.</div>`;return}
   tracks=t.data||[]; weeks=w.data||[]; loaded=true; render(scroll);
 }
