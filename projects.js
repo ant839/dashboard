@@ -5,7 +5,7 @@
     ['amber', '#f5a623'], ['red', '#ff5a5a'], ['pink', '#ff7ac6'], ['grey', '#9a9a95']
   ];
   const STATUSES = ['Planning', 'In progress', 'On hold', 'Done'];
-  const ORDER = { 'In progress': 0, 'Planning': 1, 'On hold': 2, 'Done': 3 };
+    const bySort = (a, b) => (a.sort - b.sort) || a.created_at.localeCompare(b.created_at);
   const hex = c => (COLORS.find(x => x[0] === c) || COLORS[0])[1];
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const $ = id => document.getElementById(id);
@@ -35,7 +35,7 @@
       return;
     }
     const list = projects.filter(p => showDone || p.status !== 'Done')
-      .sort((a, b) => (ORDER[a.status] - ORDER[b.status]) || (a.due || '9999').localeCompare(b.due || '9999') || a.created_at.localeCompare(b.created_at));
+      .sort(bySort);
     const done = projects.filter(p => p.status === 'Done').length;
     $('proj-count').textContent = projects.length ? `${projects.length - done} active` : '';
     if (!list.length) {
@@ -44,12 +44,15 @@
     }
     strip.innerHTML = list.map(p => {
       const cls = 'st-' + p.status.toLowerCase().replace(/\s+/g, '');
-      return `<button class="proj${p.status === 'Done' ? ' is-done' : ''}" type="button" data-proj="${p.id}" style="--pc:${hex(p.color)}">
+      return `<div class="proj${p.status === 'Done' ? ' is-done' : ''}" role="button" tabindex="0" data-proj="${p.id}" style="--pc:${hex(p.color)}" aria-label="Edit ${esc(p.title)}">
+        <span class="proj-grip" title="Drag to reorder" aria-hidden="true"><svg width="10" height="14" viewBox="0 0 10 14"><circle cx="2" cy="2" r="1.3"/><circle cx="8" cy="2" r="1.3"/><circle cx="2" cy="7" r="1.3"/><circle cx="8" cy="7" r="1.3"/><circle cx="2" cy="12" r="1.3"/><circle cx="8" cy="12" r="1.3"/></svg></span>
+        <div class="proj-body">
         <div class="proj-top"><span class="proj-status ${cls}">${esc(p.status)}</span>${dueLabel(p.due)}</div>
         <div class="proj-title">${esc(p.title)}</div>
         ${p.notes ? `<div class="proj-notes">${esc(p.notes)}</div>` : ''}
         <div class="proj-foot"><div class="proj-bar"><div style="width:${p.progress}%"></div></div><span class="proj-pct">${p.progress}%</span></div>
-      </button>`;
+        </div>
+      </div>`;
     }).join('');
   }
 
@@ -112,6 +115,7 @@
       notes: $('pf-notes').value.trim()
     };
     if (!row.title) { $('pf-title').focus(); return; }
+    if (!editing) row.sort = projects.length ? Math.min(...projects.map(p => p.sort)) - 1 : 0;
     const q = editing ? sb.from('projects').update(row).eq('id', editing.id).select().single() : sb.from('projects').insert(row).select().single();
     const { data, error } = await q;
     if (error) { alertLine('Could not save the project. Check your connection and try again.'); return; }
@@ -127,6 +131,25 @@
   function alertLine(msg) { const s = $('proj-strip'); const n = document.createElement('div'); n.className = 'proj-err'; n.textContent = msg; s.parentNode.insertBefore(n, s); setTimeout(() => n.remove(), 5000); }
   function merge(row) { const i = projects.findIndex(p => p.id === row.id); if (i >= 0) projects[i] = row; else projects.push(row); }
 
+  /* ---- reordering ---- */
+  async function persistOrder(ids) {
+    const changes = [];
+    ids.forEach((id, i) => { const p = projects.find(x => x.id === id); if (p && p.sort !== i) { p.sort = i; changes.push({ id, i }); } });
+    projects.filter(p => !ids.includes(p.id)).forEach((p, j) => { const i = ids.length + j; if (p.sort !== i) { p.sort = i; changes.push({ id: p.id, i }); } });
+    const res = await Promise.all(changes.map(c => sb.from('projects').update({ sort: c.i }).eq('id', c.id)));
+    if (res.some(r => r.error)) { alertLine('Could not save the new order. Try again.'); load(); }
+  }
+  function saveOrder() {
+    const ids = [...$('proj-strip').querySelectorAll('[data-proj]')].map(el => el.dataset.proj);
+    persistOrder(ids).then(render);
+  }
+  function nudge(id, dir) {
+    const ids = [...$('proj-strip').querySelectorAll('[data-proj]')].map(el => el.dataset.proj);
+    const i = ids.indexOf(id), j = i + dir; if (j < 0 || j >= ids.length) return;
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    persistOrder(ids).then(() => { render(); $('proj-strip').querySelector(`[data-proj="${id}"]`)?.focus(); });
+  }
+
   async function load() {
     const { data, error } = await sb.from('projects').select('*');
     if (!error) { projects = data || []; render(); }
@@ -136,7 +159,12 @@
     buildEditor();
     $('proj-add').addEventListener('click', () => open(null));
     $('proj-show-done').addEventListener('click', () => { showDone = !showDone; render(); });
-    $('proj-strip').addEventListener('click', e => { const c = e.target.closest('[data-proj]'); if (c) open(projects.find(p => p.id === c.dataset.proj)); });
+    const strip = $('proj-strip');
+    strip.addEventListener('click', e => { if (e.target.closest('.proj-grip')) return; const c = e.target.closest('[data-proj]'); if (c) open(projects.find(p => p.id === c.dataset.proj)); });
+    strip.addEventListener('keydown', e => { const c = e.target.closest('[data-proj]'); if (!c) return;
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(projects.find(p => p.id === c.dataset.proj)); }
+      if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) { e.preventDefault(); nudge(c.dataset.proj, e.key === 'ArrowUp' ? -1 : 1); } });
+    if (window.Sortable) Sortable.create(strip, { handle: '.proj-grip', draggable: '.proj', animation: 150, ghostClass: 'proj-ghost', chosenClass: 'proj-chosen', forceFallback: true, fallbackTolerance: 3, onEnd: saveOrder });
     render();
     sb.auth.getSession().then(({ data }) => {
       signedIn = !!data.session; render();

@@ -187,11 +187,18 @@ select option { background: var(--surface2); }
 .proj-add { color: var(--accent); }
 .proj-toggle { color: var(--muted); }
 .proj-toggle:hover { color: var(--text); }
-.proj-strip { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; margin: 0 -2px; padding-left: 2px; padding-right: 2px; }
-.proj-strip::-webkit-scrollbar { height: 3px; }
-.proj { flex: 0 0 210px; scroll-snap-align: start; text-align: left; background: var(--surface2); border: 1px solid var(--border); border-top: 3px solid var(--pc); border-radius: var(--radius-sm); padding: 10px 12px; color: var(--text); cursor: pointer; display: flex; flex-direction: column; gap: 7px; min-height: 118px; transition: border-color 0.15s; }
-.proj:hover { border-color: var(--border2); border-top-color: var(--pc); }
+.proj-strip { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 460px; min-height: 80px; padding-right: 4px; margin-right: -4px; }
+.proj-strip::-webkit-scrollbar { width: 3px; }
+.proj { display: flex; gap: 8px; background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--pc); border-radius: var(--radius-sm); padding: 10px 12px 10px 6px; color: var(--text); cursor: pointer; transition: border-color 0.15s; flex-shrink: 0; }
+.proj:hover { border-color: var(--border2); border-left-color: var(--pc); }
+.proj:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .proj.is-done { opacity: 0.55; }
+.proj-grip { flex-shrink: 0; width: 18px; display: flex; align-items: center; justify-content: center; cursor: grab; fill: var(--dim); touch-action: none; border-radius: 4px; }
+.proj-grip:hover { fill: var(--muted); background: rgba(255,255,255,0.04); }
+.proj-grip:active { cursor: grabbing; }
+.proj-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.proj-ghost { opacity: 0.35; }
+.proj-chosen { box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
 .proj-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .proj-status { font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 20px; white-space: nowrap; }
 .st-planning { background: var(--blue-dim); color: var(--blue); }
@@ -391,6 +398,7 @@ select option { background: var(--surface2); }
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="rev.js"></script>
 <script>revRenderNav(document.body);</script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js"></script>
 <script src="projects.js"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script>
