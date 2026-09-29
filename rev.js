@@ -15,6 +15,7 @@
     { href: 'dashboard.html', label: 'Home' },
     { href: 'athletes.html', label: 'Programming' },
     { href: 'plan.html', label: 'Periodisation' },
+    { href: 'leads.html', label: 'Leads' },
     { href: 'pt.html', label: 'PT Clients' }
   ];
 

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0e0e0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=3">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3">
+<meta name="apple-mobile-web-app-title" content="Rev">
+<title>Leads · Rev</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0e0f; --surface:#161618; --surface2:#1e1e21;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.14);
+  --text:#f0efe8; --muted:#888884; --dim:#4a4a48;
+  --accent:#c8f06a; --accent-dim:rgba(200,240,106,0.12);
+  --red:#ff5a5a; --red-dim:rgba(255,90,90,0.14);
+  --amber:#f5a623; --amber-dim:rgba(245,166,35,0.14);
+  --blue:#5ab4ff; --blue-dim:rgba(90,180,255,0.12);
+  --purple:#b08fff; --purple-dim:rgba(176,143,255,0.13);
+  --teal:#3dd6b5; --teal-dim:rgba(61,214,181,0.12);
+  --radius:10px; --radius-sm:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html{color-scheme:dark}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;font-size:14px;min-height:100vh;padding:calc(22px + env(safe-area-inset-top,0px)) 26px calc(80px + env(safe-area-inset-bottom,0px));font-variant-numeric:tabular-nums}
+input,select,textarea,button{font-family:inherit;font-size:13px;color:var(--text)}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 11px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--border2)}
+select option{background:var(--surface2)}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1320px;margin:0 auto}
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:16px}
+.eyebrow{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
+.btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.btn:hover{border-color:var(--border2)}
+.btn.primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+.btn.danger{color:var(--red)}
+.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;border-left:3px solid var(--dim)}
+.metric .l{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.metric .v{display:block;font-size:19px;font-weight:500}
+.metric .ms{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.m1{border-left-color:var(--blue)} .m2{border-left-color:var(--red)} .m3{border-left-color:var(--purple)} .m4{border-left-color:var(--accent)} .m5{border-left-color:var(--teal)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+.card-label{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.bar-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.bar-tools input[type=search]{flex:1 1 200px;max-width:320px}
+.chipset{display:flex;gap:4px;flex-wrap:wrap}
+.chipset button{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--muted)}
+.chipset button.on{background:var(--surface2);border-color:var(--accent);color:var(--text)}
+.due{margin-bottom:16px}
+.due-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.due-row:last-child{border-bottom:0}
+.due-row .who{flex:1;min-width:160px;cursor:pointer}
+.due-row .who:hover .nm{color:var(--accent)}
+.nm{font-size:14px;font-weight:500}
+.sub{font-size:11px;color:var(--muted);margin-top:2px}
+.sub.over{color:var(--red)} .sub.now{color:var(--amber)}
+.mini{display:flex;gap:5px;flex-wrap:wrap}
+.mini button,.mini a{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:11px;padding:4px 9px;text-decoration:none;white-space:nowrap}
+.mini button:hover,.mini a:hover{color:var(--text);border-color:var(--border2)}
+/* board */
+.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
+.col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;min-height:120px;display:flex;flex-direction:column}
+.col-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.col-h .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:7px}
+.col-h .n{font-family:'DM Mono',monospace;color:var(--dim);font-weight:500}
+.list{display:flex;flex-direction:column;gap:8px;min-height:40px;flex:1}
+.lead{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 11px;cursor:pointer;position:relative;touch-action:manipulation}
+.lead:hover{border-color:var(--border2)}
+.lead .top{display:flex;align-items:flex-start;gap:6px}
+.lead .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grip{flex-shrink:0;width:16px;height:20px;display:flex;align-items:center;justify-content:center;cursor:grab;fill:var(--dim);touch-action:none;margin:-1px -4px 0 -4px}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;align-items:center}
+.tag{font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:20px;white-space:nowrap}
+.i-rev{background:var(--accent-dim);color:var(--accent)} .i-fndn{background:var(--blue-dim);color:var(--blue)} .i-pt{background:var(--teal-dim);color:var(--teal)} .i-other{background:rgba(255,255,255,.06);color:var(--muted)}
+.meta{font-size:11px;color:var(--dim)}
+.fu{font-size:11px;color:var(--muted)} .fu.over{color:var(--red)} .fu.now{color:var(--amber)}
+.lead .acts{display:flex;gap:5px;margin-top:8px;align-items:center}
+.lead .acts a{color:var(--muted);text-decoration:none;font-size:11px;border:1px solid var(--border);border-radius:5px;padding:3px 7px}
+.lead .acts a:hover{color:var(--text);border-color:var(--border2)}
+.next{margin-left:auto;background:none;border:1px solid var(--accent);color:var(--accent);border-radius:5px;font-size:11px;font-weight:600;padding:3px 8px;white-space:nowrap}
+.next:hover{background:var(--accent);color:#000}
+.lead-ghost{opacity:.35}
+.lead-chosen{border-color:var(--accent)}
+.empty{font-size:12px;color:var(--dim);padding:14px 4px;text-align:center;line-height:1.5}
+.closed{margin-top:16px}
+.closed summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.closed summary::-webkit-details-marker{display:none}
+.closed summary::before{content:'▸';font-size:10px}
+.closed[open] summary::before{content:'▾'}
+.closed-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.crow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px}
+.crow:last-child{border-bottom:0}
+.crow:hover .nm{color:var(--accent)}
+.crow .d{font-size:11px;color:var(--muted);white-space:nowrap}
+.lower{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.src-row{display:grid;grid-template-columns:110px 1fr 70px;gap:10px;align-items:center;padding:5px 0;font-size:12px}
+.src-bar{height:8px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;display:flex}
+.src-bar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.src-bar i.b{background:var(--accent);opacity:.35;border-radius:0 4px 4px 0;margin-left:2px}
+.src-n{text-align:right;font-family:'DM Mono',monospace;color:var(--muted);font-size:11px}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:8px;border-radius:2px;background:var(--accent);margin-right:5px;vertical-align:0}
+.legend i.b{opacity:.35}
+.funnel-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:12px}
+.funnel-row span:first-child{width:110px;color:var(--muted)}
+.funnel-row .fb{flex:1;height:8px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden}
+.funnel-row .fb i{display:block;height:100%;border-radius:4px}
+.funnel-row b{font-weight:500;font-family:'DM Mono',monospace;font-size:11px;width:60px;text-align:right}
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--surface);border-left:1px solid var(--border);z-index:21;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.drawer header{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--border)}
+.drawer h3{font-size:20px;font-weight:300;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drawer form{flex:1;overflow-y:auto;padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;align-content:start}
+.f{display:grid;gap:6px;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;min-width:0}
+.f.full{grid-column:1/-1}
+.f input,.f textarea,.f select{font-size:14px;width:100%;min-width:0;letter-spacing:0;text-transform:none;font-weight:400}
+.f textarea{resize:vertical;min-height:90px}
+.hint{font-size:11px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--dim);line-height:1.4}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:block;text-align:center;padding:8px 4px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--muted);cursor:pointer}
+.seg input:checked+span{background:var(--surface2);border-color:var(--accent);color:var(--text)}
+.seg input:focus-visible+span{outline:2px solid var(--accent)}
+.quick{display:flex;gap:5px;flex-wrap:wrap}
+.quick button{background:var(--surface2);border:1px solid var(--border);border-radius:20px;color:var(--muted);font-size:11px;padding:3px 10px;letter-spacing:0;text-transform:none;font-weight:500}
+.quick button:hover{color:var(--text);border-color:var(--border2)}
+.drawer footer{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border)}
+.drawer footer div{display:flex;gap:8px}
+.contact-row{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+.contact-row a{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px;color:var(--text);text-decoration:none;font-size:12px}
+.modal{position:fixed;inset:0;z-index:25;display:grid;place-items:center;padding:16px;background:rgba(0,0,0,.55)}
+.modal form{background:var(--surface);border:1px solid var(--border2);border-radius:12px;width:min(380px,100%);padding:18px;display:grid;gap:12px}
+.modal h4{font-size:18px;font-weight:400}
+.modal p{color:var(--muted);font-size:12px;line-height:1.5;margin-top:-6px}
+.modal .acts{display:flex;justify-content:flex-end;gap:8px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--text);color:var(--bg);padding:10px 14px;border-radius:9px;display:flex;gap:14px;align-items:center;z-index:30;font-size:13px;max-width:calc(100% - 32px)}
+.toast button{border:0;background:none;color:inherit;font-weight:600;text-decoration:underline;padding:0;white-space:nowrap}
+@media (max-width:1000px){.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:860px){
+  body{padding-left:16px;padding-right:16px}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .board{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;margin:0 -16px;padding:0 16px 6px;scroll-padding:0 16px}
+  .col{flex:0 0 84%;scroll-snap-align:start}
+  .closed-grid,.lower{grid-template-columns:1fr}
+  .src-row{grid-template-columns:90px 1fr 60px}
+}
+@media (prefers-reduced-motion:no-preference){.drawer{animation:slide .18s ease-out}@keyframes slide{from{transform:translateX(24px);opacity:.6}}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="head">
+    <div><div class="eyebrow">Rev Barbell Club</div><h1>Leads</h1></div>
+    <button class="btn primary" id="addBtn" type="button">+ Add lead</button>
+  </div>
+
+  <section class="metrics" aria-label="Leads summary">
+    <div class="metric m1"><span class="l">Open leads</span><span class="v" id="mOpen">–</span><span class="ms" id="mOpenSub"></span></div>
+    <div class="metric m2"><span class="l">Follow-ups due</span><span class="v" id="mDue">–</span><span class="ms" id="mDueSub"></span></div>
+    <div class="metric m3"><span class="l">Trials this week</span><span class="v" id="mTrial">–</span><span class="ms" id="mTrialSub"></span></div>
+    <div class="metric m4"><span class="l">Joined this month</span><span class="v" id="mJoined">–</span><span class="ms" id="mJoinedSub"></span></div>
+    <div class="metric m5"><span class="l">Conversion</span><span class="v" id="mConv">–</span><span class="ms" id="mConvSub"></span></div>
+  </section>
+
+  <section class="card due" id="dueCard" hidden>
+    <div class="card-label">Follow up today <span id="dueCount" style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--text)"></span></div>
+    <div id="dueList"></div>
+  </section>
+
+  <div class="bar-tools">
+    <input type="search" id="q" placeholder="Search name, phone, notes" aria-label="Search leads">
+    <div class="chipset" id="interestF" role="group" aria-label="Filter by interest"></div>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <details class="closed" id="closed">
+    <summary>Joined and lost <span id="closedCount" style="font-weight:500;color:var(--dim)"></span></summary>
+    <div class="closed-grid">
+      <section class="card"><div class="card-label">Joined <span id="joinedN"></span></div><div id="joinedList"></div></section>
+      <section class="card"><div class="card-label">Lost <span id="lostN"></span></div><div id="lostList"></div></section>
+    </div>
+  </details>
+
+  <div class="lower">
+    <section class="card"><div class="card-label">Where leads come from · last 90 days</div><div id="srcList"></div>
+      <div class="legend"><span><i></i>Joined</span><span><i class="b"></i>Not joined yet</span></div></section>
+    <section class="card"><div class="card-label">How far they get · last 90 days</div><div id="funnel"></div></section>
+  </div>
+</div>
+
+<div id="drawerRoot" hidden>
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <header><h3 id="dTitle">New lead</h3><button class="btn" type="button" id="dClose">Close</button></header>
+    <form id="dForm" autocomplete="off">
+      <label class="f full">Name<input id="f-name" required maxlength="80"></label>
+      <label class="f">Phone<input id="f-phone" type="tel" inputmode="tel"></label>
+      <label class="f">Email<input id="f-email" type="email" inputmode="email" autocapitalize="off"></label>
+      <div class="contact-row" id="contactRow"></div>
+      <div class="f full"><span>Interested in</span>
+        <div class="seg" id="f-interest">
+          <label><input type="radio" name="interest" value="rev"><span>Rev</span></label>
+          <label><input type="radio" name="interest" value="fndn"><span>FNDN</span></label>
+          <label><input type="radio" name="interest" value="pt"><span>PT</span></label>
+          <label><input type="radio" name="interest" value="other"><span>Other</span></label>
+        </div>
+      </div>
+      <label class="f">Source<select id="f-source"></select></label>
+      <label class="f">Stage<select id="f-stage"></select></label>
+      <label class="f">Follow up<input id="f-fu" type="date"></label>
+      <label class="f" id="w-trial">Trial date<input id="f-trial" type="date"></label>
+      <div class="f full"><div class="quick" id="fuQuick"><button type="button" data-d="0">Today</button><button type="button" data-d="1">Tomorrow</button><button type="button" data-d="3">In 3 days</button><button type="button" data-d="7">In a week</button><button type="button" data-d="">No follow-up</button></div></div>
+      <label class="f full" id="w-lost">Why they didn't join<input id="f-lost" maxlength="120" placeholder="e.g. price, timing, went elsewhere"></label>
+      <label class="f full">Notes<textarea id="f-notes" placeholder="What they're after, goals, experience, anything from the call"></textarea></label>
+      <p class="hint full" id="f-meta" style="grid-column:1/-1"></p>
+    </form>
+    <footer>
+      <div><button class="btn danger" type="button" id="dDel">Delete</button></div>
+      <div><button class="btn" type="button" id="dCancel">Cancel</button><button class="btn primary" type="submit" form="dForm">Save</button></div>
+    </footer>
+  </aside>
+</div>
+
+<div class="toast" id="toast" hidden role="status"><span id="toastMsg"></span><button type="button" id="toastAct" hidden></button></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+<script src="rev.js?v=23"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js"></script>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const parseD=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const today=()=>iso(new Date());
+const addDays=(s,n)=>{const d=parseD(s);d.setDate(d.getDate()+n);return iso(d)};
+const fmt=(s,o)=>parseD(s).toLocaleDateString("en-AU",o||{weekday:"short",day:"numeric",month:"short"});
+const daysAgo=ts=>{const n=Math.floor((Date.now()-new Date(ts))/86400000);return n<=0?"today":n===1?"yesterday":n<30?`${n} days ago`:fmt(iso(new Date(ts)),{day:"numeric",month:"short"})};
+
+const STAGES=[
+  {k:"new",l:"New",c:"var(--blue)",next:"contacted",nl:"Contacted"},
+  {k:"contacted",l:"Contacted",c:"var(--amber)",next:"trial",nl:"Book trial"},
+  {k:"trial",l:"Trial booked",c:"var(--purple)",next:"trialled",nl:"Trialled"},
+  {k:"trialled",l:"Trialled",c:"var(--teal)",next:"joined",nl:"Joined"},
+  {k:"joined",l:"Joined",c:"var(--accent)"},{k:"lost",l:"Lost",c:"var(--dim)"}];
+const ST=Object.fromEntries(STAGES.map(s=>[s.k,s]));
+const INTEREST={rev:"Rev",fndn:"FNDN",pt:"PT",other:"Other"};
+const SOURCES=["Instagram","Facebook","Google","Website","GymDesk","Referral","Walk-in","Event","Other"];
+const OPEN=["new","contacted","trial","trialled"];
+
+let leads=[], editing=null, filter="all", query="";
+revRenderNav($("#app"));
+
+function toast(msg,actLabel,act){const t=$("#toast");$("#toastMsg").textContent=msg;const b=$("#toastAct");b.hidden=!act;b.textContent=actLabel||"";b.onclick=()=>{t.hidden=true;act&&act()};t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,act?7000:3000)}
+function fail(e){console.error(e);toast("Couldn't save that. Check your connection and try again.");load()}
+
+const phoneLink=p=>String(p||"").replace(/[^\d+]/g,"");
+function contactLinks(l,cls){
+  const p=phoneLink(l.phone),out=[];
+  if(p){out.push(`<a href="tel:${p}" class="${cls||""}" aria-label="Call ${esc(l.name)}">Call</a>`);out.push(`<a href="sms:${p}" class="${cls||""}" aria-label="Text ${esc(l.name)}">Text</a>`)}
+  if(l.email) out.push(`<a href="mailto:${esc(l.email)}" class="${cls||""}" aria-label="Email ${esc(l.name)}">Email</a>`);
+  return out.join("");
+}
+function fuText(l){
+  if(!l.follow_up) return "";
+  const t=today();
+  if(l.follow_up<t) return `<span class="fu over">Follow up overdue · ${fmt(l.follow_up,{day:"numeric",month:"short"})}</span>`;
+  if(l.follow_up===t) return `<span class="fu now">Follow up today</span>`;
+  return `<span class="fu">Follow up ${fmt(l.follow_up)}</span>`;
+}
+const matches=l=>(filter==="all"||l.interest===filter)&&(!query||[l.name,l.phone,l.email,l.notes,l.source].join(" ").toLowerCase().includes(query));
+/* within a stage: overdue and due follow-ups first, then soonest follow-up, then newest */
+const byUrgency=(a,b)=>(a.follow_up||"9999").localeCompare(b.follow_up||"9999")||b.created_at.localeCompare(a.created_at);
+
+function render(){
+  const t=today(), open=leads.filter(l=>OPEN.includes(l.stage));
+  /* metrics */
+  const wkStart=(()=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return iso(d)})(), wkEnd=addDays(wkStart,6);
+  const monthStart=t.slice(0,8)+"01", since90=addDays(t,-90);
+  const due=open.filter(l=>l.follow_up&&l.follow_up<=t).sort(byUrgency);
+  $("#mOpen").textContent=open.length; $("#mOpenSub").textContent=`${open.filter(l=>l.stage==="new").length} new · not contacted yet`;
+  $("#mDue").textContent=due.length; $("#mDueSub").textContent=due.filter(l=>l.follow_up<t).length?`${due.filter(l=>l.follow_up<t).length} overdue`:due.length?"all due today":"all caught up";
+  const trials=leads.filter(l=>l.trial_on&&l.trial_on>=wkStart&&l.trial_on<=wkEnd);
+  $("#mTrial").textContent=trials.length; $("#mTrialSub").textContent=trials.filter(l=>l.trial_on>=t&&l.stage==="trial").length?`${trials.filter(l=>l.trial_on>=t&&l.stage==="trial").length} still to come`:"";
+  const joinedM=leads.filter(l=>l.stage==="joined"&&(l.joined_at||"").slice(0,10)>=monthStart);
+  $("#mJoined").textContent=joinedM.length; $("#mJoinedSub").textContent=joinedM.length?joinedM.map(l=>INTEREST[l.interest]).filter((v,i,a)=>a.indexOf(v)===i).join(", "):"";
+  const recent=leads.filter(l=>l.created_at.slice(0,10)>=since90), rj=recent.filter(l=>l.stage==="joined").length;
+  $("#mConv").textContent=recent.length?Math.round(rj/recent.length*100)+"%":"–"; $("#mConvSub").textContent=recent.length?`${rj} of ${recent.length} leads in 90 days joined`:"No leads in 90 days";
+
+  /* follow-ups due */
+  $("#dueCard").hidden=!due.length; $("#dueCount").textContent=due.length?`${due.length}`:"";
+  $("#dueList").innerHTML=due.map(l=>`<div class="due-row"><div class="who" data-open="${l.id}"><div class="nm">${esc(l.name)} <span class="tag i-${l.interest}">${INTEREST[l.interest]}</span></div>
+    <div class="sub ${l.follow_up<t?"over":"now"}">${ST[l.stage].l} · ${l.follow_up<t?"overdue since "+fmt(l.follow_up,{day:"numeric",month:"short"}):"due today"}${l.notes?" · "+esc(l.notes.split("\n")[0].slice(0,60)):""}</div></div>
+    <div class="mini">${contactLinks(l)}<button type="button" data-snooze="${l.id}" data-days="2">+2 days</button><button type="button" data-snooze="${l.id}" data-days="7">+1 week</button>${ST[l.stage].next?`<button type="button" data-next="${l.id}" style="color:var(--accent);border-color:var(--accent)">${ST[l.stage].nl}</button>`:""}</div></div>`).join("");
+
+  /* filters */
+  $("#interestF").innerHTML=[["all","All"],...Object.entries(INTEREST)].map(([k,v])=>`<button type="button" data-f="${k}" class="${filter===k?"on":""}" aria-pressed="${filter===k}">${v}</button>`).join("");
+
+  /* board */
+  $("#board").innerHTML=STAGES.filter(s=>OPEN.includes(s.k)).map(s=>{
+    const items=leads.filter(l=>l.stage===s.k&&matches(l)).sort(s.k==="trial"?(a,b)=>(a.trial_on||"9999").localeCompare(b.trial_on||"9999"):byUrgency);
+    return `<section class="col" aria-label="${s.l}"><div class="col-h"><span><span class="dot" style="background:${s.c}"></span>${s.l}</span><span class="n">${items.length}</span></div>
+      <div class="list" data-stage="${s.k}">${items.map(card).join("")||`<div class="empty">${s.k==="new"?"Tap + Add lead when someone enquires.":"Drag a lead here, or use the button on a card."}</div>`}</div></section>`;
+  }).join("");
+  wireDrag();
+
+  /* closed */
+  const cl=(k,dateOf)=>leads.filter(l=>l.stage===k&&matches(l)).sort((a,b)=>(dateOf(b)||"").localeCompare(dateOf(a)||"")).slice(0,60);
+  const joined=cl("joined",l=>l.joined_at||l.stage_changed_at), lost=cl("lost",l=>l.stage_changed_at);
+  $("#closedCount").textContent=`· ${leads.filter(l=>l.stage==="joined").length} joined · ${leads.filter(l=>l.stage==="lost").length} lost`;
+  $("#joinedN").textContent=joined.length; $("#lostN").textContent=lost.length;
+  const crow=(l,d,extra)=>`<div class="crow" data-open="${l.id}"><div style="flex:1;min-width:0"><div class="nm">${esc(l.name)} <span class="tag i-${l.interest}">${INTEREST[l.interest]}</span></div>${extra?`<div class="sub">${esc(extra)}</div>`:""}</div><span class="d">${d?fmt(d.slice(0,10),{day:"numeric",month:"short",year:"2-digit"}):""}</span></div>`;
+  $("#joinedList").innerHTML=joined.map(l=>crow(l,l.joined_at||l.stage_changed_at,l.source)).join("")||`<div class="empty">Nobody yet.</div>`;
+  $("#lostList").innerHTML=lost.map(l=>crow(l,l.stage_changed_at,l.lost_reason)).join("")||`<div class="empty">Nobody yet.</div>`;
+
+  /* sources, last 90 days */
+  const src={}; recent.forEach(l=>{const k=l.source||"Not set";(src[k]=src[k]||{n:0,j:0}).n++;if(l.stage==="joined")src[k].j++});
+  const rows=Object.entries(src).sort((a,b)=>b[1].n-a[1].n), max=Math.max(1,...rows.map(r=>r[1].n));
+  $("#srcList").innerHTML=rows.length?rows.map(([k,v])=>`<div class="src-row" title="${esc(k)}: ${v.n} leads, ${v.j} joined"><span>${esc(k)}</span><div class="src-bar" style="width:${Math.max(4,v.n/max*100)}%">${v.j?`<i style="flex:${v.j}"></i>`:""}${v.n-v.j?`<i class="b" style="flex:${v.n-v.j};${v.j?"":"margin-left:0;border-radius:4px"}"></i>`:""}</div><span class="src-n">${v.j}/${v.n}</span></div>`).join(""):`<div class="empty">Set a source on each lead to see where they come from.</div>`;
+  /* funnel: how many of the last 90 days' leads reached each stage */
+  const rank={new:0,contacted:1,trial:2,trialled:3,joined:4,lost:-1};
+  const reached=k=>recent.filter(l=>(l.stage==="lost"?(l.max_stage??0):rank[l.stage])>=rank[k]).length;
+  const fs=[["new","Enquired"],["contacted","Contacted"],["trial","Booked a trial"],["trialled","Did a trial"],["joined","Joined"]];
+  $("#funnel").innerHTML=recent.length?fs.map(([k,lab])=>{const n=k==="new"?recent.length:reached(k);return `<div class="funnel-row"><span>${lab}</span><div class="fb"><i style="width:${n/recent.length*100}%;background:${ST[k].c}"></i></div><b>${n} · ${Math.round(n/recent.length*100)}%</b></div>`}).join("")
+    +`<p class="hint" style="margin-top:8px">Lost leads count up to the stage they reached before dropping off.</p>`:`<div class="empty">No leads in the last 90 days.</div>`;
+}
+
+const GRIP=`<span class="grip" aria-hidden="true"><svg width="10" height="14" viewBox="0 0 10 14"><circle cx="2" cy="2" r="1.3"/><circle cx="8" cy="2" r="1.3"/><circle cx="2" cy="7" r="1.3"/><circle cx="8" cy="7" r="1.3"/><circle cx="2" cy="12" r="1.3"/><circle cx="8" cy="12" r="1.3"/></svg></span>`;
+function card(l){
+  const s=ST[l.stage];
+  return `<article class="lead" data-open="${l.id}" data-id="${l.id}"><div class="top">${GRIP}<span class="nm">${esc(l.name)}</span></div>
+    <div class="tags"><span class="tag i-${l.interest}">${INTEREST[l.interest]}</span>${l.source?`<span class="meta">${esc(l.source)}</span>`:""}<span class="meta">· ${daysAgo(l.created_at)}</span></div>
+    ${l.stage==="trial"&&l.trial_on?`<div class="tags"><span class="fu ${l.trial_on<today()?"over":l.trial_on===today()?"now":""}">Trial ${l.trial_on===today()?"today":fmt(l.trial_on)}</span></div>`:""}
+    ${l.follow_up&&!(l.stage==="trial"&&l.follow_up===l.trial_on)?`<div class="tags">${fuText(l)}</div>`:""}
+    ${l.notes?`<div class="meta" style="margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(l.notes.split("\n")[0])}</div>`:""}
+    <div class="acts">${contactLinks(l)}${s.next?`<button type="button" class="next" data-next="${l.id}">${s.nl} →</button>`:""}</div></article>`;
+}
+
+/* ---- stage changes ---- */
+const rankOf={new:0,contacted:1,trial:2,trialled:3,joined:4};
+async function setStage(l,stage,extra){
+  const patch={stage,stage_changed_at:new Date().toISOString(),...extra};
+  const t=today();
+  if(stage==="contacted"&&!("follow_up" in patch)) patch.follow_up=addDays(t,2);
+  if(stage==="trial"&&patch.trial_on&&!("follow_up" in patch)) patch.follow_up=patch.trial_on;
+  if(stage==="trialled"&&!("follow_up" in patch)) patch.follow_up=addDays(t,1);
+  if(stage==="joined"){patch.joined_at=new Date().toISOString();patch.follow_up=null}
+  if(stage==="lost") patch.follow_up=null;
+  if(stage!=="joined") patch.joined_at=null;
+  const before={stage:l.stage,follow_up:l.follow_up,trial_on:l.trial_on,joined_at:l.joined_at,stage_changed_at:l.stage_changed_at,lost_reason:l.lost_reason};
+  try{
+    const {data,error}=await sb.from("leads").update(patch).eq("id",l.id).select().single(); if(error) throw error;
+    Object.assign(l,data); render();
+    const undo=async()=>{try{const r=await sb.from("leads").update(before).eq("id",l.id).select().single();if(r.error)throw r.error;Object.assign(l,r.data);render()}catch(e){fail(e)}};
+    if(stage==="joined"&&l.interest==="pt") toast(`${l.name} joined 🎉`,"Add as PT client",()=>addAsPT(l));
+    else toast(stage==="joined"?`${l.name} joined 🎉`:`${l.name} moved to ${ST[stage].l}`,"Undo",undo);
+  }catch(e){fail(e)}
+}
+async function addAsPT(l){
+  try{const {error}=await sb.from("pt_clients").insert({name:l.name,phone:l.phone||"",notes:l.notes||"",plan:"weekly",active:true,days:[]});if(error)throw error;
+    toast(`${l.name} added to PT Clients. Set their plan and days there.`,"Open",()=>location.href="pt.html")}catch(e){fail(e)}
+}
+function askDate(title,sub,def){return new Promise(res=>{
+  const el=document.createElement("div");el.className="modal";
+  el.innerHTML=`<form><h4>${esc(title)}</h4><p>${esc(sub)}</p><div class="quick">${[0,1,2,3].map(n=>`<button type="button" data-d="${addDays(today(),n)}">${n===0?"Today":n===1?"Tomorrow":fmt(addDays(today(),n),{weekday:"short"})}</button>`).join("")}</div>
+    <input type="date" value="${def}" required aria-label="Date"><div class="acts"><button type="button" class="btn" data-x>Cancel</button><button type="submit" class="btn primary">Save</button></div></form>`;
+  document.body.appendChild(el);const inp=el.querySelector("input[type=date]");
+  el.addEventListener("click",e=>{if(e.target===el||e.target.closest("[data-x]")){el.remove();res(null)}const q=e.target.closest("[data-d]");if(q)inp.value=q.dataset.d});
+  el.querySelector("form").addEventListener("submit",e=>{e.preventDefault();el.remove();res(inp.value||null)});
+})}
+function askText(title,sub,ph){return new Promise(res=>{
+  const el=document.createElement("div");el.className="modal";
+  el.innerHTML=`<form><h4>${esc(title)}</h4><p>${esc(sub)}</p><input maxlength="120" placeholder="${esc(ph)}" aria-label="Reason"><div class="acts"><button type="button" class="btn" data-x>Cancel</button><button type="submit" class="btn primary">Save</button></div></form>`;
+  document.body.appendChild(el);setTimeout(()=>el.querySelector("input").focus(),30);
+  el.addEventListener("click",e=>{if(e.target===el||e.target.closest("[data-x]")){el.remove();res(undefined)}});
+  el.querySelector("form").addEventListener("submit",e=>{e.preventDefault();const v=el.querySelector("input").value.trim();el.remove();res(v)});
+})}
+async function moveTo(l,stage){
+  if(stage==="trial"){const d=await askDate(`Trial for ${l.name}`,"When's their trial session?",addDays(today(),1));if(!d){render();return}return setStage(l,"trial",{trial_on:d})}
+  if(stage==="lost"){const r=await askText(`${l.name} didn't join`,"Optional: why not? Helps spot patterns.","e.g. price, timing, went elsewhere");if(r===undefined){render();return}return setStage(l,"lost",{lost_reason:r||null,max_stage:rankOf[l.stage]})}
+  return setStage(l,stage);
+}
+
+function wireDrag(){
+  if(!window.Sortable) return;
+  document.querySelectorAll("#board .list").forEach(el=>Sortable.create(el,{group:"leads",handle:".grip",draggable:".lead",animation:150,ghostClass:"lead-ghost",chosenClass:"lead-chosen",forceFallback:true,fallbackTolerance:3,sort:false,
+    onAdd:ev=>{const l=leads.find(x=>x.id===ev.item.dataset.id);if(l)moveTo(l,ev.to.dataset.stage)}}));
+}
+
+/* ---- drawer ---- */
+$("#f-source").innerHTML=`<option value="">Not set</option>`+SOURCES.map(s=>`<option>${s}</option>`).join("");
+$("#f-stage").innerHTML=STAGES.map(s=>`<option value="${s.k}">${s.l}</option>`).join("");
+function syncStageFields(){const s=$("#f-stage").value;$("#w-trial").hidden=!["trial","trialled","joined","lost"].includes(s)&&!$("#f-trial").value;$("#w-lost").hidden=s!=="lost"}
+function openDrawer(id){
+  editing=id?leads.find(l=>l.id===id):null;
+  const l=editing||{name:"",phone:"",email:"",interest:filter!=="all"?filter:"rev",source:"",stage:"new",follow_up:today(),trial_on:null,notes:"",lost_reason:""};
+  $("#dTitle").textContent=editing?l.name:"New lead";
+  $("#f-name").value=l.name;$("#f-phone").value=l.phone||"";$("#f-email").value=l.email||"";
+  document.querySelectorAll("input[name=interest]").forEach(r=>r.checked=r.value===l.interest);
+  $("#f-source").value=l.source&&SOURCES.includes(l.source)?l.source:(l.source?"Other":"");
+  $("#f-stage").value=l.stage;$("#f-fu").value=l.follow_up||"";$("#f-trial").value=l.trial_on||"";$("#f-lost").value=l.lost_reason||"";$("#f-notes").value=l.notes||"";
+  $("#contactRow").innerHTML=editing?contactLinks(l):"";$("#contactRow").hidden=!editing||!$("#contactRow").innerHTML;
+  $("#f-meta").textContent=editing?`Added ${daysAgo(l.created_at)}${l.stage_changed_at?` · ${ST[l.stage].l} since ${fmt(l.stage_changed_at.slice(0,10),{day:"numeric",month:"short"})}`:""}`:"";
+  $("#dDel").hidden=!editing; delete $("#dDel").dataset.armed; $("#dDel").textContent="Delete";
+  syncStageFields(); $("#drawerRoot").hidden=false; if(!editing) setTimeout(()=>$("#f-name").focus(),30);
+}
+function closeDrawer(){$("#drawerRoot").hidden=true;editing=null}
+$("#f-stage").addEventListener("change",syncStageFields);
+$("#fuQuick").addEventListener("click",e=>{const b=e.target.closest("[data-d]");if(!b)return;$("#f-fu").value=b.dataset.d===""?"":addDays(today(),+b.dataset.d)});
+$("#dForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const stage=$("#f-stage").value;
+  const row={name:$("#f-name").value.trim(),phone:$("#f-phone").value.trim()||null,email:$("#f-email").value.trim()||null,
+    interest:(document.querySelector("input[name=interest]:checked")||{}).value||"rev",source:$("#f-source").value||null,stage,
+    follow_up:$("#f-fu").value||null,trial_on:$("#f-trial").value||null,lost_reason:stage==="lost"?($("#f-lost").value.trim()||null):null,notes:$("#f-notes").value.trim()||null};
+  if(!row.name){$("#f-name").focus();return}
+  if(editing&&editing.stage!==stage){row.stage_changed_at=new Date().toISOString();row.joined_at=stage==="joined"?new Date().toISOString():null;if(stage==="lost")row.max_stage=rankOf[editing.stage]}
+  if(!editing&&stage==="joined") row.joined_at=new Date().toISOString();
+  try{
+    const q=editing?sb.from("leads").update(row).eq("id",editing.id).select().single():sb.from("leads").insert(row).select().single();
+    const {data,error}=await q; if(error) throw error;
+    const i=leads.findIndex(l=>l.id===data.id); if(i>=0) leads[i]=data; else leads.push(data);
+    const was=editing; closeDrawer(); render(); toast(was?`Saved ${data.name}`:`Added ${data.name}`);
+  }catch(err){fail(err)}
+});
+$("#dDel").addEventListener("click",async()=>{const b=$("#dDel");if(!editing)return;
+  if(!b.dataset.armed){b.dataset.armed="1";b.textContent="Tap again to delete";return}
+  try{const {error}=await sb.from("leads").delete().eq("id",editing.id);if(error)throw error;const n=editing.name;leads=leads.filter(l=>l.id!==editing.id);closeDrawer();render();toast(`Deleted ${n}`)}catch(e){fail(e)}});
+["#dClose","#dCancel","#scrim"].forEach(s=>$(s).addEventListener("click",closeDrawer));
+$("#addBtn").addEventListener("click",()=>openDrawer(null));
+
+/* ---- clicks ---- */
+document.addEventListener("click",async e=>{
+  if(e.target.closest("a[href^='tel:'],a[href^='sms:'],a[href^='mailto:']")) return;
+  const f=e.target.closest("[data-f]"); if(f){filter=f.dataset.f;render();return}
+  const nx=e.target.closest("[data-next]"); if(nx){e.stopPropagation();const l=leads.find(x=>x.id===nx.dataset.next);if(l)moveTo(l,ST[l.stage].next);return}
+  const sz=e.target.closest("[data-snooze]"); if(sz){const l=leads.find(x=>x.id===sz.dataset.snooze);if(!l)return;
+    const d=addDays(today(),+sz.dataset.days),prev=l.follow_up;
+    try{const {data,error}=await sb.from("leads").update({follow_up:d}).eq("id",l.id).select().single();if(error)throw error;Object.assign(l,data);render();
+      toast(`${l.name}: follow up ${fmt(d)}`,"Undo",async()=>{try{const r=await sb.from("leads").update({follow_up:prev}).eq("id",l.id).select().single();if(r.error)throw r.error;Object.assign(l,r.data);render()}catch(x){fail(x)}})}catch(x){fail(x)}
+    return}
+  if(e.target.closest(".grip")) return;
+  const o=e.target.closest("[data-open]"); if(o) openDrawer(o.dataset.open);
+});
+$("#q").addEventListener("input",e=>{query=e.target.value.trim().toLowerCase();render()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#drawerRoot").hidden)closeDrawer()});
+
+async function load(){
+  const {data,error}=await sb.from("leads").select("*").order("created_at",{ascending:false});
+  if(error){$("#board").innerHTML=`<div class="empty">Couldn't load leads. Refresh to try again.</div>`;return}
+  leads=data||[]; render();
+}
+revRequireLogin(()=>{load();
+  sb.channel("leads-live").on("postgres_changes",{event:"*",schema:"public",table:"leads"},()=>{clearTimeout(load._t);load._t=setTimeout(load,300)}).subscribe();
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")load()});
+});
+})();
+</script>
+</body>
+</html>
