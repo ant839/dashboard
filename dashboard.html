@@ -7,8 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=1">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=1">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=2">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2">
 <meta name="apple-mobile-web-app-title" content="Rev">
 <title>Home · Rev</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -26,7 +26,7 @@
   --purple: #b08fff; --radius: 10px; --radius-sm: 6px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; min-height: 100vh; padding: 22px 26px; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; min-height: 100vh; padding: calc(22px + env(safe-area-inset-top, 0px)) 26px calc(40px + env(safe-area-inset-bottom, 0px)); }
 ::selection { background: var(--accent); color: #000; }
 input, select, textarea, button { font-family: inherit; font-size: 13px; }
 input, select, textarea { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); padding: 7px 11px; outline: none; transition: border-color 0.15s; }
@@ -345,6 +345,26 @@ select option { background: var(--surface2); }
 .ptb-skipped .task-check { border-style: dashed; }
 .ptb-more { display: block; font-size: 11px; color: var(--muted); padding-top: 6px; text-decoration: none; }
 
+/* Phone and small tablet layout */
+@media (max-width: 900px) {
+  body { padding-left: 16px; padding-right: 16px; }
+  .header { flex-wrap: wrap; gap: 12px; }
+  .header-right { width: 100%; justify-content: space-between; }
+  .clock { font-size: 22px; }
+  .metrics-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .main-layout { grid-template-columns: minmax(0, 1fr); }
+  .left-col { grid-row: auto; order: 2; }
+  .right-top { order: 1; grid-template-columns: minmax(0, 1fr) !important; }
+  .right-bottom { order: 3; min-width: 0; }
+  .right-top > .card { height: auto; max-height: 460px; }
+  .right-top .rt-body, .right-top .sched-list { max-height: 320px; }
+  .week-cal-wrap { overflow-x: auto; }
+  .week-cal-header-row, .wcal-focus-row, .wcal-allday-row, .week-cal-scroll { min-width: 620px; }
+}
+@media (min-width: 560px) and (max-width: 900px) {
+  .right-top { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
@@ -514,10 +534,10 @@ select option { background: var(--surface2); }
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
-<script src="rev.js?v=19"></script>
+<script src="rev.js?v=20"></script>
 <script>revRenderNav(document.body);</script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js"></script>
-<script src="projects.js?v=3"></script>
+<script src="projects.js?v=20"></script>
 <script src="routine.js?v=7"></script>
 <script src="programs-due.js?v=5"></script>
 <script src="pt-core.js?v=17"></script>

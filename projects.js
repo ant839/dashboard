@@ -31,7 +31,7 @@
     $('proj-show-done').textContent = showDone ? 'Hide done' : 'Show done';
     if (!signedIn) {
       strip.innerHTML = `<div class="proj-empty">Sign in to see your projects.<button class="proj-signin" type="button" id="proj-signin">Sign in</button></div>`;
-      $('proj-signin').onclick = () => { location.href = 'athletes.html'; };
+      $('proj-signin').onclick = () => { window.revShowLogin ? revShowLogin() : (location.href = 'athletes.html'); };
       return;
     }
     const list = projects.filter(p => showDone || p.status !== 'Done')
