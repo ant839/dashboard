@@ -128,6 +128,18 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 .switch.sm .slider{width:28px;height:16px}
 .switch.sm .slider::after{width:12px;height:12px}
 .switch.sm input:checked+.slider::after{transform:translateX(12px)}
+.viewsw{display:inline-flex;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px;gap:2px}
+.viewsw button{background:none;border:0;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:500;color:var(--muted)}
+.viewsw button.on{background:var(--surface2);color:var(--text)}
+.head-acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.due-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.due-row:last-child{border-bottom:0}
+.due-when{font-size:11px;color:var(--muted);margin-top:2px}
+.due-when.over{color:var(--red)} .due-when.now{color:var(--amber)}
+.due-amt{font-family:'DM Mono',monospace;font-size:13px;white-space:nowrap}
+.paid-btn{background:none;border:1px solid var(--accent);color:var(--accent);border-radius:var(--radius-sm);font-size:12px;font-weight:600;padding:5px 12px;white-space:nowrap}
+.paid-btn:hover{background:var(--accent);color:#000}
+.paid-tag{font-size:10px;color:var(--accent);font-weight:600;letter-spacing:.04em}
 /* drawer */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--surface);border-left:1px solid var(--border);z-index:21;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -180,13 +192,15 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 <div class="wrap" id="app">
   <div class="head">
     <div><div class="eyebrow">Personal training</div><h1>PT clients</h1></div>
-    <button class="btn primary" id="addBtn" type="button">+ Add client</button>
+    <div class="head-acts"><div class="viewsw" role="tablist" aria-label="View"><button type="button" role="tab" data-view="clients" class="on" aria-selected="true">Clients</button><button type="button" role="tab" data-view="biz" aria-selected="false">Business</button></div>
+    <button class="btn primary" id="addBtn" type="button">+ Add client</button></div>
   </div>
+  <div id="vClients">
 
   <section class="metrics" aria-label="PT summary">
     <div class="metric m1"><span class="l">Sessions today</span><span class="v" id="mToday">0</span></div>
     <div class="metric m2"><span class="l">Sessions this week</span><span class="v" id="mWeek">0</span></div>
-    <div class="metric m5"><span class="l">Weekly clients income</span><span class="v" id="mIncome">–</span><span class="ms" id="mIncomeSub"></span></div>
+    <div class="metric m5"><span class="l">Weekly income received</span><span class="v" id="mIncome">–</span><span class="ms" id="mIncomeSub"></span></div>
     <div class="metric m3"><span class="l">Packs running low</span><span class="v" id="mLow">0</span></div>
     <div class="metric m4"><span class="l">Renewals due</span><span class="v" id="mRenew">0</span></div>
   </section>
@@ -203,6 +217,10 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
           <select id="otherClient" aria-label="Log a session for another client"><option value="">Log a session for someone else…</option></select>
           <button class="btn" type="submit">Log</button>
         </form>
+      </section>
+      <section class="card attn" id="dueCard" hidden>
+        <div class="card-label">Payments due <span id="dueTotal" style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--text)"></span></div>
+        <div id="dueList"></div>
       </section>
       <section class="card attn" id="payCard" hidden>
         <div class="card-label">Upcoming package payments <span id="payTotal" style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--text)"></span></div>
@@ -230,6 +248,8 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
     </section>
     </div>
   </div>
+  </div>
+  <div id="vBiz" hidden></div>
 </div>
 
 <div id="drawerRoot" hidden>
@@ -282,6 +302,8 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
     <label class="f">New start<input id="r-start" type="date" required></label>
     <label class="f">New end<input id="r-end" type="date"></label>
     <label class="f full" id="r-packWrap">Sessions in new pack<input id="r-pack" type="number" min="1" max="500"></label>
+    <label class="f">Amount paid ($)<input id="r-amt" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Leave blank if not paid yet"></label>
+    <label class="f">Paid on<input id="r-paid" type="date"></label>
     <div class="acts"><button class="btn" type="button" id="rCancel">Cancel</button><button class="btn primary" type="submit">Renew</button></div>
   </form>
 </div>
@@ -291,7 +313,8 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="rev.js?v=22"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js"></script>
-<script src="pt-core.js?v=19"></script>
+<script src="pt-core.js?v=20"></script>
+<script src="pt-biz.js?v=1"></script>
 <script>
 (function(){
 const $=s=>document.querySelector(s);
@@ -340,11 +363,19 @@ function render(){
   $("#attnCard").hidden=!attn.length;
   $("#attnList").innerHTML=attn.map(({c,s})=>`<div class="client" data-edit="${c.id}"><div class="cbody"><div class="cname">${esc(c.name)} ${planBadge(c)}</div><div class="cline ${s.level}">${esc(s.line)}</div></div><button class="btn" type="button" data-renew="${c.id}">Renew</button></div>`).join("");
 
+  const dues=PT.paymentsDue();
+  $("#dueCard").hidden=!dues.length;
+  const dueNow=dues.filter(d=>d.date<=t).reduce((a,d)=>a+d.amount,0);
+  $("#dueTotal").textContent=dueNow?`${PT.money(dueNow)} due now`:"";
+  $("#dueList").innerHTML=dues.map((d,i)=>`<div class="due-row"><div class="cbody"><div class="cname">${esc(d.c.name)} ${planBadge(d.c)}</div>
+    <div class="due-when ${d.overdue?"over":d.today?"now":""}">${d.overdue?`Overdue · was due ${fmt(d.date,{weekday:"short",day:"numeric",month:"short"})}`:d.today?"Due today":`Due ${fmt(d.date,{weekday:"short",day:"numeric",month:"short"})}`} · ${esc(d.label)}</div></div>
+    <span class="due-amt">${PT.money(d.amount)}</span><button type="button" class="paid-btn" data-paid="${i}">Paid</button></div>`).join("");
+  render._dues=dues;
   const pays=PT.upcomingPayments().slice(0,8);
   $("#payCard").hidden=!pays.length;
   const in30=PT.upcomingPayments().filter(x=>x.n.date<=addDays(t,30)).reduce((s,x)=>s+(x.n.amount||0),0);
   $("#payTotal").textContent=in30?`${PT.money(in30)} in the next 30 days`:"";
-  $("#payList").innerHTML=pays.map(({c,n})=>`<div class="client" data-edit="${c.id}"><div class="cbody"><div class="cname">${esc(c.name)} ${planBadge(c)}</div><div class="cline">${n.estimate?"About ":""}${fmt(n.date,{weekday:"short",day:"numeric",month:"short"})} · ${esc(n.why)}</div></div><span class="cprice strong">${n.amount!=null?PT.money(n.amount):"No price set"}</span></div>`).join("");
+  $("#payList").innerHTML=pays.map(({c,n})=>`<div class="client" data-edit="${c.id}"><div class="cbody"><div class="cname">${esc(c.name)} ${planBadge(c)}</div><div class="cline">${n.estimate?"About ":""}${fmt(n.date,{weekday:"short",day:"numeric",month:"short"})} · ${esc(n.why)}</div></div><span class="cprice strong">${n.amount!=null?PT.money(n.amount):"No price set"}</span><button type="button" class="paid-btn" data-renew="${c.id}" title="Log the payment and start their new ${c.plan==="pack"?"pack":"period"}">Paid</button></div>`).join("");
   const wi=PT.weeklyIncome();
   $("#mIncome").textContent=wi.priced?PT.money(wi.earned):"–";
   $("#mIncomeSub").textContent=wi.priced?`of ${PT.money(wi.expected)} expected`:"Add session prices";
@@ -352,11 +383,13 @@ function render(){
   const incHtml=(w,elT,elL,elD)=>{
     $(elD).textContent=`${fmt(w.ws)} to ${fmt(w.we)}`;
     $(elT).textContent=PT.money(w.total);
-    $(elL).innerHTML=w.items.length?w.items.map(i=>`<div class="inc-row"><span class="inc-name">${esc(i.c.name)} <span class="plan p-${i.c.plan}">${esc(i.kind)}</span></span><span class="inc-note">${esc(i.note)}</span><span class="inc-amt${i.amount?"":" zero"}">${PT.money(i.amount)}</span></div>`).join(""):`<div class="empty">Nothing expected this week.</div>`;
+    const isPaid=i=>i.kind==="Weekly"?PT.paymentFor(i.c.id,"week",w.ws):i.kind==="Fortnightly"?PT.paymentFor(i.c.id,"fortnight",i.date):null;
+    $(elL).innerHTML=w.items.length?w.items.map(i=>`<div class="inc-row"><span class="inc-name">${esc(i.c.name)} <span class="plan p-${i.c.plan}">${esc(i.kind)}</span>${isPaid(i)?` <span class="paid-tag">✓ PAID</span>`:""}</span><span class="inc-note">${esc(i.note)}</span><span class="inc-amt${i.amount?"":" zero"}">${PT.money(i.amount)}</span></div>`).join(""):`<div class="empty">Nothing expected this week.</div>`;
   };
   incHtml(PT.weekForecast(t),"#incThisT","#incThis","#incThisD");
   incHtml(PT.weekForecast(addDays(t,7)),"#incNextT","#incNext","#incNextD");
 
+  if(window.PTBiz&&!$("#vBiz").hidden) PTBiz.render();
   if(!store.clients.length){$("#clientList").innerHTML=`<div class="empty">No clients yet. Tap + Add client to get started.</div>`;return}
   /* weekly clients by weekly income, then everyone else by next payment date, inactive faded at the bottom */
   const weeklyAmt=c=>PT.weekAmount(c);
@@ -413,6 +446,16 @@ $("#logOther").addEventListener("submit",async e=>{e.preventDefault();const id=$
 if(window.Sortable) Sortable.create($("#tickList"),{handle:".pt-grip",draggable:".tick-row",animation:150,ghostClass:"pt-ghost",chosenClass:"pt-chosen",forceFallback:true,fallbackTolerance:3,
   onEnd:async ev=>{ if(ev.oldIndex===ev.newIndex) return; const ids=[...$("#tickList").querySelectorAll(".tick-row")].map(r=>r.dataset.cid);
     try{await PT.saveDayOrder(day,ids)}catch(e){fail(e)} }});
+async function markPaid(d){ if(!d) return;
+  try{ const p=await PT.markPaid(d); render(); toast(`${d.c.name} paid ${PT.money(p.amount)}`,async()=>{try{await PT.removePayment(p.id);render()}catch(e){fail(e)}}); }catch(e){fail(e)} }
+function setView(v){
+  document.querySelectorAll("[data-view]").forEach(b=>{b.classList.toggle("on",b.dataset.view===v);b.setAttribute("aria-selected",b.dataset.view===v)});
+  $("#vClients").hidden=v!=="clients"; $("#vBiz").hidden=v!=="biz";
+  try{localStorage.setItem("pt-view",v)}catch(e){}
+  if(v==="biz"&&window.PTBiz) PTBiz.render();
+}
+window.PTPage={openDrawer,toast,fail,render:()=>render()};
+try{ if(localStorage.getItem("pt-view")==="biz") setView("biz"); }catch(e){}
 $("#prevDay").addEventListener("click",()=>{day=addDays(day,-1);render()});
 $("#nextDay").addEventListener("click",()=>{day=addDays(day,1);render()});
 $("#goToday").addEventListener("click",()=>{day=iso(today());render()});
@@ -438,7 +481,11 @@ function renderHist(){
   const h=$("#hist"); if(!editing){h.hidden=true;return}
   const ss=PT.sessionsOf(editing.id).sort((a,b)=>b.day.localeCompare(a.day)||b.created_at.localeCompare(a.created_at)).slice(0,20);
   h.hidden=false;
-  h.innerHTML=`<div class="f"><span>Recent sessions (${PT.sessionsOf(editing.id).length} logged)</span></div>`+(ss.length?ss.map(s=>`<div class="hist-row"><span>${fmt(s.day,{weekday:"short",day:"numeric",month:"short",year:"numeric"})}</span><button type="button" data-delsess="${s.id}" aria-label="Remove this session">×</button></div>`).join(""):`<div class="hint" style="padding:6px 0">No sessions logged yet.</div>`);
+  const pays=PT.paymentsOf(editing.id), paidTot=pays.reduce((a,p)=>a+Number(p.amount||0),0);
+  const cov={week:"Week",fortnight:"Fortnight",pack:"Pack",period:"Period",other:"Payment"};
+  const vals=PT.sessionsOf(editing.id).filter(x=>x.value!=null);
+  h.innerHTML=`<div class="f"><span>Payments · ${PT.money(paidTot)} paid in total${vals.length?` · about ${PT.money(vals.reduce((a,x)=>a+Number(x.value),0)/vals.length)} a session`:""}</span></div>`+(pays.length?pays.slice(0,30).map(p=>`<div class="hist-row"><span>${fmt(p.paid_on,{day:"numeric",month:"short",year:"numeric"})} · ${cov[p.covers]||"Payment"}${p.covers==="pack"&&p.sessions?` of ${p.sessions}`:""}${p.period_from&&p.covers!=="pack"?` from ${fmt(p.period_from)}`:""}${p.note?` · ${esc(p.note)}`:""}</span><span><span class="due-amt">${PT.money(p.amount)}</span> <button type="button" data-delpay="${p.id}" aria-label="Remove this payment">×</button></span></div>`).join(""):`<div class="hint" style="padding:6px 0 12px">No payments logged yet.</div>`)+
+  `<div class="f" style="margin-top:12px"><span>Recent sessions (${PT.sessionsOf(editing.id).length} logged)</span></div>`+(ss.length?ss.map(s=>`<div class="hist-row"><span>${fmt(s.day,{weekday:"short",day:"numeric",month:"short",year:"numeric"})}</span><button type="button" data-delsess="${s.id}" aria-label="Remove this session">×</button></div>`).join(""):`<div class="hint" style="padding:6px 0">No sessions logged yet.</div>`);
 }
 function closeDrawer(){$("#drawerRoot").hidden=true;editing=null}
 $("#f-plan").addEventListener("change",showPlanFields);
@@ -479,7 +526,10 @@ $("#dForm").addEventListener("submit",async e=>{
   }catch(err){fail(err)}
 });
 $("#f-active").addEventListener("change",e=>{$("#f-activeTxt").textContent=e.target.checked?"Active":"Inactive"});
-$("#hist").addEventListener("click",async e=>{const b=e.target.closest("[data-delsess]");if(!b)return;
+$("#hist").addEventListener("click",async e=>{
+  const dp=e.target.closest("[data-delpay]");
+  if(dp){ if(!dp.dataset.armed){dp.dataset.armed="1";dp.textContent="Remove?";dp.classList.add("armed");return} try{await PT.removePayment(dp.dataset.delpay);renderHist();render()}catch(err){fail(err)} return; }
+  const b=e.target.closest("[data-delsess]");if(!b)return;
   if(!b.dataset.armed){b.dataset.armed="1";b.textContent="Remove?";b.classList.add("armed");return}
   try{await PT.removeSession(b.dataset.delsess);renderHist();render()}catch(err){fail(err)}});
 ["#dClose","#dCancel","#scrim"].forEach(s=>$(s).addEventListener("click",closeDrawer));
@@ -492,6 +542,7 @@ function openRenew(c){
   const st=c.plan==="period"&&c.period_end&&c.period_end>=iso(today())?addDays(c.period_end,1):iso(today());
   $("#r-start").value=st; $("#r-end").value=span!==null?addDays(st,span):"";
   $("#r-packWrap").hidden=c.plan!=="pack"; $("#r-pack").value=c.pack_size||"";
+  $("#r-amt").value=c.price_package??""; $("#r-paid").value=iso(today());
   $("#renewSub").textContent=c.plan==="pack"?`Starts a new pack for ${c.name}. Sessions count again from the new start date.`:`Extends ${c.name}'s time period.`;
   $("#renewModal").hidden=false;
 }
@@ -501,7 +552,10 @@ $("#renewForm").addEventListener("submit",async e=>{e.preventDefault();const c=r
   const patch={period_start:$("#r-start").value,period_end:$("#r-end").value||null,active:true};
   if(c.plan==="pack"){ patch.pack_size=parseInt($("#r-pack").value,10)||c.pack_size; patch.prior_sessions=0; }
   try{const {data,error}=await sb.from("pt_clients").update(patch).eq("id",c.id).select().single();if(error)throw error;
-    const i=store.clients.findIndex(x=>x.id===c.id);store.clients[i]=data;$("#renewModal").hidden=true;if(editing)closeDrawer();render();toast(`Renewed ${c.name}`)}catch(err){fail(err)}});
+    const i=store.clients.findIndex(x=>x.id===c.id);store.clients[i]=data;
+    const amt=$("#r-amt").value;
+    if(amt!=="") await PT.addPayment({client_id:c.id,paid_on:$("#r-paid").value||iso(today()),amount:Number(amt),covers:c.plan==="pack"?"pack":"period",period_from:data.period_start,period_to:data.period_end,sessions:c.plan==="pack"?data.pack_size:null});
+    $("#renewModal").hidden=true;if(editing)closeDrawer();render();toast(amt!==""?`Renewed ${c.name} and logged ${PT.money(amt)}`:`Renewed ${c.name}`)}catch(err){fail(err)}});
 
 /* ---- clicks ---- */
 document.addEventListener("change",async e=>{const a=e.target.closest("[data-active]");if(!a)return;const c=store.clients.find(x=>x.id===a.dataset.active);if(!c)return;
@@ -512,6 +566,8 @@ document.addEventListener("click",e=>{
   const sk=e.target.closest("[data-skip]"); if(sk) return toggleSkip(sk.dataset.skip);
   const mv=e.target.closest("[data-move]"); if(mv) return doMove(mv.dataset.move);
   const um=e.target.closest("[data-unmove]"); if(um) return undoMove(um.dataset.unmove);
+  const pd=e.target.closest("[data-paid]"); if(pd) return markPaid(render._dues[+pd.dataset.paid]);
+  const vw=e.target.closest("[data-view]"); if(vw) return setView(vw.dataset.view);
   const r=e.target.closest("[data-renew]"); if(r){e.stopPropagation();return openRenew(store.clients.find(c=>c.id===r.dataset.renew))}
   const ed=e.target.closest("[data-edit]"); if(ed) return openDrawer(ed.dataset.edit);
 });

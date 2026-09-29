@@ -13,7 +13,7 @@
     const done = list.filter(c => hasSession(c.id, day)).length, skipped = list.filter(c => PT.isSkipped(c.id, day) || PT.movedTo(c.id, day)).length;
     $('ptb-count').textContent = list.length ? `${done}/${list.length - skipped}` : '';
     const wi = PT.weeklyIncome();
-    let html = wi.priced ? `<div class="ptb-income"><span class="ptb-inc-l">Weekly income</span><span class="ptb-inc-v">${PT.money(wi.earned)}</span><span class="ptb-inc-s">of ${PT.money(wi.expected)} this week</span><div class="ptb-inc-bar"><div style="width:${wi.expected ? Math.min(100, Math.round(wi.earned / wi.expected * 100)) : 0}%"></div></div></div>` : '';
+    let html = wi.priced ? `<div class="ptb-income"><span class="ptb-inc-l">Weekly income received</span><span class="ptb-inc-v">${PT.money(wi.earned)}</span><span class="ptb-inc-s">of ${PT.money(wi.expected)} this week</span><div class="ptb-inc-bar"><div style="width:${wi.expected ? Math.min(100, Math.round(wi.earned / wi.expected * 100)) : 0}%"></div></div></div>` : '';
     if (!PT.store.clients.length) html = '<div class="rt-empty">No PT clients yet. Add them on the PT tab.</div>';
     else if (!list.length) html = '<div class="rt-empty">No PT sessions scheduled today.</div>';
     else html = list.map(c => {
@@ -26,6 +26,9 @@
         ${on ? '' : sk ? `<button type="button" class="ptb-skip" data-ptskip="${c.id}">Undo</button>` : mvTo ? `<button type="button" class="ptb-skip" data-ptunmove="${c.id}">Undo</button>`
           : `<span class="ptb-btns"><button type="button" class="ptb-skip" data-ptmove="${c.id}">Move</button><button type="button" class="ptb-skip" data-ptskip="${c.id}">Skip</button></span>`}</div>`;
     }).join('');
+    const due = PT.paymentsDue().filter(d => d.date <= day); render._due = due;
+    if (due.length) html += `<div class="rt-sec">Payments due</div>` + due.map((d, i) =>
+      `<div class="ptb-pay-row"><a href="pt.html">${esc(d.c.name)}</a><span class="ptb-pay-d${d.overdue ? ' over' : ''}">${d.overdue ? 'Overdue' : 'Today'}</span><span class="ptb-pay-a">${PT.money(d.amount)}</span><button type="button" class="ptb-skip ptb-paid" data-ptpaid="${i}">Paid</button></div>`).join('');
     const attn = needsAttention().filter(x => x.s.level === 'bad');
     if (attn.length) html += `<div class="rt-sec">Needs attention</div>` + attn.slice(0, 3).map(({ c, s }) =>
       `<div class="ptb-attn ${s.level}"><a href="pt.html">${esc(c.name)}</a><span>${esc(s.line)}</span></div>`).join('');
@@ -42,6 +45,8 @@
     $('ptb-body').addEventListener('click', async e => {
       const k = e.target.closest('[data-ptskip]');
       if (k) { const id = k.dataset.ptskip, day = PT.iso(PT.today()); try { PT.isSkipped(id, day) ? await PT.unskip(id, day) : await PT.skip(id, day); render(); } catch (err) { refresh(); } return; }
+      const pd = e.target.closest('[data-ptpaid]');
+      if (pd) { const d = (render._due || [])[+pd.dataset.ptpaid]; if (!d) return; pd.disabled = true; try { await PT.markPaid(d); render(); } catch (err) { refresh(); } return; }
       const mv = e.target.closest('[data-ptmove]');
       if (mv) { const id = mv.dataset.ptmove, day = PT.iso(PT.today()), c = PT.store.clients.find(x => x.id === id); const to = await PT.pickMoveDay(c, day); if (!to) return; try { await PT.move(id, day, to); render(); } catch (err) { refresh(); } return; }
       const um = e.target.closest('[data-ptunmove]');

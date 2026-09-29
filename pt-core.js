@@ -14,17 +14,21 @@
   const fmt = (s, opts) => parseD(s).toLocaleDateString('en-AU', opts || { day: 'numeric', month: 'short' });
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  const store = { clients: [], sessions: [], orders: [] };
+  const store = { clients: [], sessions: [], orders: [], payments: [] };
+  /* Payment tracking starts the week of 28 Sep 2026; nothing before that is flagged as unpaid. */
+  const PAY_FROM = '2026-09-28';
+  const SESS_COLS = 'id,client_id,day,created_at,status,moved_to,value';
 
   async function load(sinceDays = 400) {
     const since = addDays(iso(today()), -sinceDays);
-    const [c, s, o] = await Promise.all([
+    const [c, s, o, p] = await Promise.all([
       sb.from('pt_clients').select('*'),
-      sb.from('pt_sessions').select('id,client_id,day,created_at,status,moved_to').gte('day', since),
-      sb.from('pt_day_order').select('day,ids').gte('day', addDays(iso(today()), -120))
+      sb.from('pt_sessions').select(SESS_COLS).gte('day', since),
+      sb.from('pt_day_order').select('day,ids').gte('day', addDays(iso(today()), -120)),
+      sb.from('pt_payments').select('*').gte('paid_on', addDays(iso(today()), -sinceDays))
     ]);
     if (c.error || s.error) throw (c.error || s.error);
-    store.clients = c.data || []; store.sessions = s.data || []; store.orders = (o && !o.error && o.data) || [];
+    store.clients = c.data || []; store.sessions = s.data || []; store.orders = (o && !o.error && o.data) || []; store.payments = (p && !p.error && p.data) || [];
     return store;
   }
 
@@ -104,21 +108,72 @@
   const perSession = c => { const n = c.sessions_per_week || (c.days || []).length || 1; return weekAmount(c) / n; };
   const money = n => '$' + Number(n || 0).toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
-  /* Weekly clients this week: earned from ticked sessions, and expected from their usual sessions per week. */
+  /* What one session is worth for this client right now. Saved onto each session when it's ticked. */
+  function sessionValue(c) {
+    const r = v => v == null || !isFinite(v) ? null : Math.round(v * 100) / 100;
+    const spw = c.sessions_per_week || (c.days || []).length || 1;
+    if (c.plan === 'weekly') return weekAmount(c) ? r(perSession(c)) : null;
+    if (c.plan === 'fortnightly') return c.price_package != null ? r(c.price_package / (2 * spw)) : null;
+    if (c.plan === 'pack') return c.price_package != null && c.pack_size ? r(c.price_package / c.pack_size) : null;
+    if (c.price_session != null) return r(Number(c.price_session));
+    if (c.price_package != null && c.period_start && c.period_end) return r(c.price_package / Math.max(1, Math.round(daysBetween(c.period_start, c.period_end) / 7 * spw)));
+    return null;
+  }
+
+  /* ---- payments ---- */
+  const paymentFor = (clientId, covers, from) => store.payments.find(p => p.client_id === clientId && p.covers === covers && p.period_from === from);
+  const paymentsOf = id => store.payments.filter(p => p.client_id === id).sort((a, b) => b.paid_on.localeCompare(a.paid_on) || b.created_at.localeCompare(a.created_at));
+
+  /* Weekly and fortnightly payments falling due from `from` to `to`, each marked paid or not. */
+  function dues(from, to) {
+    const out = [], start = from < PAY_FROM ? PAY_FROM : from;
+    store.clients.forEach(c => {
+      if (c.plan === 'weekly') {
+        const wk = weekAmount(c); if (!wk) return;
+        for (let ws = weekStart(start); ws <= to; ws = addDays(ws, 7)) {
+          const date = addDays(ws, (c.pay_day || 1) - 1), paid = paymentFor(c.id, 'week', ws);
+          if (date < start || date > to) continue;
+          if (!c.active && !paid) continue;
+          const amt = Math.max(0, wk - skipsIn(c.id, ws, addDays(ws, 6)) * perSession(c));
+          if (!amt && !paid) continue;
+          out.push({ c, covers: 'week', key: ws, date, amount: amt, paid, label: 'Week of ' + fmt(ws) });
+        }
+      } else if (c.plan === 'fortnightly') {
+        const amt = Number(c.price_package || 0); if (!amt || !anchorFor(c)) return;
+        for (let d = fortnightPayIn(c, start, to); d; d = fortnightPayIn(c, addDays(d, 1), to)) {
+          const paid = paymentFor(c.id, 'fortnight', d);
+          if (!c.active && !paid) continue;
+          out.push({ c, covers: 'fortnight', key: d, date: d, amount: amt, paid, label: 'Fortnight from ' + fmt(d) });
+        }
+      }
+    });
+    return out.sort((a, b) => a.date.localeCompare(b.date) || a.c.name.localeCompare(b.c.name));
+  }
+  /* Unpaid weekly/fortnightly amounts due up to the end of this week (overdue first), for the Paid list. */
+  function paymentsDue(onDay) {
+    const t = onDay || iso(today());
+    return dues(PAY_FROM, addDays(weekStart(t), 6)).filter(d => !d.paid).map(d => ({ ...d, overdue: d.date < t, today: d.date === t }));
+  }
+  const outstanding = () => paymentsDue().filter(d => d.date <= iso(today())).reduce((s, d) => s + d.amount, 0);
+
+  async function addPayment(row) {
+    const { data, error } = await sb.from('pt_payments').insert(row).select('*').single();
+    if (error) throw error;
+    store.payments.push(data); return data;
+  }
+  const markPaid = (due, over) => addPayment({ client_id: due.c.id, paid_on: (over && over.paid_on) || iso(today()), amount: over && over.amount != null ? over.amount : due.amount, covers: due.covers, period_from: due.key, period_to: due.covers === 'week' ? addDays(due.key, 6) : addDays(due.key, 13) });
+  async function removePayment(id) {
+    const { error } = await sb.from('pt_payments').delete().eq('id', id);
+    if (error) throw error;
+    store.payments = store.payments.filter(p => p.id !== id);
+  }
+
+  /* Weekly and fortnightly clients this week: received (paid) against expected. */
   function weeklyIncome(onDay) {
     const ref = onDay || iso(today()), ws = weekStart(ref), we = addDays(ws, 6);
-    let earned = 0, expected = 0, priced = 0;
-    store.clients.filter(c => c.active && c.plan === 'weekly').forEach(c => {
-      const wk = weekAmount(c); if (!wk) return; priced++;
-      const amt = Math.max(0, wk - skipsIn(c.id, ws, we) * perSession(c));
-      expected += amt;
-      if (c.pay_day) { if (addDays(ws, c.pay_day - 1) <= ref) earned += amt; }
-      else earned += Math.min(amt, store.sessions.filter(x => x.client_id === c.id && isDone(x) && x.day >= ws && x.day <= we).length * perSession(c));
-    });
-    store.clients.filter(c => c.active && c.plan === 'fortnightly').forEach(c => {
-      const amt = Number(c.price_package || 0), d = fortnightPayIn(c, ws, we); if (!amt) return; priced++;
-      if (d) { expected += amt; if (d <= ref) earned += amt; }
-    });
+    const list = dues(ws, we), priced = store.clients.filter(c => c.active && (c.plan === 'weekly' || c.plan === 'fortnightly') && (weekAmount(c) || c.price_package)).length;
+    const expected = list.filter(d => d.c.active).reduce((s, d) => s + d.amount, 0);
+    const earned = list.filter(d => d.paid).reduce((s, d) => s + Number(d.paid.amount || 0), 0);
     return { earned, expected, priced };
   }
 
@@ -208,7 +263,7 @@
     if (done.length) { const r = await sb.from('pt_sessions').delete().in('id', done); if (r.error) throw r.error; store.sessions = store.sessions.filter(x => !done.includes(x.id)); }
     await clearSkip(clientId, from); await clearMove(clientId, from);
     if (to === from) return;
-    const { data, error } = await sb.from('pt_sessions').insert({ client_id: clientId, day: from, status: 'moved', moved_to: to }).select('id,client_id,day,created_at,status,moved_to').single();
+    const { data, error } = await sb.from('pt_sessions').insert({ client_id: clientId, day: from, status: 'moved', moved_to: to }).select(SESS_COLS).single();
     if (error) throw error;
     store.sessions.push(data);
   }
@@ -252,7 +307,8 @@
 
   async function tick(clientId, day) {
     await clearSkip(clientId, day); await clearMove(clientId, day);
-    const { data, error } = await sb.from('pt_sessions').insert({ client_id: clientId, day }).select('id,client_id,day,created_at,status').single();
+    const c = store.clients.find(x => x.id === clientId);
+    const { data, error } = await sb.from('pt_sessions').insert({ client_id: clientId, day, value: c ? sessionValue(c) : null }).select(SESS_COLS).single();
     if (error) throw error;
     store.sessions.push(data); return data;
   }
@@ -261,7 +317,7 @@
     const done = store.sessions.filter(x => x.client_id === clientId && x.day === day && isDone(x)).map(x => x.id);
     if (done.length) { const r = await sb.from('pt_sessions').delete().in('id', done); if (r.error) throw r.error; store.sessions = store.sessions.filter(x => !done.includes(x.id)); }
     if (isSkipped(clientId, day)) return;
-    const { data, error } = await sb.from('pt_sessions').insert({ client_id: clientId, day, status: 'skipped' }).select('id,client_id,day,created_at,status').single();
+    const { data, error } = await sb.from('pt_sessions').insert({ client_id: clientId, day, status: 'skipped' }).select(SESS_COLS).single();
     if (error) throw error;
     store.sessions.push(data);
   }
@@ -283,9 +339,10 @@
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pt_clients' }, onChange)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pt_sessions' }, onChange)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pt_day_order' }, onChange)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pt_payments' }, onChange)
       .subscribe();
   }
 
-  window.PT = { sortForDay, saveDayOrder, move, unmove, movedTo, movedFrom, pickMoveDay, weekAmount, perSession, DAY_LONG, payDayName, anchorFor, isSkipped, skip, unskip, skipsIn, weekForecast, nextFortnightPay, fortnightPayIn, money, weeklyIncome, nextPayment, upcomingPayments, PLAN_LABEL, DAY_SHORT, store, load, status, sessionsOf, hasSession, scheduledOn, trainedOn, needsAttention, tick, untick, removeSession, subscribe,
+  window.PT = { paymentFor, PAY_FROM, sessionValue, dues, paymentsDue, outstanding, addPayment, markPaid, removePayment, paymentsOf, isDone, sortForDay, saveDayOrder, move, unmove, movedTo, movedFrom, pickMoveDay, weekAmount, perSession, DAY_LONG, payDayName, anchorFor, isSkipped, skip, unskip, skipsIn, weekForecast, nextFortnightPay, fortnightPayIn, money, weeklyIncome, nextPayment, upcomingPayments, PLAN_LABEL, DAY_SHORT, store, load, status, sessionsOf, hasSession, scheduledOn, trainedOn, needsAttention, tick, untick, removeSession, subscribe,
     iso, parseD, today, addDays, addMonths, daysBetween, weekday, weekStart, fmt, esc };
 })();
