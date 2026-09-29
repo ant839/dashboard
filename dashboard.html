@@ -471,7 +471,7 @@ select option { background: var(--surface2); }
 <script>revRenderNav(document.body);</script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js"></script>
 <script src="projects.js?v=3"></script>
-<script src="routine.js?v=4"></script>
+<script src="routine.js?v=7"></script>
 <script src="programs-due.js?v=5"></script>
 <script src="layout.js?v=6"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
@@ -583,7 +583,8 @@ function getAllDayForDay(d) {
 
 // ---- Metrics ----
 function renderMetrics() {
-  const total=state.tasks.length+githubTasks.length, done=state.tasks.filter(t=>t.done).length+githubTasks.filter(t=>t.done).length;
+  const rt=window.revRoutineToday||{done:0,total:0};
+  const total=state.tasks.length+githubTasks.length+rt.total, done=state.tasks.filter(t=>t.done).length+githubTasks.filter(t=>t.done).length+rt.done;
   const pct=total?Math.round((done/total)*100):0;
   const today=new Date(), tom=new Date(today); tom.setDate(today.getDate()+1);
   const todayEvs=getEventsForDay(today).length+state.schedule.length;
@@ -980,6 +981,7 @@ fetchGithubTasks();
 render();
 renderChat();
 setInterval(render,60000);
+window.addEventListener('rev:routine',renderMetrics);
 setInterval(()=>{if(accessToken)fetchAllCalendarEvents().then(render);},15*60*1000);
 setInterval(()=>{fetchGithubTasks().then(()=>{renderTasks();renderMetrics();});},2*60*1000);
 </script>

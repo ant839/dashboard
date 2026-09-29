@@ -40,6 +40,8 @@
     $('rt-edit').textContent = editing ? 'Done' : 'Edit';
     if (!signedIn) { body.innerHTML = '<div class="rt-empty">Sign in to see your weekly to-dos.</div>'; $('rt-days').innerHTML = ''; $('rt-count').textContent = ''; return; }
     const dates = weekDates(), tIdx = todayIdx();
+    const tc = countFor(tIdx, iso(dates[tIdx]));
+    window.revRoutineToday = tc; window.dispatchEvent(new CustomEvent('rev:routine', { detail: tc }));
     $('rt-days').innerHTML = dates.map((d, i) => {
       const c = countFor(i, iso(d));
       const state = c.total && c.done === c.total ? ' all' : c.done ? ' some' : '';
