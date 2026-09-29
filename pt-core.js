@@ -50,7 +50,8 @@
       const pct = span ? Math.max(0, Math.min(100, Math.round(daysBetween(c.period_start, ref) / span * 100))) : 0;
       return { level, line: `${used} session${used === 1 ? '' : 's'} · ${endTxt}${left > 0 && left <= 14 ? ` (${left} days)` : ''}`, used, total: 0, pct, daysLeft: left };
     }
-    const size = c.pack_size || 0, rem = size - used;
+    if (!c.pack_size) return { level: 'warn', line: `${used} used · pack size not set`, used, total: 0, remaining: null, pct: 0, daysLeft: left };
+    const size = c.pack_size, rem = size - used;
     let level = 'ok';
     if (rem <= 0 || (left !== null && left < 0)) level = 'bad'; else if (rem <= 2 || (left !== null && left <= 7)) level = 'warn';
     return { level, line: `${used}/${size} used · ${rem <= 0 ? 'pack finished' : rem + ' left'}${c.period_end ? ' · ' + endTxt : ''}`, used, total: size, remaining: rem, pct: size ? Math.min(100, Math.round(used / size * 100)) : 0, daysLeft: left };
@@ -92,7 +93,8 @@
     let date = c.period_end ? addDays(c.period_end, 1) : null, why = c.period_end ? `${c.plan === 'pack' ? 'pack' : 'period'} ends ${fmt(c.period_end)}` : '', estimate = false;
     if (c.plan === 'pack') {
       const s = status(c), rate = c.sessions_per_week || (c.days || []).length;
-      if (s.remaining <= 0) { date = t; why = 'pack finished'; }
+      if (s.remaining === null) { /* size unknown: fall back to end date only */ }
+      else if (s.remaining <= 0) { date = t; why = 'pack finished'; }
       else if (rate) {
         const proj = addDays(t, Math.ceil(s.remaining / rate * 7));
         if (!date || proj < date) { date = proj; why = `${s.remaining} left at ${rate} a week`; estimate = true; }
