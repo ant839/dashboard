@@ -234,7 +234,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
       <label class="f">Sessions per week<input id="f-spw" type="number" min="1" max="14" step="1" placeholder="e.g. 2"><span class="hint" data-for="pack">Used to estimate when the pack runs out</span></label>
       <label class="f" data-for="pack">Sessions in pack<input id="f-pack" type="number" min="1" max="500" step="1" placeholder="e.g. 24"></label>
       <label class="f" data-for="pack">Already used<input id="f-prior" type="number" min="0" max="500" step="1" placeholder="0"><span class="hint">Sessions done before you started tracking here</span></label>
-      <label class="f" data-for="period pack fortnightly"><span id="l-start">Start date</span><input id="f-start" type="date"><span class="hint" data-for="fortnightly">Any one of their payment days. They pay every 2 weeks from it.</span></label>
+      <label class="f" data-for="period pack fortnightly"><span id="l-start">Start date</span><input id="f-start" type="date"><span class="hint" data-for="fortnightly">Their next payment. They pay every 2 weeks from it. If it shows this week but they pay next week, move it forward 7 days.</span></label>
       <label class="f" data-for="period pack">End date<input id="f-end" type="date"></label>
       <div class="f full" data-for="period pack"><span>Length</span>
         <div class="quick" id="lenQuick"><button type="button" data-m="1">1 month</button><button type="button" data-m="3">3 months</button><button type="button" data-m="6">6 months</button><button type="button" data-m="12">12 months</button></div>
@@ -246,6 +246,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
       </div>
       <label class="f" data-for="weekly period">Cost per session ($)<input id="f-psess" type="number" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 65"></label>
       <label class="f" data-for="period pack fortnightly"><span id="l-ppack">Package price ($)</span><input id="f-ppack" type="number" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 1400"></label>
+      <label class="f" data-for="weekly fortnightly">Pays on<select id="f-payday"><option value="">Not set</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="7">Sunday</option></select></label>
       <label class="f">Phone<input id="f-phone" type="tel"></label>
       <div class="f"><span>Active</span><label class="switch"><input type="checkbox" id="f-active" checked><span class="slider"></span><span class="switch-txt" id="f-activeTxt">Active</span></label></div>
       <label class="f full">Notes<textarea id="f-notes"></textarea></label>
@@ -273,7 +274,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="rev.js?v=8"></script>
-<script src="pt-core.js?v=12"></script>
+<script src="pt-core.js?v=13"></script>
 <script>
 (function(){
 const $=s=>document.querySelector(s);
@@ -344,7 +345,7 @@ function render(){
       const s=status(c);
       return `<div class="client" data-edit="${c.id}" role="button" tabindex="0"${c.active?"":" style=\"opacity:.5\""}>
         <div class="cbody"><div class="cname">${esc(c.name)}${c.active?"":" · inactive"}</div><div class="cline ${s.level}">${esc(s.line)}</div>${s.pct||s.total?`<div class="bar ${s.level}"><div style="width:${s.pct}%"></div></div>`:""}</div>
-        <span class="cprice">${c.plan==="weekly"?(c.price_session!=null?PT.money(c.price_session)+"/session":""):c.plan==="fortnightly"?(c.price_package!=null?PT.money(c.price_package)+"/fortnight":""):(c.price_package!=null?PT.money(c.price_package):"")}</span>
+        <span class="cprice">${c.plan==="weekly"?(c.price_session!=null?PT.money(c.price_session)+"/session":""):c.plan==="fortnightly"?(c.price_package!=null?PT.money(c.price_package)+"/fortnight":""):(c.price_package!=null?PT.money(c.price_package):"")}${c.pay_day&&(c.plan==="weekly"||c.plan==="fortnightly")?" · "+PT.payDayName(c):""}</span>
         <label class="switch sm" title="${c.active?"Active":"Inactive"}"><input type="checkbox" data-active="${c.id}"${c.active?" checked":""} aria-label="${esc(c.name)} active"><span class="slider"></span></label>
         <div class="cdays" aria-label="Training days">${DAY_SHORT.map((d,i)=>`<span class="${(c.days||[]).includes(i+1)?"on":""}">${d[0]}</span>`).join("")}</div></div>`;
     }).join("");
@@ -384,7 +385,8 @@ function openDrawer(id){
   document.querySelectorAll('input[name=days]').forEach(ch=>ch.checked=(c.days||[]).includes(+ch.value));
   $("#f-phone").value=c.phone||""; $("#f-notes").value=c.notes||"";
   $("#f-active").checked=c.active!==false; $("#f-activeTxt").textContent=c.active!==false?"Active":"Inactive";
-  $("#f-psess").value=c.price_session??""; $("#f-ppack").value=c.price_package??"";
+  $("#f-psess").value=c.price_session??""; $("#f-ppack").value=c.price_package??""; $("#f-payday").value=c.pay_day||"";
+  if(editing&&c.plan==="fortnightly"){const nx=PT.nextFortnightPay(c);if(nx)$("#f-start").value=nx;}
   renderHist(); showPlanFields();
   $("#drawerRoot").hidden=false; setTimeout(()=>$("#f-name").focus(),30);
 }
@@ -396,6 +398,13 @@ function renderHist(){
 }
 function closeDrawer(){$("#drawerRoot").hidden=true;editing=null}
 $("#f-plan").addEventListener("change",showPlanFields);
+/* fortnightly: picking a pay day moves the next payment date onto that day */
+$("#f-payday").addEventListener("change",e=>{
+  if(planVal()!=="fortnightly"||!e.target.value) return;
+  const want=+e.target.value, cur=$("#f-start").value||iso(today());
+  let d=addDays(PT.weekStart(cur),want-1); if(d<iso(today())) d=addDays(d,7);
+  $("#f-start").value=d;
+});
 $("#lenQuick").addEventListener("click",e=>{const b=e.target.closest("[data-m]");if(!b)return;const st=$("#f-start").value||iso(today());$("#f-start").value=st;$("#f-end").value=addMonths(st,+b.dataset.m)});
 $("#dForm").addEventListener("submit",async e=>{
   e.preventDefault();
@@ -410,7 +419,8 @@ $("#dForm").addEventListener("submit",async e=>{
     phone:$("#f-phone").value.trim(),notes:$("#f-notes").value.trim(),
     price_session:(plan==="weekly"||plan==="period")&&$("#f-psess").value!==""?Number($("#f-psess").value):null,
     price_package:plan!=="weekly"&&$("#f-ppack").value!==""?Number($("#f-ppack").value):null,
-    active:$("#f-active").checked};
+    active:$("#f-active").checked,
+    pay_day:(plan==="weekly"||plan==="fortnightly")&&$("#f-payday").value?+$("#f-payday").value:null};
   if(!row.name){$("#f-name").focus();return}
   if(plan==="pack"&&!row.pack_size){$("#f-pack").focus();toast("Enter how many sessions are in the pack.");return}
   if(row.period_start&&row.period_end&&row.period_end<row.period_start){$("#f-end").focus();toast("The end date is before the start date.");return}
