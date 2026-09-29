@@ -51,7 +51,12 @@ select option { background: var(--surface2); }
 /* Layout */
 .main-layout { display: grid; grid-template-columns: 340px 1fr; grid-template-rows: auto auto; gap: 14px; }
 .left-col { grid-row: 1 / 3; display: flex; flex-direction: column; gap: 14px; }
-.right-top { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+.right-top { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 1300px) { .right-top { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
+.right-top > .card { padding: 14px 14px; }
+.right-top .sched-add { flex-wrap: wrap; }
+.right-top .sched-add input[type="text"] { flex: 1 1 100%; min-width: 0; order: -1; }
+.right-top .sched-add input[type="time"] { flex: 1 1 auto; width: auto; min-width: 0; }
 .right-top > .card { height: 400px; display: flex; flex-direction: column; min-width: 0; }
 .right-top .sched-list, .right-top .rt-body { flex: 1; max-height: none; min-height: 0; }
 .right-top .chat-card { min-height: 0; }
