@@ -192,6 +192,7 @@
         if (!date || proj < date) { date = proj; why = `${s.remaining} left at ${rate} a week`; estimate = true; }
       }
     }
+    if (c.next_pay_on) { date = c.next_pay_on; why = 'date set by you'; estimate = false; }
     if (!date) return null;
     if (date < t) { why = 'overdue · ' + why; }
     return { date, amount: c.price_package != null ? Number(c.price_package) : null, why, estimate };

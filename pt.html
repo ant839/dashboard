@@ -139,6 +139,8 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 .due-amt{font-family:'DM Mono',monospace;font-size:13px;white-space:nowrap}
 .paid-btn{background:none;border:1px solid var(--accent);color:var(--accent);border-radius:var(--radius-sm);font-size:12px;font-weight:600;padding:5px 12px;white-space:nowrap}
 .paid-btn:hover{background:var(--accent);color:#000}
+.date-btn{background:none;border:0;border-bottom:1px dashed var(--dim);padding:0;color:inherit;font-size:inherit;cursor:pointer}
+.date-btn:hover{color:var(--text);border-bottom-color:var(--muted)}
 .paid-tag{font-size:10px;color:var(--accent);font-weight:600;letter-spacing:.04em}
 /* drawer */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20}
@@ -271,6 +273,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
       <label class="f" data-for="pack">Already used<input id="f-prior" type="number" min="0" max="500" step="1" placeholder="0"><span class="hint">Sessions done before you started tracking here</span></label>
       <label class="f" data-for="period pack fortnightly"><span id="l-start">Start date</span><input id="f-start" type="date"><span class="hint" data-for="fortnightly">Their next payment. They pay every 2 weeks from it. If it shows this week but they pay next week, move it forward 7 days.</span></label>
       <label class="f" data-for="period pack">End date<input id="f-end" type="date"></label>
+      <label class="f full" data-for="period pack">Next payment (optional)<input id="f-nextpay" type="date"><span class="hint">Leave blank to work it out from sessions left or the end date. Set it if they'll pay on a different day. It clears when you renew.</span></label>
       <div class="f full" data-for="period pack"><span>Length</span>
         <div class="quick" id="lenQuick"><button type="button" data-m="1">1 month</button><button type="button" data-m="3">3 months</button><button type="button" data-m="6">6 months</button><button type="button" data-m="12">12 months</button></div>
         <span class="hint">Sets the end date from the start date.</span>
@@ -313,7 +316,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="rev.js?v=22"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js"></script>
-<script src="pt-core.js?v=20"></script>
+<script src="pt-core.js?v=21"></script>
 <script src="pt-biz.js?v=1"></script>
 <script>
 (function(){
@@ -375,7 +378,7 @@ function render(){
   $("#payCard").hidden=!pays.length;
   const in30=PT.upcomingPayments().filter(x=>x.n.date<=addDays(t,30)).reduce((s,x)=>s+(x.n.amount||0),0);
   $("#payTotal").textContent=in30?`${PT.money(in30)} in the next 30 days`:"";
-  $("#payList").innerHTML=pays.map(({c,n})=>`<div class="client" data-edit="${c.id}"><div class="cbody"><div class="cname">${esc(c.name)} ${planBadge(c)}</div><div class="cline">${n.estimate?"About ":""}${fmt(n.date,{weekday:"short",day:"numeric",month:"short"})} · ${esc(n.why)}</div></div><span class="cprice strong">${n.amount!=null?PT.money(n.amount):"No price set"}</span><button type="button" class="paid-btn" data-renew="${c.id}" title="Log the payment and start their new ${c.plan==="pack"?"pack":"period"}">Paid</button></div>`).join("");
+  $("#payList").innerHTML=pays.map(({c,n})=>`<div class="client" data-edit="${c.id}"><div class="cbody"><div class="cname">${esc(c.name)} ${planBadge(c)}</div><div class="cline"><button type="button" class="date-btn" data-paydate="${c.id}" title="Change the expected date">${n.estimate?"About ":""}${fmt(n.date,{weekday:"short",day:"numeric",month:"short"})} ✎</button> · ${esc(n.why)}</div></div><span class="cprice strong">${n.amount!=null?PT.money(n.amount):"No price set"}</span><button type="button" class="paid-btn" data-renew="${c.id}" title="Log the payment and start their new ${c.plan==="pack"?"pack":"period"}">Paid</button></div>`).join("");
   const wi=PT.weeklyIncome();
   $("#mIncome").textContent=wi.priced?PT.money(wi.earned):"–";
   $("#mIncomeSub").textContent=wi.priced?`of ${PT.money(wi.expected)} expected`:"Add session prices";
@@ -448,6 +451,20 @@ if(window.Sortable) Sortable.create($("#tickList"),{handle:".pt-grip",draggable:
     try{await PT.saveDayOrder(day,ids)}catch(e){fail(e)} }});
 async function markPaid(d){ if(!d) return;
   try{ const p=await PT.markPaid(d); render(); toast(`${d.c.name} paid ${PT.money(p.amount)}`,async()=>{try{await PT.removePayment(p.id);render()}catch(e){fail(e)}}); }catch(e){fail(e)} }
+function openPayDate(c){ if(!c) return;
+  const n=PT.nextPayment(c), el=document.createElement("div"); el.className="modal";
+  el.innerHTML=`<form autocomplete="off"><h4>When will ${esc(c.name)} pay?</h4><p>Currently ${n?(c.next_pay_on?"set to ":"worked out as ")+fmt(n.date,{weekday:"long",day:"numeric",month:"short"}):"not known"}. Pick the day you expect it.</p>
+    <div class="f full"><div class="quick">${n?[7,14].map(k=>`<button type="button" data-plus="${k}">+${k/7} week${k>7?"s":""}</button>`).join(""):""}</div></div>
+    <label class="f full">Expected payment date<input type="date" id="pd-d" value="${n?n.date:iso(today())}" required></label>
+    <div class="acts">${c.next_pay_on?`<button class="btn" type="button" data-auto>Back to automatic</button>`:""}<button class="btn" type="button" data-x>Cancel</button><button class="btn primary" type="submit">Save</button></div></form>`;
+  document.body.appendChild(el);
+  const save=async v=>{try{const {data,error}=await sb.from("pt_clients").update({next_pay_on:v}).eq("id",c.id).select().single();if(error)throw error;
+    Object.assign(c,data);el.remove();render();toast(v?`${c.name} now expected ${fmt(v,{weekday:"short",day:"numeric",month:"short"})}`:`${c.name} back to the automatic date`)}catch(err){fail(err)}};
+  el.addEventListener("click",e=>{ if(e.target===el||e.target.closest("[data-x]")) return el.remove();
+    const p=e.target.closest("[data-plus]"); if(p) el.querySelector("#pd-d").value=addDays(n.date,+p.dataset.plus);
+    if(e.target.closest("[data-auto]")) save(null); });
+  el.querySelector("form").addEventListener("submit",e=>{e.preventDefault();save(el.querySelector("#pd-d").value||null)});
+}
 function setView(v){
   document.querySelectorAll("[data-view]").forEach(b=>{b.classList.toggle("on",b.dataset.view===v);b.setAttribute("aria-selected",b.dataset.view===v)});
   $("#vClients").hidden=v!=="clients"; $("#vBiz").hidden=v!=="biz";
@@ -468,7 +485,7 @@ function openDrawer(id){
   const c=editing||{name:"",plan:"weekly",sessions_per_week:"",pack_size:"",period_start:iso(today()),period_end:"",days:[],phone:"",notes:"",active:true};
   $("#dTitle").textContent=editing?c.name:"New client";
   $("#f-name").value=c.name; document.querySelectorAll('input[name=plan]').forEach(r=>r.checked=r.value===c.plan);
-  $("#f-spw").value=c.sessions_per_week??""; $("#f-pack").value=c.pack_size??""; $("#f-prior").value=c.prior_sessions||""; $("#f-start").value=c.period_start||iso(today()); $("#f-end").value=c.period_end||"";
+  $("#f-spw").value=c.sessions_per_week??""; $("#f-pack").value=c.pack_size??""; $("#f-prior").value=c.prior_sessions||""; $("#f-start").value=c.period_start||iso(today()); $("#f-end").value=c.period_end||""; $("#f-nextpay").value=c.next_pay_on||"";
   document.querySelectorAll('input[name=days]').forEach(ch=>ch.checked=(c.days||[]).includes(+ch.value));
   $("#f-phone").value=c.phone||""; $("#f-notes").value=c.notes||"";
   $("#f-active").checked=c.active!==false; $("#f-activeTxt").textContent=c.active!==false?"Active":"Inactive";
@@ -513,6 +530,7 @@ $("#dForm").addEventListener("submit",async e=>{
     price_session:plan==="period"&&$("#f-psess").value!==""?Number($("#f-psess").value):null,
     price_week:plan==="weekly"&&$("#f-pweek").value!==""?Number($("#f-pweek").value):null,
     price_package:plan!=="weekly"&&$("#f-ppack").value!==""?Number($("#f-ppack").value):null,
+    next_pay_on:(plan==="pack"||plan==="period")?($("#f-nextpay").value||null):null,
     active:$("#f-active").checked,
     pay_day:(plan==="weekly"||plan==="fortnightly")&&document.querySelector("input[name=payday]:checked")?+document.querySelector("input[name=payday]:checked").value:null};
   if(!row.name){$("#f-name").focus();return}
@@ -549,7 +567,7 @@ function openRenew(c){
 $("#dRenew").addEventListener("click",()=>{if(editing)openRenew(editing)});
 $("#rCancel").addEventListener("click",()=>{$("#renewModal").hidden=true});
 $("#renewForm").addEventListener("submit",async e=>{e.preventDefault();const c=renewing;if(!c)return;
-  const patch={period_start:$("#r-start").value,period_end:$("#r-end").value||null,active:true};
+  const patch={period_start:$("#r-start").value,period_end:$("#r-end").value||null,active:true,next_pay_on:null};
   if(c.plan==="pack"){ patch.pack_size=parseInt($("#r-pack").value,10)||c.pack_size; patch.prior_sessions=0; }
   try{const {data,error}=await sb.from("pt_clients").update(patch).eq("id",c.id).select().single();if(error)throw error;
     const i=store.clients.findIndex(x=>x.id===c.id);store.clients[i]=data;
@@ -566,6 +584,7 @@ document.addEventListener("click",e=>{
   const sk=e.target.closest("[data-skip]"); if(sk) return toggleSkip(sk.dataset.skip);
   const mv=e.target.closest("[data-move]"); if(mv) return doMove(mv.dataset.move);
   const um=e.target.closest("[data-unmove]"); if(um) return undoMove(um.dataset.unmove);
+  const pdt=e.target.closest("[data-paydate]"); if(pdt){e.stopPropagation();return openPayDate(store.clients.find(c=>c.id===pdt.dataset.paydate))}
   const pd=e.target.closest("[data-paid]"); if(pd) return markPaid(render._dues[+pd.dataset.paid]);
   const vw=e.target.closest("[data-view]"); if(vw) return setView(vw.dataset.view);
   const r=e.target.closest("[data-renew]"); if(r){e.stopPropagation();return openRenew(store.clients.find(c=>c.id===r.dataset.renew))}
