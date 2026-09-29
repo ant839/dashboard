@@ -5,7 +5,7 @@
   const DAY_LETTER = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
   const DAY_NAME = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-  let tasks = [], checks = new Set(), signedIn = false, editing = false, selDay = todayIdx();
+  let tasks = [], leadsDue = null, checks = new Set(), signedIn = false, editing = false, selDay = todayIdx();
 
   function todayIdx() { return (new Date().getDay() + 6) % 7; } /* 0 = Monday */
   function weekDates() {
@@ -59,7 +59,7 @@
       const del = editing ? `<button type="button" class="rt-del" data-del="${t.id}" aria-label="Remove ${esc(t.title)}">×</button>` : '';
       const row = `<div class="rt-item${sub ? ' sub' : ''}">
         <button type="button" class="task-check${done ? ' done' : ''}" data-tick="${t.id}" aria-label="${done ? 'Untick' : 'Tick'} ${esc(t.title)}" aria-pressed="${done}"></button>
-        <span class="task-text${done ? ' done' : ''}">${esc(t.title)}</span>${del}</div>`;
+        ${t.link && !editing ? `<a class="task-text rt-link${done ? ' done' : ''}" href="${esc(t.link)}">${esc(t.title)}${t.link === 'leads.html' && leadsDue ? ` <span class="rt-badge">${leadsDue} due</span>` : ''}<span class="rt-arrow" aria-hidden="true">›</span></a>` : `<span class="task-text${done ? ' done' : ''}">${esc(t.title)}</span>`}${del}</div>`;
       return row + ch.map(k => item(k, true)).join('');
     };
     let html = '';
@@ -119,10 +119,12 @@
 
   async function load() {
     const dates = weekDates();
-    const [t, c] = await Promise.all([
+    const [t, c, l] = await Promise.all([
       sb.from('routine_tasks').select('*'),
-      sb.from('routine_checks').select('task_id,day').gte('day', iso(dates[0])).lte('day', iso(dates[6]))
+      sb.from('routine_checks').select('task_id,day').gte('day', iso(dates[0])).lte('day', iso(dates[6])),
+      sb.from('leads').select('id', { count: 'exact', head: true }).in('stage', ['new', 'contacted', 'trial', 'trialled']).lte('follow_up', iso(new Date()))
     ]);
+    leadsDue = l && !l.error ? l.count : null;
     if (t.error || c.error) { flash('Could not load your to-dos. Refresh to try again.'); return; }
     tasks = t.data || []; checks = new Set((c.data || []).map(r => key(r.task_id, r.day))); render();
   }

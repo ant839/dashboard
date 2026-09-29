@@ -281,6 +281,11 @@ select option { background: var(--surface2); }
 .rt-sec { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; padding: 8px 0 4px; }
 .rt-item { display: flex; align-items: center; gap: 9px; padding: 6px 0; border-bottom: 1px solid var(--border); }
 .rt-item.sub { padding-left: 25px; }
+.rt-link { color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 6px; }
+.rt-link:hover { color: var(--accent); }
+.rt-link.done { color: var(--dim); }
+.rt-arrow { margin-left: auto; color: var(--dim); font-size: 15px; line-height: 1; }
+.rt-badge { font-size: 10px; font-weight: 600; color: var(--amber); background: var(--amber-dim, rgba(245,166,35,.14)); border-radius: 20px; padding: 1px 7px; text-decoration: none; }
 .rt-item.sub .task-text { font-size: 12px; color: var(--muted); }
 .rt-item.sub .task-text.done { color: var(--dim); }
 .rt-item .task-check { background: none; padding: 0; }
@@ -539,7 +544,7 @@ select option { background: var(--surface2); }
 <script>revRenderNav(document.body);</script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js"></script>
 <script src="projects.js?v=20"></script>
-<script src="routine.js?v=7"></script>
+<script src="routine.js?v=8"></script>
 <script src="programs-due.js?v=5"></script>
 <script src="pt-core.js?v=21"></script>
 <script src="pt-box.js?v=15"></script>
