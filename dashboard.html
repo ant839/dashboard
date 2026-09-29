@@ -51,7 +51,11 @@ select option { background: var(--surface2); }
 /* Layout */
 .main-layout { display: grid; grid-template-columns: 340px 1fr; grid-template-rows: auto auto; gap: 14px; }
 .left-col { grid-row: 1 / 3; display: flex; flex-direction: column; gap: 14px; }
-.right-top { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.right-top { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+.right-top > .card { height: 400px; display: flex; flex-direction: column; min-width: 0; }
+.right-top .sched-list, .right-top .rt-body { flex: 1; max-height: none; min-height: 0; }
+.right-top .chat-card { min-height: 0; }
+.right-top .chat-messages { flex: 1; max-height: none; min-height: 0; }
 .right-bottom {}
 
 /* Card */
@@ -278,6 +282,20 @@ select option { background: var(--surface2); }
 .rt-add input { flex: 1; min-width: 0; }
 .rt-add select { width: 130px; }
 
+/* Programs due */
+.pd-open { font-size: 10px; color: var(--accent); text-decoration: none; font-weight: 500; letter-spacing: 0.05em; }
+.pd-sub { font-size: 11px; color: var(--dim); margin: -6px 0 4px; }
+.pd-item { display: flex; align-items: center; gap: 7px; padding: 6px 0; border-bottom: 1px solid var(--border); min-width: 0; }
+.pd-name { flex: 1; min-width: 0; font-size: 13px; color: var(--text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pd-name:hover { color: var(--accent); }
+.pd-type { font-size: 9px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); white-space: nowrap; max-width: 70px; overflow: hidden; text-overflow: ellipsis; }
+.pd-ef { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent); text-decoration: none; border: 1px solid var(--border); border-radius: 4px; padding: 1px 4px; }
+.pd-ef:hover { border-color: var(--accent); }
+.pd-days { font-family: 'DM Mono', monospace; font-size: 11px; min-width: 26px; text-align: center; padding: 2px 4px; border-radius: 4px; }
+.pd-days.d-over { background: var(--red-dim); color: var(--red); }
+.pd-days.d-soon { background: var(--amber-dim); color: var(--amber); }
+.pd-days.d-ok { background: var(--accent-dim); color: var(--accent); }
+
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
@@ -320,18 +338,6 @@ select option { background: var(--surface2); }
       </div>
       <div class="proj-strip" id="proj-strip"></div>
     </div>
-    <div class="card" id="rt-card">
-      <div class="card-label">
-        <div class="card-label-left">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
-          Weekly to-dos <span class="card-sublabel" id="rt-count"></span>
-        </div>
-        <button class="rt-edit" id="rt-edit" type="button" hidden>Edit</button>
-      </div>
-      <div class="rt-days" id="rt-days"></div>
-      <div class="rt-prog-track"><div class="rt-prog-fill" id="rt-prog" style="width:0%"></div></div>
-      <div class="rt-body" id="rt-body"></div>
-    </div>
     <div class="card" style="flex:1;">
       <div class="card-label">
         <div class="card-label-left">
@@ -365,6 +371,30 @@ select option { background: var(--surface2); }
 
   <!-- Right top: Today | Tomorrow | Ask Claude -->
   <div class="right-top">
+
+    <div class="card" id="rt-card">
+      <div class="card-label">
+        <div class="card-label-left">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
+          Weekly to-dos <span class="card-sublabel" id="rt-count"></span>
+        </div>
+        <button class="rt-edit" id="rt-edit" type="button" hidden>Edit</button>
+      </div>
+      <div class="rt-days" id="rt-days"></div>
+      <div class="rt-prog-track"><div class="rt-prog-fill" id="rt-prog" style="width:0%"></div></div>
+      <div class="rt-body" id="rt-body"></div>
+    </div>
+    <div class="card" id="pd-card">
+      <div class="card-label">
+        <div class="card-label-left">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4v16M18 4v16M2 9v6M22 9v6M6 12h12"/></svg>
+          Programs due <span class="card-sublabel" id="pd-count"></span>
+        </div>
+        <a class="pd-open" href="athletes.html">Tracker</a>
+      </div>
+      <div class="pd-sub">Next 7 days</div>
+      <div class="rt-body" id="pd-body"></div>
+    </div>
 
     <div class="card">
       <div class="card-label">
@@ -444,6 +474,7 @@ select option { background: var(--surface2); }
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js"></script>
 <script src="projects.js?v=3"></script>
 <script src="routine.js?v=4"></script>
+<script src="programs-due.js?v=5"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script>
 const CLIENT_ID = '129633223960-8ebr601nsaapd8ojbloivi83k1tbitl6.apps.googleusercontent.com';
