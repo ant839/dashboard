@@ -477,11 +477,6 @@ select option { background: var(--surface2); }
       </div>
       <div id="today-focus-banner"></div>
       <div class="sched-list" id="today-sched"></div>
-      <div class="sched-add">
-        <input type="time" id="sched-time" />
-        <input type="text" id="sched-input" placeholder="Add block..." />
-        <button class="btn btn-icon" id="add-sched-btn">+</button>
-      </div>
     </div>
 
     <div class="card" data-card="tomorrow">
@@ -1032,8 +1027,6 @@ async function fetchAllCalendarEvents(){
 // ---- Init ----
 document.getElementById('add-task-btn').addEventListener('click',addTask);
 document.getElementById('task-input').addEventListener('keydown',e=>{if(e.key==='Enter')addTask();});
-document.getElementById('add-sched-btn').addEventListener('click',addManual);
-document.getElementById('sched-input').addEventListener('keydown',e=>{if(e.key==='Enter')addManual();});
 document.getElementById('filters').addEventListener('click',e=>{
   const p=e.target.closest('.pill');if(!p)return;
   taskFilter=p.dataset.f;
