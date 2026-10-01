@@ -43,6 +43,15 @@ select option { background: var(--surface2); }
 .clock { font-family: 'DM Mono', monospace; font-size: 26px; font-weight: 400; letter-spacing: -0.02em; }
 .gcal-btn { display: flex; align-items: center; gap: 7px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 13px; color: var(--muted); cursor: pointer; font-size: 12px; transition: all 0.15s; }
 .gcal-btn:hover { border-color: var(--border2); color: var(--text); }
+.gc-modal { position: fixed; inset: 0; z-index: 120; background: rgba(0,0,0,.6); display: grid; place-items: center; padding: 16px; }
+.gc-card { width: min(420px,100%); background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; padding: 20px; display: grid; gap: 12px; }
+.gc-card h3 { font-size: 18px; font-weight: 400; }
+.gc-card p { font-size: 13px; color: var(--muted); line-height: 1.55; }
+.gc-card b { color: var(--text); font-weight: 500; }
+.gc-card input { width: 100%; padding: 10px 12px; font-size: 14px; }
+.gc-err { color: var(--red) !important; min-height: 0; }
+.gc-card .btn-primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+.gc-acts { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 .gcal-btn.connected { color: var(--accent); border-color: rgba(200,240,106,0.3); }
 
 /* Metrics */
@@ -549,10 +558,7 @@ select option { background: var(--surface2); }
 <script src="pt-core.js?v=21"></script>
 <script src="pt-box.js?v=15"></script>
 <script src="layout.js?v=6"></script>
-<script src="https://accounts.google.com/gsi/client" async></script>
 <script>
-const CLIENT_ID = '129633223960-8ebr601nsaapd8ojbloivi83k1tbitl6.apps.googleusercontent.com';
-const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly';
 const KEY = 'ant_dash_v8';
 const TOKEN_KEY = 'ant_gcal_token';
 const CHAT_KEY = 'ant_chat_v1';
@@ -579,8 +585,8 @@ let calEvents = [];
 let githubTasks = [];
 let chatHistory = [];
 let taskFilter = 'all';
-let tokenClient = null;
-let accessToken = null;
+let calConnected = false;
+const CAL_CACHE = 'ant_gcal_events_v2';
 
 // ---- Persist ----
 function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e) {} }
@@ -985,53 +991,72 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-// ---- Auth ----
-function handleGcalAuth(){ if(accessToken){signOut();return;} tokenClient.requestAccessToken({prompt:''}); }
-function initGsi(){
-  tokenClient=google.accounts.oauth2.initTokenClient({
-    client_id:CLIENT_ID,scope:SCOPES,
-    callback:async(resp)=>{
-      if(resp.error){console.error(resp);return;}
-      accessToken=resp.access_token;
-      saveToken(resp.access_token,resp.expires_in||3600);
-      setCalConnected(true);
-      await fetchAllCalendarEvents();render();
-    }
-  });
-  const saved=loadToken();
-  if(saved){accessToken=saved;setCalConnected(true);fetchAllCalendarEvents().then(render);}
+// ---- Google Calendar (through the gcal Supabase function, which keeps you signed in) ----
+async function gcal(action,extra){
+  const {data,error}=await sb.functions.invoke('gcal',{body:{action,...(extra||{})}});
+  if(error){let detail=null;try{detail=await error.context.json()}catch(e){}throw Object.assign(new Error((detail&&detail.error)||error.message),{detail})}
+  return data;
 }
-function setCalConnected(c){
+function setCalConnected(c,label){
+  calConnected=c;
   document.getElementById('gcal-btn').classList.toggle('connected',c);
-  document.getElementById('gcal-label').textContent=c?'Calendar connected ✓':'Connect Google Calendar';
+  document.getElementById('gcal-label').textContent=label||(c?'Calendar connected ✓':'Connect Google Calendar');
 }
-function signOut(){
-  if(accessToken) google.accounts.oauth2.revoke(accessToken,()=>{});
-  accessToken=null;calEvents=[];clearToken();setCalConnected(false);render();
+function gcModal(html){
+  const el=document.createElement('div');el.className='gc-modal';el.innerHTML=`<div class="gc-card" role="dialog" aria-modal="true">${html}</div>`;
+  document.body.appendChild(el);el.addEventListener('click',e=>{if(e.target===el||e.target.closest('[data-gc-close]'))el.remove()});return el;
+}
+async function handleGcalAuth(){
+  let st;try{st=await gcal('status')}catch(e){gcModal(`<h3>Can't reach the calendar service</h3><p>Check you're signed in to the dashboard, then try again.</p><div class="gc-acts"><button class="btn" data-gc-close>Close</button></div>`);return}
+  if(st.connected){
+    const m=gcModal(`<h3>Google Calendar</h3><p>Connected${st.email?' as <b>'+escHtml(st.email)+'</b>':''}. It stays signed in on every device. Nothing to do here.</p>
+      <div class="gc-acts"><button class="btn" data-gc-dis style="color:var(--red)">Disconnect</button><button class="btn" data-gc-refresh>Refresh now</button><button class="btn btn-primary" data-gc-close>Close</button></div>`);
+    m.querySelector('[data-gc-refresh]').onclick=async()=>{m.remove();await fetchAllCalendarEvents();render()};
+    m.querySelector('[data-gc-dis]').onclick=async e=>{const b=e.target;if(!b.dataset.armed){b.dataset.armed=1;b.textContent='Tap again to disconnect';return}
+      try{await gcal('disconnect')}catch(x){}m.remove();calEvents=[];try{localStorage.removeItem(CAL_CACHE)}catch(x){}setCalConnected(false);render()};
+    return;
+  }
+  if(!st.hasSecret){
+    const m=gcModal(`<h3>One-time setup</h3><p>Paste the <b>client secret</b> from your Google Cloud OAuth client (the one ending in …tbitl6). It's stored privately in your Supabase database and never shown in the dashboard again.</p>
+      <input type="password" id="gc-secret" placeholder="GOCSPX-…" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <p class="gc-err" id="gc-err"></p>
+      <div class="gc-acts"><button class="btn" data-gc-close>Cancel</button><button class="btn btn-primary" id="gc-save">Save and connect</button></div>`);
+    m.querySelector('#gc-save').onclick=async()=>{const v=m.querySelector('#gc-secret').value.trim();if(!v)return;
+      try{await gcal('setup',{client_secret:v});m.remove();startGcal()}catch(e){m.querySelector('#gc-err').textContent='Could not save that: '+e.message}};
+    setTimeout(()=>m.querySelector('#gc-secret').focus(),30);
+    return;
+  }
+  startGcal();
+}
+async function startGcal(){
+  try{const {url}=await gcal('start',{login_hint:'ant@revbbc.com.au'});location.href=url}
+  catch(e){gcModal(`<h3>Couldn't start the Google sign-in</h3><p>${escHtml(e.message)}</p><div class="gc-acts"><button class="btn" data-gc-close>Close</button></div>`)}
+}
+function gcalReturnNotice(){
+  const q=new URLSearchParams(location.search).get('gcal');if(!q)return;
+  history.replaceState(null,'',location.pathname);
+  const msg={connected:['Google Calendar connected','You won\'t be asked to sign in to Google again, on this device or your phone. If you use the home-screen app, close it and open it again.'],
+    cancelled:['Not connected','You cancelled the Google sign-in. Tap Connect Google Calendar to try again.'],
+    expired:['That took too long','The sign-in link expired. Tap Connect Google Calendar to try again.'],
+    norefresh:['Almost there','Google didn\'t hand over a long-term key. Remove the dashboard from your Google account\'s third-party access, then connect again.'],
+    error:['Something went wrong','Check the redirect address in Google Cloud matches exactly, then try again.']}[q]||['Google Calendar',''];
+  gcModal(`<h3>${msg[0]}</h3><p>${msg[1]}</p><div class="gc-acts"><button class="btn btn-primary" data-gc-close>OK</button></div>`);
 }
 async function fetchAllCalendarEvents(){
   const {mon,sun}=getWeekBounds();
   const tom=new Date();tom.setDate(tom.getDate()+2);tom.setHours(23,59,59,999);
   const timeMin=mon.toISOString(),timeMax=(tom>sun?tom:sun).toISOString();
   try{
-    const calListRes=await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList',{headers:{Authorization:'Bearer '+accessToken}});
-    const calList=await calListRes.json();
-    const calendars=(calList.items||[]).filter(c=>c.selected!==false);
-    const allEvents=await Promise.all(calendars.map(async cal=>{
-      const url=`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?`
-        +`timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&maxResults=250`;
-      try{
-        const res=await fetch(url,{headers:{Authorization:'Bearer '+accessToken}});
-        const data=await res.json();
-        return(data.items||[]).map(ev=>({...ev,_calColor:cal.backgroundColor}));
-      }catch(e){return[];}
-    }));
-    calEvents=allEvents.flat();
+    const r=await gcal('events',{timeMin,timeMax});
+    if(!r.connected){setCalConnected(false);calEvents=[];return}
+    setCalConnected(true);calEvents=r.events||[];
+    try{localStorage.setItem(CAL_CACHE,JSON.stringify({at:Date.now(),events:calEvents}))}catch(e){}
   }catch(e){
     console.error('Calendar fetch error',e);
-    if(e.status===401){clearToken();accessToken=null;setCalConnected(false);}
+    if(e.message==='reconnect') setCalConnected(false,'Reconnect Google Calendar');
   }
 }
+function loadCachedEvents(){try{const c=JSON.parse(localStorage.getItem(CAL_CACHE)||'null');if(c&&Date.now()-c.at<7*864e5){calEvents=c.events||[];setCalConnected(true)}}catch(e){}}
 
 // ---- Init ----
 document.getElementById('add-task-btn').addEventListener('click',addTask);
@@ -1043,10 +1068,10 @@ document.getElementById('filters').addEventListener('click',e=>{
   renderTasks();
 });
 
-window.addEventListener('load',()=>{
-  const tryInit=()=>{if(typeof google!=='undefined'){initGsi();}else{setTimeout(tryInit,200);}};
-  tryInit();
-});
+loadCachedEvents();
+gcalReturnNotice();
+sb.auth.getSession().then(({data})=>{if(data.session)fetchAllCalendarEvents().then(render);});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&calConnected)fetchAllCalendarEvents().then(render);});
 
 load();
 loadChat();
@@ -1055,7 +1080,7 @@ render();
 renderChat();
 setInterval(render,60000);
 window.addEventListener('rev:routine',renderMetrics);
-setInterval(()=>{if(accessToken)fetchAllCalendarEvents().then(render);},15*60*1000);
+setInterval(()=>{if(calConnected)fetchAllCalendarEvents().then(render);},10*60*1000);
 setInterval(()=>{fetchGithubTasks().then(()=>{renderTasks();renderMetrics();});},2*60*1000);
 </script>
 </body>
