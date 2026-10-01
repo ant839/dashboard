@@ -126,6 +126,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 .hist-row:last-child{border-bottom:0}
 .hist-row b{color:var(--text);font-weight:500}
 .empty{font-size:12px;color:var(--dim);padding:12px 0;line-height:1.5}
+.base-tag{font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:20px;background:rgba(255,255,255,.07);color:var(--muted);margin-left:6px;vertical-align:1px}
 .banner{display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:12px;background:rgba(200,240,106,.06);border:1px solid rgba(200,240,106,.22)}
 /* drawer / modal */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20}
@@ -173,7 +174,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
     <div><div class="eyebrow">Rev Barbell Club</div><h1>Members &amp; goals</h1></div>
     <div class="phase-pill" id="phasePill"></div>
   </div>
-  <div class="banner" id="firstRun" hidden>👋 <span>Start by entering today's member numbers in <b>Members by type</b> below, then tap <b>Save numbers</b>. Everything above fills in from there.</span></div>
+  <div class="banner" id="firstRun" hidden>👋 <span style="flex:1">Set your <b>starting point</b>: how many members you have today and what they bring in each week, odd old prices and all. New members from today go on your current prices.</span><button type="button" class="btn primary sm" data-base>Set starting point</button></div>
 
   <section class="bigs" id="bigs" aria-label="Members against goals"></section>
 
@@ -188,7 +189,7 @@ h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
 
   <div class="lower">
     <section class="card">
-      <div class="card-label"><span>Members by type</span><button type="button" class="btn sm" id="addTier">+ Add type</button></div>
+      <div class="card-label"><span>Members by type</span><span style="display:flex;gap:6px"><button type="button" class="btn sm" data-base>Starting point</button><button type="button" class="btn sm" id="addTier">+ Add type</button></span></div>
       <div id="tiers"></div>
       <div class="save-row"><span class="hint" id="saveHint">Change the numbers, then save. Each save is logged so you can see the trend.</span><button type="button" class="btn primary" id="saveCounts" disabled>Save numbers</button></div>
     </section>
@@ -235,7 +236,8 @@ function toast(msg,lab,act){const t=$("#toast");$("#toastMsg").textContent=msg;c
 function fail(e){console.error(e);toast("Couldn't save that. Check your connection and try again.");load()}
 
 /* ---------- numbers ---------- */
-const activeTiers=p=>tiers.filter(t=>t.program===p&&t.active).sort((a,b)=>a.sort-b.sort||a.name.localeCompare(b.name));
+const activeTiers=p=>tiers.filter(t=>t.program===p&&t.active).sort((a,b)=>(b.is_base-a.is_base)||a.sort-b.sort||a.name.localeCompare(b.name));
+const baseTier=p=>tiers.find(t=>t.program===p&&t.is_base);
 function countOn(tierId,asOf){ let best=null; for(const c of counts){ if(c.tier_id===tierId&&c.day<=asOf&&(!best||c.day>best.day)) best=c; } return best?best.count:0; }
 const progTotal=(p,asOf)=>activeTiers(p).reduce((a,t)=>a+countOn(t.id,asOf||today()),0);
 const progIncome=(p,asOf)=>activeTiers(p).reduce((a,t)=>a+countOn(t.id,asOf||today())*Number(t.price_week),0);
@@ -248,16 +250,19 @@ const progInc=p=>p==="total"?progIncome("rev")+progIncome("fndn"):progIncome(p);
 const progAgo=(p,d)=>p==="total"?progTotal("rev",addDays(today(),-d))+progTotal("fndn",addDays(today(),-d)):progTotal(p,addDays(today(),-d));
 const goalIncome=(ph,p)=>p==="total"?(ph.rev_target??progTotal("rev"))*avgPrice("rev")+(ph.fndn_target??progTotal("fndn"))*avgPrice("fndn"):target(ph,p)*avgPrice(p);
 const hasHistory=()=>counts.length>0;
+const hasBase=()=>tiers.some(t=>t.is_base);
 
 /* ---------- big cards ---------- */
 function bigCard(p){
   const ph=currentPhase(), goal=target(ph,p), now=progNow(p), inc=progInc(p), c=p==="total"?"var(--text)":PROGS[p].color;
-  const ago30=hasHistory()?progAgo(p,30):now, d30=now-ago30;
+  const firstDay=counts.length?counts.reduce((a,c)=>c.day<a?c.day:a,counts[0].day):today();
+  const lookback=Math.min(30,Math.max(0,days(firstDay,today()))), young=lookback<7;
+  const d30=hasHistory()?now-progAgo(p,lookback):0;
   let pace="none", paceT="No goal set", pct=0, togo="", weeksLeft=null, need=null;
   if(goal){ pct=Math.min(100,Math.round(now/goal*100)); const left=goal-now; weeksLeft=Math.max(0,days(today(),ph.end_date)/7);
     if(left<=0){ pace="done"; paceT="Goal hit 🎉"; togo=`<span><b>${-left}</b> over goal</span><span>${pct}%</span>`; }
-    else { need=weeksLeft>0?left/weeksLeft:left; const actual=d30/(30/7);
-      pace=actual>=need*0.9?"ok":"behind"; paceT=pace==="ok"?"On pace":"Behind pace";
+    else { need=weeksLeft>0?left/weeksLeft:left;       const actualRate=lookback?d30/(lookback/7):0;
+      if(young){ pace="none"; paceT="Just started"; } else { pace=actualRate>=need*0.9?"ok":"behind"; paceT=pace==="ok"?"On pace":"Behind pace"; }
       togo=`<span><b>${left}</b> to go · ${weeksLeft>=1?Math.round(weeksLeft)+" weeks left":"due now"}</span><span>need ~${need<1?need.toFixed(1):Math.ceil(need*10)/10}/week</span>`; } }
   const gInc=goal?goalIncome(ph,p):null, gain=gInc!=null?gInc-inc:null;
   return `<article class="big${p==="total"?" total":""}" style="--c:${c}">
@@ -269,7 +274,7 @@ function bigCard(p){
     <div class="money"><div><div class="m">${money(inc)}<small>/wk</small></div><div class="s">now · ${kmoney(inc*52/12)}/mo · ${kmoney(inc*52)}/yr</div></div>
       <div class="atgoal"><div class="m">${gInc!=null?money(gInc):"–"}<small>/wk</small></div><div class="s">at goal${gInc!=null?` · ${kmoney(gInc*52)}/yr`:""}</div>${gain>0?`<div class="gain">+${money(gain)}/wk · +${kmoney(gain*52)} a year</div>`:""}</div></div>
     <div class="acts">${p==="total"?"":`<button type="button" class="btn sm join" data-join="${p}">+ Joined</button><button type="button" class="btn sm leave" data-leave="${p}">− Left</button>`}
-      <span class="delta">${hasHistory()?(d30===0?"no change in 30 days":`<span class="${d30>0?"up":"down"}">${d30>0?"▲":"▼"} ${Math.abs(d30)}</span> in 30 days`):""}</span></div></article>`;
+      <span class="delta">${!hasHistory()?"":lookback===0?`starting point set today`:(d30===0?`no change ${lookback<30?"since "+fmt(firstDay):"in 30 days"}`:`<span class="${d30>0?"up":"down"}">${d30>0?"▲":"▼"} ${Math.abs(d30)}</span> ${lookback<30?"since "+fmt(firstDay):"in 30 days"}`)}</span></div></article>`;
 }
 
 /* ---------- chart ---------- */
@@ -339,7 +344,7 @@ function renderTiers(){
   let h="";
   ["rev","fndn"].forEach(p=>{ const ts=tiers.filter(t=>t.program===p).sort((a,b)=>a.sort-b.sort||a.name.localeCompare(b.name)); if(!ts.length) return;
     h+=`<div class="grp"><span class="dot" style="background:${PROGS[p].color}"></span>${PROGS[p].name} · ${ts.filter(t=>t.active).reduce((a,t)=>a+(draft[t.id]??countOn(t.id,today())),0)} members</div>`;
-    h+=ts.map(t=>{ const v=draft[t.id]??countOn(t.id,today()); return `<div class="tier"${t.active?"":` style="opacity:.45"`}><div class="tn" data-tier="${t.id}"><b>${esc(t.name)}</b><span>${money(t.price_week)}/wk${t.active?"":" · hidden"}</span></div>
+    h+=ts.slice().sort((a,b)=>(b.is_base-a.is_base)||a.sort-b.sort).map(t=>{ const v=draft[t.id]??countOn(t.id,today()); return `<div class="tier"${t.active?"":` style="opacity:.45"`}><div class="tn" ${t.is_base?"data-base":`data-tier="${t.id}"`}><b>${esc(t.name)}${t.is_base?`<span class="base-tag">base</span>`:""}</b><span>${t.is_base?`avg $${Number(t.price_week).toFixed(2)}/wk · from ${fmt(t.created_at.slice(0,10))}`:money(t.price_week)+"/wk"}${t.active?"":" · hidden"}</span></div>
       <div class="step"><button type="button" data-step="${t.id}" data-d="-1" aria-label="One fewer ${esc(t.name)}">−</button><input type="number" min="0" inputmode="numeric" value="${v}" data-cnt="${t.id}" aria-label="${esc(t.name)} members"><button type="button" data-step="${t.id}" data-d="1" aria-label="One more ${esc(t.name)}">+</button></div>
       <div class="inc">${money(v*Number(t.price_week))}/wk</div></div>`; }).join("");
   });
@@ -354,7 +359,7 @@ function renderHistory(){
     return `<div class="hist-row"><span>${fmt(d,{weekday:"short",day:"numeric",month:"short"})}</span><span>Rev <b>${r}</b>${ch(r,pr)} · FNDN <b>${f}</b>${ch(f,pf)}</span></div>`; }).join(""):`<div class="empty">Nothing logged yet.</div>`;
 }
 function render(){
-  $("#firstRun").hidden=hasHistory();
+  $("#firstRun").hidden=hasBase();
   $("#bigs").innerHTML=["rev","fndn","total"].map(bigCard).join("");
   drawChart(); renderPhases(); renderTiers(); renderHistory();
 }
@@ -370,15 +375,52 @@ async function saveCounts(map,undoMsg){
 }
 $("#saveCounts").addEventListener("click",async()=>{ try{ await saveCounts({...draft}); toast("Numbers saved for today"); }catch(e){fail(e)} });
 function pickTier(p,dir){
-  const ts=activeTiers(p); if(!ts.length) return toast("Add a membership type first.");
+  const ts=activeTiers(p).filter(t=>dir>0?!t.is_base:countOn(t.id,today())>0||!t.is_base); if(!ts.length) return toast("Add a membership type first.");
   const go=async t=>{ try{ const n=countOn(t.id,today())+dir; if(n<0) return; await saveCounts({[t.id]:n},`${dir>0?"Joined":"Left"}: ${PROGS[p].short} ${t.name} · ${PROGS[p].short} now ${progTotal(p)+dir}`); }catch(e){fail(e)} };
   if(ts.length===1) return go(ts[0]);
   const el=document.createElement("div"); el.className="modal";
   el.innerHTML=`<div class="box" role="dialog" aria-modal="true"><h4>${dir>0?"Who joined?":"Who left?"}</h4><p>${PROGS[p].name} · pick their membership</p>
-    ${ts.map(t=>`<button type="button" class="opt" data-pick="${t.id}">${esc(t.name)}<span>${money(t.price_week)}/wk · ${countOn(t.id,today())} now</span></button>`).join("")}
+    ${ts.map(t=>`<button type="button" class="opt" data-pick="${t.id}">${esc(t.name)}<span>${t.is_base?"avg ":""}${money(t.price_week)}/wk · ${countOn(t.id,today())} now</span></button>`).join("")}
     <button type="button" class="btn" data-x style="justify-self:end">Cancel</button></div>`;
   document.body.appendChild(el);
   el.addEventListener("click",e=>{ if(e.target===el||e.target.closest("[data-x]")) return el.remove(); const b=e.target.closest("[data-pick]"); if(b){ el.remove(); go(tiers.find(t=>t.id===b.dataset.pick)); } });
+}
+
+/* ---------- starting point ---------- */
+function openBase(){
+  const el=document.createElement("div"); el.className="modal";
+  const row=p=>{ const b=baseTier(p), n=b?countOn(b.id,today()):"", inc=b&&n!==""?Math.round(n*Number(b.price_week)*100)/100:"";
+    return `<div class="grp" style="margin-top:6px"><span class="dot" style="background:${PROGS[p].color}"></span>${PROGS[p].name}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label class="f">Members today<input type="number" min="0" inputmode="numeric" id="bs-${p}-n" value="${n}"></label>
+      <label class="f">Weekly income from them ($)<input type="number" min="0" step="0.01" inputmode="decimal" id="bs-${p}-i" value="${inc}"></label></div>
+      <span class="hint" id="bs-${p}-avg"></span>`; };
+  el.innerHTML=`<div class="box" role="dialog" aria-modal="true" style="width:min(440px,100%)"><h4>Starting point · ${fmt(today(),{day:"numeric",month:"long",year:"numeric"})}</h4>
+    <p>Everyone you have right now, whatever they pay. Use the weekly total from GymDesk (or your best estimate). People who join from today go on your current membership types.</p>
+    ${row("rev")}${row("fndn")}
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px"><button type="button" class="btn" data-x>Cancel</button><button type="button" class="btn primary" data-save>Save starting point</button></div></div>`;
+  document.body.appendChild(el);
+  const upd=()=>["rev","fndn"].forEach(p=>{ const n=+el.querySelector(`#bs-${p}-n`).value, i=+el.querySelector(`#bs-${p}-i`).value; el.querySelector(`#bs-${p}-avg`).textContent=n&&i?`Works out at ${money(i/n)} per member per week on average.`:""; });
+  el.addEventListener("input",upd); upd();
+  el.addEventListener("click",async e=>{
+    if(e.target===el||e.target.closest("[data-x]")) return el.remove();
+    if(!e.target.closest("[data-save]")) return;
+    try{
+      const map={};
+      for(const p of ["rev","fndn"]){
+        const nv=el.querySelector(`#bs-${p}-n`).value, iv=el.querySelector(`#bs-${p}-i`).value; if(nv==="") continue;
+        const n=Math.max(0,parseInt(nv,10)), inc=Number(iv||0), avg=n?inc/n:0;
+        let b=baseTier(p);
+        if(b){ const {data,error}=await sb.from("mem_tiers").update({price_week:avg,active:true}).eq("id",b.id).select().single(); if(error) throw error; Object.assign(b,data); }
+        else { const {data,error}=await sb.from("mem_tiers").insert({program:p,name:"Existing members",price_week:avg,sort:0,is_base:true,active:true}).select().single(); if(error) throw error; tiers.push(data); b=data; }
+        map[b.id]=n;
+        /* new-member types start from zero on the base day unless already logged today */
+        activeTiers(p).filter(t=>!t.is_base&&!counts.some(c=>c.tier_id===t.id&&c.day===today())).forEach(t=>map[t.id]=0);
+      }
+      if(!Object.keys(map).length) return;
+      el.remove(); await saveCounts(map); toast("Starting point saved. Tracking from today.");
+    }catch(x){fail(x)}
+  });
+  setTimeout(()=>el.querySelector("#bs-rev-n").focus(),30);
 }
 
 /* ---------- drawers ---------- */
@@ -445,6 +487,7 @@ document.addEventListener("click",e=>{
   const l=e.target.closest("[data-leave]"); if(l) return pickTier(l.dataset.leave,-1);
   if(e.target.closest("#addPhase")) return openPhase(null);
   const ph=e.target.closest("[data-phase]"); if(ph) return openPhase(ph.dataset.phase);
+  if(e.target.closest("[data-base]")) return openBase();
   if(e.target.closest("#addTier")) return openTier(null);
   const tn=e.target.closest("[data-tier]"); if(tn) return openTier(tn.dataset.tier);
   const st=e.target.closest("[data-step]"); if(st){ const id=st.dataset.step; draft[id]=Math.max(0,(draft[id]??countOn(id,today()))+(+st.dataset.d)); renderTiers(); renderLive(); }
