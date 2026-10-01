@@ -148,6 +148,18 @@ input[type=range]{width:100%;accent-color:var(--accent);background:none;border:0
 .modal h4{grid-column:1/-1;font-size:18px;font-weight:400}
 .modal p{grid-column:1/-1;color:var(--muted);font-size:12px;line-height:1.5;margin-top:-6px}
 .modal .acts{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
+.planbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-radius:var(--radius-sm);margin-bottom:12px;background:rgba(176,143,255,.1);border:1px solid rgba(176,143,255,.4);font-size:13px}
+.planbar b{font-weight:600}
+.planbar .grow{flex:1;min-width:200px;color:var(--muted)}
+.planbar .grow b{color:var(--text)}
+body.planning .card:first-of-type,body.planning #chartCard{border-color:rgba(176,143,255,.45)}
+.btn.plan{border-color:rgba(176,143,255,.5);color:#cdb8ff}
+.btn.plan:hover{border-color:#b08fff}
+.plan-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);grid-column:1/-1}
+.plan-row .body{flex:1;min-width:0}
+.plan-row .nm{font-size:14px;font-weight:500}
+.plan-row .sub{font-size:11px;color:var(--muted);margin-top:2px}
+.modal form.wide{width:min(480px,100%)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--text);color:var(--bg);padding:10px 14px;border-radius:9px;display:flex;gap:14px;align-items:center;z-index:30;font-size:13px;max-width:calc(100% - 32px)}
 .toast button{border:0;background:none;color:inherit;font-weight:600;text-decoration:underline;padding:0}
 @media (max-width:1000px){.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -170,9 +182,13 @@ input[type=range]{width:100%;accent-color:var(--accent);background:none;border:0
     <div><div class="eyebrow">Money</div><h1>Cash flow</h1></div>
     <div class="head-acts">
       <div class="seg2" id="bookSw" role="tablist" aria-label="Book"><button type="button" data-book="business" role="tab" title="Rev Barbell Club">Business</button><button type="button" data-book="personal" role="tab" title="You, including PT income">Personal</button></div>
+      <button type="button" class="btn plan" id="planBtn">🧪 Planning mode</button>
       <div class="chips" id="horizon" role="group" aria-label="How far ahead"><button type="button" data-h="13">3 mo</button><button type="button" data-h="26">6 mo</button><button type="button" data-h="52">12 mo</button></div>
     </div>
   </div>
+
+  <div class="planbar" id="planBar" hidden><span>🧪</span><span class="grow">Planning: <b id="planName"></b> · change anything you like here, your real numbers stay as they are. <span id="planDiff"></span></span>
+    <button type="button" class="btn sm" id="planRename">Rename</button><button type="button" class="btn sm" id="planList">Other plans</button><button type="button" class="btn sm primary" id="planExit">Exit planning</button></div>
 
   <section class="metrics" aria-label="Summary">
     <button type="button" class="metric m-bal" id="balBtn" title="Update your balance"><span class="l">Balance now ✎</span><span class="v" id="mBal">–</span><span class="ms" id="mBalSub"></span></button>
@@ -184,9 +200,9 @@ input[type=range]{width:100%;accent-color:var(--accent);background:none;border:0
 
   <div class="alert" id="alert" hidden><span class="ic" id="alertIc"></span><span id="alertTx"></span></div>
 
-  <section class="card">
+  <section class="card" id="chartCard">
     <div class="card-label"><span id="chartTitle">Balance and weekly money in and out</span>
-      <div class="legend"><span><i class="sw line" style="background:var(--bal)"></i>Balance</span><span><i class="sw dash" style="border-top-width:1.5px"></i>Buffer</span><span><i class="sw" style="background:var(--in)"></i>Money in</span><span><i class="sw" style="background:var(--out)"></i>Money out</span><span id="lgWhatIf" hidden><i class="sw dash" style="opacity:.7"></i>Before what-if</span></div>
+      <div class="legend"><span><i class="sw line" style="background:var(--bal)"></i>Balance</span><span><i class="sw dash" style="border-top-width:1.5px"></i>Buffer</span><span><i class="sw" style="background:var(--in)"></i>Money in</span><span><i class="sw" style="background:var(--out)"></i>Money out</span><span id="lgWhatIf" hidden><i class="sw dash" style="opacity:.7"></i><span id="lgWhatIfT">Before what-if</span></span></div>
     </div>
     <div class="chart" id="chart"></div>
     <div class="week" id="week" hidden></div>
@@ -266,7 +282,7 @@ const QUICK={business:{in:[["Memberships","Memberships","weekly"],["Programming 
 const FREQ_LABEL={once:"Once",weekly:"Weekly",fortnightly:"Fortnightly",monthly:"Monthly",quarterly:"Quarterly",yearly:"Yearly"};
 const PER_MONTH={once:0,weekly:52/12,fortnightly:26/12,monthly:1,quarterly:1/3,yearly:1/12};
 
-let animate=true, book="business", horizon=26, books={}, items=[], ptOn=false, selWeek=null, editing=null;
+let realItems=[], realBooks={}, plan=null, plans=[], animate=true, book="business", horizon=26, books={}, items=[], ptOn=false, selWeek=null, editing=null;
 let wi={members:null,weekly:0,oneoff:0,oneWeek:4};
 try{book=localStorage.getItem("cf-book")||"business";horizon=+localStorage.getItem("cf-h")||26}catch(e){}
 revRenderNav($("#app"));
@@ -301,10 +317,14 @@ function ptFlows(from,to){
   return out;
 }
 function project(opts){
-  const o=opts||{}, B=books[book]||{opening_balance:0,balance_date:today(),buffer:0};
+  const o=opts||{}, srcItems=o.src?o.src.items:items, B=(o.src?o.src.B:books[book])||{opening_balance:0,balance_date:today(),buffer:0}, savePt=ptOn;
+  if(o.src) ptOn=o.src.pt;
+  try{ return projectInner(o,srcItems,B); } finally { ptOn=savePt; }
+}
+function projectInner(o,srcItems,B){
   const ws0=weekStart(today()), N=horizon, end=addDays(ws0,N*7-1), from=B.balance_date<ws0?B.balance_date:ws0;
   const flows=[];
-  items.filter(i=>i.book===book).forEach(it=>{ const a=itemAmount(it,o.members); occurrences(it,from,end).forEach(d=>flows.push({date:d,name:it.name,amount:a,kind:it.kind,cat:it.category||"Other",id:it.id})); });
+  srcItems.filter(i=>i.book===book).forEach(it=>{ const a=itemAmount(it,o.members); occurrences(it,from,end).forEach(d=>flows.push({date:d,name:it.name,amount:a,kind:it.kind,cat:it.category||"Other",id:it.id})); });
   ptFlows(from,end).forEach(f=>flows.push(f));
   if(o.weekly) for(let w=0;w<N;w++){ const d=addDays(ws0,w*7); flows.push({date:d,name:"What-if weekly change",amount:Math.abs(o.weekly),kind:o.weekly>0?"in":"out",cat:"What if",ghost:true}); }
   if(o.oneoff){ const d=addDays(ws0,o.oneWeek*7+2); flows.push({date:d,name:"What-if one-off spend",amount:o.oneoff,kind:"out",cat:"What if",ghost:true}); }
@@ -392,7 +412,13 @@ function render(){
   document.querySelectorAll("[data-book]").forEach(b=>{b.classList.toggle("on",b.dataset.book===book);b.setAttribute("aria-selected",b.dataset.book===book)});
   document.querySelectorAll("[data-h]").forEach(b=>b.classList.toggle("on",+b.dataset.h===horizon));
   const mi=membersItem();
-  const base=project(), on=whatIfOn(), P=on?project({members:wi.members,weekly:wi.weekly,oneoff:wi.oneoff,oneWeek:wi.oneWeek}):base;
+  const on=whatIfOn(), cur=project(), P=on?project({members:wi.members,weekly:wi.weekly,oneoff:wi.oneoff,oneWeek:wi.oneWeek}):cur;
+  const realP=plan?project({src:{items:realItems,B:realBooks[book],pt:book==="personal"&&(realBooks.personal?realBooks.personal.include_pt!==false:true)}}):null;
+  const base=plan?realP:cur;
+  document.body.classList.toggle("planning",!!plan); $("#planBar").hidden=!plan; $("#planBtn").hidden=!!plan;
+  if(plan){ $("#planName").textContent=plan.name; const dEnd=P.weeks[P.weeks.length-1].bal-realP.weeks[realP.weeks.length-1].bal;
+    $("#planDiff").innerHTML=`In ${horizon===13?"3":horizon===26?"6":"12"} months this plan is <b>${dEnd>=0?"+":"−"}${money(Math.abs(dEnd))}</b> on your real forecast.`; }
+  $("#lgWhatIfT").textContent=plan?"Real forecast":"Before what-if";
   const B=P.B, floor=Math.max(P.buffer,0);
   /* metrics */
   $("#mBal").textContent=money(P.start); $("#mBal").classList.toggle("neg",P.start<0);
@@ -414,8 +440,8 @@ function render(){
   if(!items.some(i=>i.book===book)&&!(ptOn&&book==="personal")){ al.hidden=false; al.className="alert"; $("#alertIc").textContent="👋"; $("#alertTx").innerHTML=`Start by tapping <b>Balance now</b> to enter what's in the ${book} account, then add your regular money in and out below. The chart fills in as you go.`; }
   else if(below.length){ al.hidden=false; al.className="alert bad"; $("#alertIc").textContent="⚠️"; $("#alertTx").textContent=`Drops below ${P.buffer>0?"your "+money(P.buffer)+" buffer":"$0"} in the week of ${fmt(below[0].ws)}${below.length>1?` and is below it for ${below.length} of the next ${horizon} weeks`:""}. Lowest is ${money(L.bal)}.`; }
   else { al.hidden=false; al.className="alert ok"; $("#alertIc").textContent="✓"; $("#alertTx").textContent=`Stays above ${P.buffer>0?"your "+money(P.buffer)+" buffer":"$0"} for the next ${horizon===13?"3":horizon===26?"6":"12"} months${on?" with this what-if":""}.`; }
-  $("#lgWhatIf").hidden=!on;
-  drawChart(P,on?base:null);
+  $("#lgWhatIf").hidden=!(on||plan);
+  drawChart(P,(on||plan)?base:null);
   renderWeek(P);
   /* what-if */
   $("#wiMembers").hidden=!mi;
@@ -424,8 +450,8 @@ function render(){
   $("#wi-w").value=wi.weekly; $("#wi-wo").textContent=(wi.weekly>0?"+":wi.weekly<0?"−":"")+money(Math.abs(wi.weekly));
   $("#wi-o").value=wi.oneoff; $("#wi-oo").textContent=money(wi.oneoff);
   $("#wiWhenRow").hidden=!wi.oneoff; $("#wi-ow").max=horizon-1; $("#wi-ow").value=Math.min(wi.oneWeek,horizon-1); $("#wi-owo").textContent=fmt(addDays(weekStart(today()),wi.oneWeek*7));
-  if(on){ const dEnd=last.bal-base.weeks[base.weeks.length-1].bal, dLow=L.bal-base.weeks.reduce((a,w)=>Math.min(a,w.bal),Infinity);
-    $("#wiNote").innerHTML=`In ${horizon===13?"3":horizon===26?"6":"12"} months you'd have <b>${money(last.bal)}</b>, ${dEnd>=0?"up":"down"} <b>${money(Math.abs(dEnd))}</b> on the current plan. Lowest point ${dLow>=0?"rises":"drops"} by ${money(Math.abs(dLow))}. The dashed line is the plan without the what-if.`;
+  if(on){ const dEnd=last.bal-cur.weeks[cur.weeks.length-1].bal, dLow=L.bal-cur.weeks.reduce((a,w)=>Math.min(a,w.bal),Infinity);
+    $("#wiNote").innerHTML=`In ${horizon===13?"3":horizon===26?"6":"12"} months you'd have <b>${money(last.bal)}</b>, ${dEnd>=0?"up":"down"} <b>${money(Math.abs(dEnd))}</b> on ${plan?"this plan":"the current forecast"}. Lowest point ${dLow>=0?"rises":"drops"} by ${money(Math.abs(dLow))}.${plan?"":" The dashed line is the forecast without the what-if."}`;
   } else $("#wiNote").textContent="Drag a slider to see what changes. Nothing is saved until you tap Save.";
   $("#wiActs").hidden=!on; $("#wiSaveOne").hidden=!wi.oneoff; $("#wiSaveMem").hidden=!(mi&&wi.members!==mi.members);
   renderCats(); renderLists(P);
@@ -480,6 +506,77 @@ function renderLists(P){
   ["in","out"].forEach(k=>{ $("#"+k+"Quick").innerHTML=QUICK[book][k].filter(q=>!names.has(q[0].toLowerCase())).map((q,i)=>`<button type="button" data-quick="${k}|${QUICK[book][k].indexOf(q)}">+ ${esc(q[0])}</button>`).join(""); });
 }
 
+/* ---------- data layer: real numbers, or the open plan's copy ---------- */
+const uid=()=>(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));
+function applyView(){
+  if(plan){ items=realItems.filter(i=>i.book!==plan.book).concat(plan.data.items||[]); books={...realBooks,[plan.book]:{...(realBooks[plan.book]||{}),...(plan.data.book||{})}};
+    ptOn=plan.book==="personal"&&books.personal.include_pt!==false; }
+  else { items=realItems.slice(); books={...realBooks}; ptOn=book==="personal"&&(books.personal?books.personal.include_pt!==false:true); }
+}
+let planSaveT;
+function persistPlan(){ if(!plan) return; clearTimeout(planSaveT); const p=plan; planSaveT=setTimeout(async()=>{ try{ const {error}=await sb.from("cf_plans").update({data:p.data,name:p.name,updated_at:new Date().toISOString()}).eq("id",p.id); if(error) throw error; }catch(e){fail(e)} },350); }
+async function dbSaveItem(row,id){
+  if(plan){ const list=plan.data.items; let it;
+    if(id){ it=list.find(x=>x.id===id); Object.assign(it,row); } else { it={...row,id:uid(),created_at:new Date().toISOString()}; list.push(it); }
+    persistPlan(); applyView(); return it; }
+  const q=id?sb.from("cf_items").update(row).eq("id",id).select().single():sb.from("cf_items").insert(row).select().single();
+  const {data,error}=await q; if(error) throw error;
+  const i=realItems.findIndex(x=>x.id===data.id); if(i>=0) realItems[i]=data; else realItems.push(data); applyView(); return data;
+}
+async function dbDeleteItem(id){
+  if(plan){ plan.data.items=plan.data.items.filter(x=>x.id!==id); persistPlan(); applyView(); return; }
+  const {error}=await sb.from("cf_items").delete().eq("id",id); if(error) throw error; realItems=realItems.filter(i=>i.id!==id); applyView();
+}
+async function dbSaveBook(patch){
+  if(plan){ plan.data.book={...(plan.data.book||{}),...patch}; persistPlan(); applyView(); return; }
+  const row={...(realBooks[book]||{book}),...patch,book,updated_at:new Date().toISOString()};
+  const {data,error}=await sb.from("cf_books").upsert(row).select().single(); if(error) throw error; realBooks[book]=data; applyView();
+}
+
+/* ---------- planning mode ---------- */
+async function loadPlans(){ const {data,error}=await sb.from("cf_plans").select("*").order("updated_at",{ascending:false}); if(!error) plans=data||[]; }
+function openPlan(p){ plan=JSON.parse(JSON.stringify(p)); plan.data.items=plan.data.items||[]; selWeek=null; animate=true; wi={members:null,weekly:0,oneoff:0,oneWeek:4};
+  try{sessionStorage.setItem("cf-plan",plan.id)}catch(e){} applyView(); render(); window.scrollTo({top:0,behavior:"smooth"}); }
+function exitPlan(){ plan=null; selWeek=null; animate=true; wi={members:null,weekly:0,oneoff:0,oneWeek:4}; try{sessionStorage.removeItem("cf-plan")}catch(e){} applyView(); render(); toast("Back to your real numbers"); }
+async function newPlan(name,fromPlan){
+  const srcItems=fromPlan?fromPlan.data.items:realItems.filter(i=>i.book===book), srcBook=fromPlan?fromPlan.data.book:realBooks[book]||{};
+  const data={items:JSON.parse(JSON.stringify(srcItems)).map(i=>({...i,id:uid()})),book:{opening_balance:srcBook.opening_balance??0,balance_date:srcBook.balance_date||today(),buffer:srcBook.buffer??0,include_pt:srcBook.include_pt!==false}};
+  const {data:row,error}=await sb.from("cf_plans").insert({book,name,data}).select().single(); if(error) throw error;
+  plans.unshift(row); openPlan(row); toast(`Planning: ${name}`);
+}
+function planEnd(p){ try{ const pr=project({src:{items:p.data.items||[],B:{...(realBooks[book]||{}),...(p.data.book||{})},pt:book==="personal"&&(p.data.book||{}).include_pt!==false}}); return pr.weeks[pr.weeks.length-1].bal; }catch(e){ return null; } }
+async function openPlansModal(){
+  await loadPlans();
+  const mine=plans.filter(p=>p.book===book), el=document.createElement("div"); el.className="modal";
+  const realEnd=project({src:{items:realItems,B:realBooks[book],pt:book==="personal"&&(realBooks.personal?realBooks.personal.include_pt!==false:true)}});
+  const rEnd=realEnd.weeks[realEnd.weeks.length-1].bal, hz=horizon===13?"3":horizon===26?"6":"12";
+  el.innerHTML=`<form class="wide" autocomplete="off"><h4>🧪 ${book==="business"?"Business":"Personal"} plans</h4>
+    <p>A plan is a copy of your numbers to play with: add a coach, drop a bill, try a price rise. Nothing in a plan touches your real forecast, and plans are saved so you can come back to them.</p>
+    <label class="f full">New plan name<input id="pl-n" maxlength="60" value="${esc((book==="business"?"Gym":"Personal")+" plan · "+fmt(today(),{day:"numeric",month:"short"}))}"></label>
+    <div class="acts" style="justify-content:flex-start"><button type="submit" class="btn primary">Start a new plan from today's numbers</button></div>
+    ${mine.length?`<div class="f full" style="margin-top:6px"><span>Saved plans · real forecast in ${hz} months: ${money(rEnd)}</span></div>`+mine.map(p=>{const e=planEnd(p),d=e==null?null:e-rEnd;return `<div class="plan-row"><div class="body"><div class="nm">${esc(p.name)}${plan&&plan.id===p.id?` <span class="auto" style="background:rgba(176,143,255,.15);color:#cdb8ff">open</span>`:""}</div><div class="sub">${(p.data.items||[]).length} items · updated ${fmt(p.updated_at.slice(0,10))}${d!=null?` · ${hz} months: ${money(e)} (${d>=0?"+":"−"}${money(Math.abs(d))} vs real)`:""}</div></div>
+      <button type="button" class="btn sm" data-pl-open="${p.id}">Open</button><button type="button" class="btn sm" data-pl-dup="${p.id}">Copy</button><button type="button" class="btn sm danger" data-pl-del="${p.id}">Delete</button></div>`}).join(""):`<p style="margin-top:4px">No saved plans yet.</p>`}
+    <div class="acts">${plan?`<button type="button" class="btn" data-pl-exit>Exit planning</button>`:""}<button type="button" class="btn" data-x>Close</button></div></form>`;
+  document.body.appendChild(el);
+  el.addEventListener("click",async e=>{
+    if(e.target===el||e.target.closest("[data-x]")) return el.remove();
+    if(e.target.closest("[data-pl-exit]")){ el.remove(); return exitPlan(); }
+    const o=e.target.closest("[data-pl-open]"); if(o){ el.remove(); return openPlan(plans.find(p=>p.id===o.dataset.plOpen)); }
+    const c=e.target.closest("[data-pl-dup]"); if(c){ const src=plans.find(p=>p.id===c.dataset.plDup); el.remove(); try{ await newPlan(src.name+" (copy)",src); }catch(x){fail(x)} return; }
+    const d=e.target.closest("[data-pl-del]"); if(d){ if(!d.dataset.armed){d.dataset.armed=1;d.textContent="Sure?";return}
+      try{ const {error}=await sb.from("cf_plans").delete().eq("id",d.dataset.plDel); if(error) throw error; plans=plans.filter(p=>p.id!==d.dataset.plDel); if(plan&&plan.id===d.dataset.plDel){ plan=null; applyView(); render(); } d.closest(".plan-row").remove(); }catch(x){fail(x)} }
+  });
+  el.querySelector("form").addEventListener("submit",async e=>{ e.preventDefault(); const n=el.querySelector("#pl-n").value.trim()||"Plan"; el.remove(); try{ await newPlan(n); }catch(x){fail(x)} });
+}
+$("#planBtn").addEventListener("click",openPlansModal);
+$("#planList").addEventListener("click",openPlansModal);
+$("#planExit").addEventListener("click",exitPlan);
+$("#planRename").addEventListener("click",()=>{ if(!plan) return; const el=document.createElement("div"); el.className="modal";
+  el.innerHTML=`<form><h4>Rename plan</h4><label class="f full">Name<input id="rn" maxlength="60" value="${esc(plan.name)}"></label><div class="acts"><button type="button" class="btn" data-x>Cancel</button><button class="btn primary" type="submit">Save</button></div></form>`;
+  document.body.appendChild(el); setTimeout(()=>el.querySelector("#rn").select(),30);
+  el.addEventListener("click",e=>{if(e.target===el||e.target.closest("[data-x]"))el.remove()});
+  el.querySelector("form").addEventListener("submit",e=>{e.preventDefault();plan.name=el.querySelector("#rn").value.trim()||plan.name;const i=plans.findIndex(p=>p.id===plan.id);if(i>=0)plans[i].name=plan.name;persistPlan();el.remove();render();}); });
+
 /* ---------- edit drawer ---------- */
 function fillCats(kind,sel){ $("#f-cat").innerHTML=CATS[book][kind].map(c=>`<option${c===sel?" selected":""}>${c}</option>`).join(""); }
 function syncForm(){
@@ -512,22 +609,20 @@ $("#dForm").addEventListener("submit",async e=>{
     category:cat,members:cat==="Memberships"&&$("#f-usemem").checked&&$("#f-members").value!==""?parseInt($("#f-members").value,10):null,active:$("#f-active").checked,notes:$("#f-notes").value.trim()||null};
   if(!row.name){$("#f-name").focus();return}
   if(editing&&editing.book!==book) row.book=editing.book;
-  try{ const q=editing?sb.from("cf_items").update(row).eq("id",editing.id).select().single():sb.from("cf_items").insert(row).select().single();
-    const {data,error}=await q; if(error) throw error;
-    const i=items.findIndex(x=>x.id===data.id); if(i>=0) items[i]=data; else items.push(data);
+  try{ const data=await dbSaveItem(row,editing&&editing.id);
     const was=editing; closeDrawer(); if(data.members!=null) wi.members=data.members; render(); toast(was?`Saved ${data.name}`:`Added ${data.name}`);
   }catch(err){fail(err)}
 });
 $("#dDel").addEventListener("click",async()=>{ const b=$("#dDel"); if(!editing) return;
   if(!b.dataset.armed){b.dataset.armed="1";b.textContent="Tap again to delete";return}
-  const gone=editing; try{ const {error}=await sb.from("cf_items").delete().eq("id",gone.id); if(error) throw error; items=items.filter(i=>i.id!==gone.id); closeDrawer(); render();
-    toast(`Deleted ${gone.name}`,"Undo",async()=>{ const {id,created_at,...rest}=gone; try{const {data,error}=await sb.from("cf_items").insert(rest).select().single();if(error)throw error;items.push(data);render()}catch(x){fail(x)} }); }catch(err){fail(err)} });
+  const gone=editing; try{ await dbDeleteItem(gone.id); closeDrawer(); render();
+    toast(`Deleted ${gone.name}`,"Undo",async()=>{ const {id,created_at,...rest}=gone; try{ await dbSaveItem(rest); render(); }catch(x){fail(x)} }); }catch(err){fail(err)} });
 ["#dClose","#dCancel","#scrim"].forEach(s=>$(s).addEventListener("click",closeDrawer));
 
 /* ---------- balance modal ---------- */
 function openBalance(){
   const B=books[book]||{}, el=document.createElement("div"); el.className="modal";
-  el.innerHTML=`<form autocomplete="off"><h4>${book==="business"?"Business":"Personal"} balance</h4><p>What's in the ${book} account right now. Update it whenever you check your bank, and the forecast re-anchors from there.</p>
+  el.innerHTML=`<form autocomplete="off"><h4>${plan?"Plan starting balance":(book==="business"?"Business":"Personal")+" balance"}</h4><p>${plan?"Only changes this plan. Your real balance stays as it is.":`What's in the ${book} account right now. Update it whenever you check your bank, and the forecast re-anchors from there.`}</p>
     <label class="f">Balance ($)<input type="number" step="0.01" inputmode="decimal" id="b-v" value="${B.opening_balance??0}" required></label>
     <label class="f">As of<input type="date" id="b-d" value="${today()}" required></label>
     <label class="f full">Safety buffer ($)<input type="number" min="0" step="100" inputmode="decimal" id="b-b" value="${B.buffer??0}"><span class="hint">The chart warns you when the balance is forecast to drop below this.</span></label>
@@ -535,13 +630,13 @@ function openBalance(){
   document.body.appendChild(el); setTimeout(()=>{const i=el.querySelector("#b-v");i.focus();i.select()},30);
   el.addEventListener("click",e=>{if(e.target===el||e.target.closest("[data-x]"))el.remove()});
   el.querySelector("form").addEventListener("submit",async e=>{ e.preventDefault();
-    const row={book,opening_balance:Number(el.querySelector("#b-v").value||0),balance_date:el.querySelector("#b-d").value||today(),buffer:Number(el.querySelector("#b-b").value||0),include_pt:books[book]?books[book].include_pt:true,updated_at:new Date().toISOString()};
-    try{ const {data,error}=await sb.from("cf_books").upsert(row).select().single(); if(error) throw error; books[book]=data; el.remove(); render(); toast("Balance updated"); }catch(err){fail(err)} });
+    const patch={opening_balance:Number(el.querySelector("#b-v").value||0),balance_date:el.querySelector("#b-d").value||today(),buffer:Number(el.querySelector("#b-b").value||0)};
+    try{ await dbSaveBook(patch); el.remove(); render(); toast(plan?"Plan balance updated":"Balance updated"); }catch(err){fail(err)} });
 }
 
 /* ---------- events ---------- */
 document.addEventListener("click",async e=>{
-  const bk=e.target.closest("[data-book]"); if(bk){ book=bk.dataset.book; selWeek=null; animate=true; wi={members:null,weekly:0,oneoff:0,oneWeek:4}; ptOn=book==="personal"&&(books.personal?books.personal.include_pt!==false:true); try{localStorage.setItem("cf-book",book)}catch(x){} render(); return; }
+  const bk=e.target.closest("[data-book]"); if(bk){ if(plan&&bk.dataset.book!==plan.book){ plan=null; try{sessionStorage.removeItem("cf-plan")}catch(x){} } book=bk.dataset.book; selWeek=null; animate=true; wi={members:null,weekly:0,oneoff:0,oneWeek:4}; applyView(); try{localStorage.setItem("cf-book",book)}catch(x){} render(); return; }
   const h=e.target.closest("[data-h]"); if(h){ horizon=+h.dataset.h; selWeek=null; animate=true; wi.oneWeek=Math.min(wi.oneWeek,horizon-1); try{localStorage.setItem("cf-h",horizon)}catch(x){} render(); return; }
   if(e.target.closest("#balBtn")) return openBalance();
   if(e.target.closest(".switch")) return;
@@ -553,11 +648,10 @@ document.addEventListener("click",async e=>{
   const ed=e.target.closest("[data-edit]"); if(ed) return openDrawer(ed.dataset.edit);
 });
 document.addEventListener("change",async e=>{
-  if(e.target.id==="ptToggle"){ ptOn=e.target.checked; render(); try{ const {data,error}=await sb.from("cf_books").update({include_pt:ptOn}).eq("book","personal").select().single(); if(error) throw error; books.personal=data; }catch(x){fail(x)} return; }
+  if(e.target.id==="ptToggle"){ const v=e.target.checked; try{ await dbSaveBook({include_pt:v}); render(); }catch(x){fail(x)} return; }
   const t=e.target.closest("[data-toggle]"); if(!t) return;
   const it=items.find(i=>i.id===t.dataset.toggle); if(!it) return;
-  it.active=t.checked; render();
-  try{ const {error}=await sb.from("cf_items").update({active:it.active}).eq("id",it.id); if(error) throw error; }catch(x){fail(x)}
+  try{ await dbSaveItem({active:t.checked},it.id); render(); }catch(x){fail(x)}
 });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("#drawerRoot").hidden) closeDrawer(); if((e.key==="Enter"||e.key===" ")&&e.target.matches?.(".item[data-edit]")){e.preventDefault();openDrawer(e.target.dataset.edit)} });
 let raf; const live=fn=>e=>{ fn(e); cancelAnimationFrame(raf); raf=requestAnimationFrame(render); };
@@ -567,16 +661,16 @@ $("#wi-o").addEventListener("input",live(e=>wi.oneoff=+e.target.value));
 $("#wi-ow").addEventListener("input",live(e=>wi.oneWeek=+e.target.value));
 $("#wiReset").addEventListener("click",()=>{ wi={members:null,weekly:0,oneoff:0,oneWeek:4}; render(); });
 $("#wiSaveOne").addEventListener("click",()=>openDrawer(null,{kind:"out",name:"Planned purchase",freq:"once",amount:wi.oneoff,start_date:addDays(weekStart(today()),wi.oneWeek*7+2),category:book==="business"?"Equipment":"Other"}));
-$("#wiSaveMem").addEventListener("click",async()=>{ const mi=membersItem(); if(!mi) return; try{ const {data,error}=await sb.from("cf_items").update({members:wi.members}).eq("id",mi.id).select().single(); if(error) throw error; Object.assign(mi,data); render(); toast(`Members set to ${data.members}`); }catch(x){fail(x)} });
+$("#wiSaveMem").addEventListener("click",async()=>{ const mi=membersItem(); if(!mi) return; try{ const data=await dbSaveItem({members:wi.members},mi.id); render(); toast(`Members set to ${data.members}`); }catch(x){fail(x)} });
 let rz; window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(render,200)});
 
 /* ---------- load ---------- */
 async function load(){
   const [b,i]=await Promise.all([sb.from("cf_books").select("*"),sb.from("cf_items").select("*").order("created_at")]);
   if(b.error||i.error){ $("#chart").innerHTML=`<div class="empty">Couldn't load cash flow. Refresh to try again.</div>`; return; }
-  books=Object.fromEntries((b.data||[]).map(r=>[r.book,r])); items=i.data||[];
-  ptOn=book==="personal"&&(books.personal?books.personal.include_pt!==false:true);
-  render();
+  realBooks=Object.fromEntries((b.data||[]).map(r=>[r.book,r])); realItems=i.data||[];
+  if(!load._plans){ load._plans=true; await loadPlans(); let id=null; try{id=sessionStorage.getItem("cf-plan")}catch(e){} const p=id&&plans.find(x=>x.id===id); if(p&&!plan){ book=p.book; plan=JSON.parse(JSON.stringify(p)); plan.data.items=plan.data.items||[]; } }
+  applyView(); render();
   if(window.PT&&!PT.store.clients.length){ try{ await PT.load(); render(); }catch(e){} }
 }
 revRequireLogin(()=>{ load();
