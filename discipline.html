@@ -187,7 +187,7 @@ table.grid{border-collapse:separate;border-spacing:3px;min-width:100%}
 
   <section class="vision" id="vision"></section>
 
-  <div class="sec-h"><h2>The four pillars</h2><span class="meta">30-day score under each</span></div>
+  <div class="sec-h"><h2>The four pillars</h2><span class="meta">Who I'm becoming · scored over 30 days</span></div>
   <section class="pillars" id="pillars"></section>
 
   <div class="sec-h"><h2 id="dayTitle">Today</h2>
@@ -195,19 +195,19 @@ table.grid{border-collapse:separate;border-spacing:3px;min-width:100%}
   <section class="tiles" id="tiles"></section>
 
   <section class="gridcard">
-    <div class="sec-h"><h2>The grid</h2><div class="month-nav"><button type="button" id="prevM" aria-label="Earlier six weeks">‹</button><span class="ml" id="monthLabel"></span><button type="button" id="nextM" aria-label="Later six weeks">›</button></div></div>
+    <div class="sec-h"><h2>The record</h2><div class="month-nav"><button type="button" id="prevM" aria-label="Earlier six weeks">‹</button><span class="ml" id="monthLabel"></span><button type="button" id="nextM" aria-label="Later six weeks">›</button></div></div>
     <div class="grid-scroll"><table class="grid" id="grid"></table></div>
   </section>
 
   <section class="gridcard">
     <div class="sec-h"><h2>The year</h2><span class="meta" id="yearMeta"></span></div>
     <div class="year" id="year"></div>
-    <div class="ylegend"><span>Less</span><i style="background:rgba(255,255,255,.045)"></i><i style="background:rgba(214,178,94,.25)"></i><i style="background:rgba(214,178,94,.5)"></i><i style="background:rgba(214,178,94,.75)"></i><i style="background:var(--gold)"></i><span>Perfect day</span></div>
+    <div class="ylegend"><span>Missed</span><i style="background:rgba(255,255,255,.045)"></i><i style="background:rgba(214,178,94,.25)"></i><i style="background:rgba(214,178,94,.5)"></i><i style="background:rgba(214,178,94,.75)"></i><i style="background:var(--gold)"></i><span>Clean day</span></div>
   </section>
 
   <div class="lower">
-    <section class="gridcard"><div class="sec-h"><h2>The work</h2><span class="meta">What you learned, wrote and drilled</span></div><div id="log"></div></section>
-    <section class="gridcard"><div class="sec-h"><h2>Daily standards</h2><button type="button" class="btn sm" id="addHabit">+ Add</button></div><div id="habits"></div></section>
+    <section class="gridcard"><div class="sec-h"><h2>The work</h2><span class="meta">What I learned, wrote and drilled</span></div><div id="log"></div></section>
+    <section class="gridcard"><div class="sec-h"><h2>Daily non-negotiables</h2><button type="button" class="btn sm" id="addHabit">+ Add</button></div><div id="habits"></div></section>
   </div>
 </div>
 
@@ -218,9 +218,9 @@ table.grid{border-collapse:separate;border-spacing:3px;min-width:100%}
     <form id="dForm" autocomplete="off">
       <label class="f">Name<input id="h-name" required maxlength="50"></label>
       <label class="f">Pillar<select id="h-pillar"><option value="mindset">Mindset</option><option value="physical">Physical</option><option value="financial">Financial</option><option value="philosophical">Philosophical</option></select></label>
-      <label class="f">What it means<textarea id="h-detail" rows="3" placeholder="The standard, in your words"></textarea></label>
+      <label class="f">What it means<textarea id="h-detail" rows="3" placeholder="The standard, in your own words"></textarea></label>
       <label class="f">Note prompt (optional)<input id="h-prompt" maxlength="60" placeholder="e.g. What did you learn?"><span class="hint">Adds a box on the tile to record details each day.</span></label>
-      <label class="f" style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:13px;color:var(--text);font-weight:400"><input type="checkbox" id="h-active" style="width:auto;accent-color:var(--gold)" checked> Active (untick to retire it without losing history)</label>
+      <label class="f" style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:13px;color:var(--text);font-weight:400"><input type="checkbox" id="h-active" style="width:auto;accent-color:var(--gold)" checked> Active (untick to retire it and keep its history)</label>
     </form>
     <footer><div><button class="btn danger" type="button" id="dDel">Delete</button></div><div><button class="btn" type="button" id="dCancel">Cancel</button><button class="btn gold" type="submit" form="dForm">Save</button></div></footer>
   </aside>
@@ -264,9 +264,9 @@ function pillarScore(p){ const hs=active().filter(h=>h.pillar===p); if(!hs.lengt
 function renderHero(){
   $("#dateLine").textContent=fmt(today(),{weekday:"long",day:"numeric",month:"long",year:"numeric"});
   const s=dayScore(today())||{n:0,of:active().length,pct:0}, pct=s.of?s.n/s.of:0, R=62, C=2*Math.PI*R;
-  $("#ring").innerHTML=`<svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="${R}" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="9"/><circle cx="75" cy="75" r="${R}" fill="none" stroke="var(--gold)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct)}" style="transition:stroke-dashoffset .6s ease"/></svg><div class="c"><div><b>${s.n}/${s.of}</b><span>${s.n===s.of&&s.of?"Clean day":"Today"}</span></div></div>`;
+  $("#ring").innerHTML=`<svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="${R}" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="9"/><circle cx="75" cy="75" r="${R}" fill="none" stroke="var(--gold)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct)}" style="transition:stroke-dashoffset .6s ease"/></svg><div class="c"><div><b>${s.n}/${s.of}</b><span>${s.n===s.of&&s.of?"Clean day":"Done today"}</span></div></div>`;
   const last30=[...Array(30)].map((_,i)=>dayScore(addDays(today(),-i))).filter(Boolean), avg=last30.length?Math.round(last30.reduce((a,x)=>a+x.pct,0)/last30.length*100):0;
-  $("#streaks").innerHTML=`<div class="streak"><b>${perfectStreak()}</b><span>Perfect-day streak</span></div><div class="streak"><b>${bestPerfect()}</b><span>Best streak</span></div><div class="streak"><b>${avg}%</b><span>Last 30 days</span></div>`;
+  $("#streaks").innerHTML=`<div class="streak"><b>${perfectStreak()}</b><span>Clean-day streak</span></div><div class="streak"><b>${bestPerfect()}</b><span>Best streak</span></div><div class="streak"><b>${avg}%</b><span>Last 30 days</span></div>`;
 }
 function renderVision(){
   const v=$("#vision");
@@ -276,9 +276,9 @@ function renderVision(){
 function renderPillars(){
   $("#pillars").innerHTML=PILLARS.map(([k,name,g])=>{ const pts=meta.pillars[k]||[], hs=active().filter(h=>h.pillar===k), sc=pillarScore(k), tdone=hs.filter(h=>isDone(h.id,today())).length;
     const body=editingPillar===k?`<textarea data-ptxt="${k}">${esc(pts.join("\n"))}</textarea><div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px"><button type="button" class="btn sm" data-pcancel>Cancel</button><button type="button" class="btn sm gold" data-psave="${k}">Save</button></div>`
-      :`<ul>${pts.map(p=>`<li>${esc(p)}</li>`).join("")||`<li style="color:var(--dim)">Tap Edit to write who you're becoming here.</li>`}</ul>`;
+      :`<ul>${pts.map(p=>`<li>${esc(p)}</li>`).join("")||`<li style="color:var(--dim)">Tap Edit and write who you're becoming here.</li>`}</ul>`;
     return `<article class="pillar" style="--pc:var(--p-${k})"><div class="glyph">${g}</div><h3>${name}</h3>${body}
-      <div class="foot"><span>${hs.length?`<b>${sc??"–"}${sc!=null?"%":""}</b> · 30 days · ${tdone}/${hs.length} today`:"No daily standard yet · add one below"}</span>${editingPillar===k?"":`<button type="button" class="pe" data-pedit="${k}">Edit</button>`}</div></article>`; }).join("");
+      <div class="foot"><span>${hs.length?`<b>${sc??"–"}${sc!=null?"%":""}</b> · 30 days · ${tdone}/${hs.length} today`:"Nothing tracked yet · add a non-negotiable below"}</span>${editingPillar===k?"":`<button type="button" class="pe" data-pedit="${k}">Edit</button>`}</div></article>`; }).join("");
 }
 function renderTiles(){
   const t=today(), isT=day===t;
@@ -291,7 +291,7 @@ function renderTiles(){
       <div class="row"><button type="button" class="tick" data-tick="${h.id}" aria-pressed="${on}" aria-label="${on?"Untick":"Tick"} ${esc(h.name)}"></button>
         <div style="min-width:0;padding-right:40px"><div class="tag">${PNAME[h.pillar]}</div><div class="tn">${esc(h.name)}</div>${h.detail?`<div class="td">${esc(h.detail)}</div>`:""}</div></div>
       ${h.note_prompt?`<textarea data-note="${h.id}" rows="2" placeholder="${esc(h.note_prompt)}">${esc(c&&c.note||"")}</textarea><div class="saved" data-saved="${h.id}"></div>`:""}</article>`; }).join("")
-    :`<div class="empty">No daily standards yet. Tap + Add under Daily standards.</div>`;
+    :`<div class="empty">No non-negotiables yet. Add your first under Daily non-negotiables.</div>`;
 }
 function renderGrid(){
   const N=42, t=today(), hs=active(), ds=[...Array(N)].map((_,i)=>addDays(gridEnd,i-N+1));
@@ -301,7 +301,7 @@ function renderGrid(){
   const rows=hs.map(h=>{ const inMonth=ds.filter(d=>d<=t&&d>=h.created_at.slice(0,10)), done=inMonth.filter(d=>isDone(h.id,d)).length;
     return `<tr><th class="hname"><span class="dotp" style="background:var(--p-${h.pillar})"></span>${esc(h.name)}</th>${ds.map(d=>{ const c=chk(h.id,d), on=!!(c&&c.done), fut=d>t; return `<td><button type="button" class="cell${on?" on":""}${fut?" future":""}${d===t?" today":""}${c&&c.note?" note":""}" ${fut?"disabled":""} data-cell="${h.id}|${d}" aria-label="${esc(h.name)} ${d}${on?" done":""}"></button></td>`; }).join("")}
       <td class="rs"><b>${done}</b>/${inMonth.length} · 🔥${habitStreak(h)}</td></tr>`; }).join("");
-  const score=`<tr class="score"><th class="hname">Day</th>${ds.map(d=>{ const s=d<=t?dayScore(d):null; return `<td><div class="sbar${s&&s.n===s.of?" perfect":""}" title="${s?`${s.n}/${s.of}`:""}"><i style="height:${s?Math.max(2,s.pct*24):0}px"></i></div></td>`; }).join("")}<td class="rs">${(()=>{const p=ds.filter(d=>{const s=d<=t?dayScore(d):null;return s&&s.n===s.of}).length;return `<b>${p}</b> perfect`})()}</td></tr>`;
+  const score=`<tr class="score"><th class="hname">Day</th>${ds.map(d=>{ const s=d<=t?dayScore(d):null; return `<td><div class="sbar${s&&s.n===s.of?" perfect":""}" title="${s?`${s.n}/${s.of}`:""}"><i style="height:${s?Math.max(2,s.pct*24):0}px"></i></div></td>`; }).join("")}<td class="rs">${(()=>{const p=ds.filter(d=>{const s=d<=t?dayScore(d):null;return s&&s.n===s.of}).length;return `<b>${p}</b> clean`})()}</td></tr>`;
   $("#grid").innerHTML=head+`<tbody>${rows}${score}</tbody>`;
   const tc=$("#grid").querySelector("th.today"); if(tc&&!renderGrid._scrolled){ renderGrid._scrolled=true; const sc=$(".grid-scroll"); sc.scrollLeft=Math.max(0,tc.offsetLeft-sc.clientWidth+80); }
 }
@@ -310,13 +310,13 @@ function renderYear(){
   let h="", perfect=0, any=0;
   for(let d=first; d<=t; d=addDays(d,1)){ const s=d>=start?dayScore(d):null; if(s){any++; if(s.n===s.of) perfect++;}
     const a=!s||!s.n?0:s.n===s.of?1:.2+.55*s.pct; h+=`<div class="yc" title="${fmt(d,{day:"numeric",month:"short",year:"numeric"})}${s?`: ${s.n}/${s.of}`:""}" style="${a?`background:${a===1?"var(--gold)":`rgba(214,178,94,${a.toFixed(2)})`}`:""}"></div>`; }
-  $("#year").innerHTML=h; $("#yearMeta").textContent=`${perfect} perfect day${perfect===1?"":"s"} in the last year`;
+  $("#year").innerHTML=h; $("#yearMeta").textContent=`${perfect} clean day${perfect===1?"":"s"} in the last year`;
 }
 function renderLog(){
   const noteHabits=new Set(habits.filter(h=>h.note_prompt).map(h=>h.id));
   const allRows=checks.filter(c=>c.note&&noteHabits.has(c.habit_id)).sort((a,b)=>b.day.localeCompare(a.day)||String(b.created_at||"").localeCompare(String(a.created_at||""))), rows=allRows.slice(0,logAll?60:8);
   $("#log").innerHTML=rows.length?rows.map(c=>{ const h=habits.find(x=>x.id===c.habit_id); return `<div class="log-row"><div class="lh"><span style="color:var(--p-${h.pillar})">${esc(h.name)}</span><span>${fmt(c.day,{day:"numeric",month:"short"})}</span></div><p>${esc(c.note)}</p></div>`; }).join("")+(allRows.length>8?`<button type="button" class="btn sm ghost" data-logmore style="margin-top:10px">${logAll?"Show less":`Show all ${Math.min(60,allRows.length)}`}</button>`:"")
-    :`<div class="empty">Notes from Learn something, Write something and Study BJJ collect here.</div>`;
+    :`<div class="empty">Every note you add to Learn, Write and BJJ builds up here.</div>`;
 }
 function renderHabits(){
   const all=habits.slice().sort((a,b)=>(b.active-a.active)||a.sort-b.sort);
@@ -335,7 +335,7 @@ async function toggle(hid,d){
   const was=isDone(hid,d);
   try{ await setCheck(hid,d,{done:!was}); render();
     if(!was){ const tile=document.querySelector(`[data-tile="${hid}"]`); if(tile){ tile.classList.add("pop"); setTimeout(()=>tile.classList.remove("pop"),400); }
-      const s=dayScore(d); if(s&&s.n===s.of&&d===today()) toast("Clean day. Every standard met."); }
+      const s=dayScore(d); if(s&&s.n===s.of&&d===today()) toast("Clean day. Every non-negotiable done."); }
   }catch(e){fail(e)}
 }
 async function saveMeta(){ const {error}=await sb.from("settings").upsert({key:"discipline",value:meta,updated_at:new Date().toISOString()}); if(error) throw error; }
@@ -374,7 +374,7 @@ $("#nextM").addEventListener("click",()=>{ if(gridEnd<today()){ gridEnd=addDays(
 /* ---------- habit drawer ---------- */
 function openHabit(id){
   editing=id?habits.find(h=>h.id===id):null; const h=editing||{name:"",pillar:"mindset",detail:"",note_prompt:"",active:true};
-  $("#dTitle").textContent=editing?"Edit standard":"New standard";
+  $("#dTitle").textContent=editing?"Edit non-negotiable":"New non-negotiable";
   $("#h-name").value=h.name; $("#h-pillar").value=h.pillar; $("#h-detail").value=h.detail||""; $("#h-prompt").value=h.note_prompt||""; $("#h-active").checked=h.active;
   $("#dDel").hidden=!editing; delete $("#dDel").dataset.armed; $("#dDel").textContent="Delete";
   $("#drawerRoot").hidden=false; setTimeout(()=>$("#h-name").focus(),30);
@@ -387,7 +387,7 @@ $("#dForm").addEventListener("submit",async e=>{ e.preventDefault();
   if(!row.name) return; if(!editing) row.sort=habits.length+1;
   try{ const q=editing?sb.from("disc_habits").update(row).eq("id",editing.id).select().single():sb.from("disc_habits").insert(row).select().single();
     const {data,error}=await q; if(error) throw error; const i=habits.findIndex(h=>h.id===data.id); if(i>=0) habits[i]=data; else habits.push(data); closeDrawer(); render(); toast(`Saved ${data.name}`); }catch(x){fail(x)} });
-$("#dDel").addEventListener("click",async()=>{ const b=$("#dDel"); if(!editing) return; if(!b.dataset.armed){ b.dataset.armed=1; b.textContent="Deletes its history. Tap again"; return; }
+$("#dDel").addEventListener("click",async()=>{ const b=$("#dDel"); if(!editing) return; if(!b.dataset.armed){ b.dataset.armed=1; b.textContent="This deletes its history. Tap again"; return; }
   try{ const {error}=await sb.from("disc_habits").delete().eq("id",editing.id); if(error) throw error; habits=habits.filter(h=>h.id!==editing.id); checks=checks.filter(c=>c.habit_id!==editing.id); closeDrawer(); render(); toast("Deleted"); }catch(x){fail(x)} });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("#drawerRoot").hidden) closeDrawer(); });
 
