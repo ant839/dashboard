@@ -223,6 +223,7 @@ input[type=range]{width:100%;accent-color:var(--accent);background:none;border:0
     <form id="dForm" autocomplete="off">
       <div class="f full"><div class="kind"><label><input type="radio" name="kind" value="in"><span><i class="sw" style="background:var(--in)"></i>Money in</span></label><label><input type="radio" name="kind" value="out"><span><i class="sw" style="background:var(--out)"></i>Money out</span></label></div></div>
       <label class="f full">Name<input id="f-name" required maxlength="60" placeholder="e.g. Rent, GymDesk, Insurance"></label>
+      <label class="f full" id="w-usemem" hidden style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-weight:400;font-size:12px;color:var(--muted)"><input type="checkbox" id="f-usemem" style="width:auto;accent-color:var(--accent)"> Work it out from members × price per member (adds a members slider to What if)</label>
       <label class="f" id="w-members" hidden>Members<input id="f-members" type="number" min="0" step="1" inputmode="numeric"></label>
       <label class="f"><span id="l-amt">Amount ($)</span><input id="f-amt" type="number" min="0" step="0.01" inputmode="decimal" required></label>
       <label class="f">How often<select id="f-freq"><option value="weekly">Weekly</option><option value="fortnightly">Fortnightly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="yearly">Yearly</option><option value="once">Once</option></select></label>
@@ -258,7 +259,7 @@ const kfmt=n=>{const a=Math.abs(n);return (n<0?"−":"")+"$"+(a>=1e6?(a/1e6).toF
 
 const CATS={business:{in:["Memberships","Programming","Merch","Events","Other"],out:["Rent","Wages","Software","Equipment","Insurance","Utilities","Marketing","Tax & super","Loan","Owner pay","Other"]},
   personal:{in:["PT","Owner pay","Pay","Side income","Other"],out:["Housing","Car","Bills","Food","Insurance","Subscriptions","Savings","Health & fitness","Fun","Other"]}};
-const QUICK={business:{in:[["Memberships","Memberships","weekly",60,60],["Programming clients","Programming","weekly"],["Merch","Merch","monthly"]],
+const QUICK={business:{in:[["Memberships","Memberships","weekly"],["Programming clients","Programming","weekly"],["Merch","Merch","monthly"]],
   out:[["Rent","Rent","monthly"],["Coaches","Wages","weekly"],["GymDesk","Software","monthly"],["Everfit","Software","monthly"],["Insurance","Insurance","yearly"],["BAS","Tax & super","quarterly"],["Power","Utilities","quarterly"],["Owner pay","Owner pay","weekly"]]},
   personal:{in:[["Pay from Rev","Owner pay","weekly"],["Other income","Side income","monthly"]],
   out:[["Mortgage / rent","Housing","monthly"],["Car","Car","monthly"],["Phone","Bills","monthly"],["Groceries","Food","weekly"],["Insurance","Insurance","yearly"],["Savings","Savings","weekly"],["Subscriptions","Subscriptions","monthly"]]}};
@@ -482,12 +483,12 @@ function renderLists(P){
 /* ---------- edit drawer ---------- */
 function fillCats(kind,sel){ $("#f-cat").innerHTML=CATS[book][kind].map(c=>`<option${c===sel?" selected":""}>${c}</option>`).join(""); }
 function syncForm(){
-  const kind=(document.querySelector("input[name=kind]:checked")||{}).value||"out", freq=$("#f-freq").value, isMem=$("#f-cat").value==="Memberships"||!$("#w-members").hidden&&$("#f-members").value!=="";
-  $("#w-members").hidden=!($("#f-cat").value==="Memberships");
-  $("#l-amt").textContent=$("#f-cat").value==="Memberships"?"Price per member ($)":"Amount ($)";
+  const freq=$("#f-freq").value, isMemCat=$("#f-cat").value==="Memberships", useMem=isMemCat&&$("#f-usemem").checked;
+  $("#w-usemem").hidden=!isMemCat; $("#w-members").hidden=!useMem;
+  $("#l-amt").textContent=useMem?"Price per member ($)":"Amount ($)";
   $("#l-start").textContent=freq==="once"?"Date":"Next date";
   $("#w-end").hidden=freq==="once";
-  const a=Number($("#f-amt").value||0)*($("#f-cat").value==="Memberships"?Number($("#f-members").value||0):1);
+  const a=Number($("#f-amt").value||0)*(useMem?Number($("#f-members").value||0):1);
   $("#f-hint").textContent=a?(freq==="once"?`${money(a,true)} on ${$("#f-start").value?fmt($("#f-start").value,{day:"numeric",month:"long"}):"that date"}.`:`${money(a,true)} ${FREQ_LABEL[freq].toLowerCase()}, about ${money(a*PER_MONTH[freq])} a month.`):"";
 }
 function openDrawer(id,preset){
@@ -497,18 +498,18 @@ function openDrawer(id,preset){
   document.querySelectorAll("input[name=kind]").forEach(r=>r.checked=r.value===it.kind);
   fillCats(it.kind,it.category||CATS[book][it.kind][0]);
   $("#f-name").value=it.name; $("#f-amt").value=it.amount; $("#f-freq").value=it.freq; $("#f-start").value=it.start_date; $("#f-end").value=it.end_date||"";
-  $("#f-members").value=it.members??""; $("#f-active").checked=it.active!==false; $("#f-notes").value=it.notes||"";
+  $("#f-members").value=it.members??""; $("#f-usemem").checked=it.members!=null; $("#f-active").checked=it.active!==false; $("#f-notes").value=it.notes||"";
   $("#dDel").hidden=!editing; delete $("#dDel").dataset.armed; $("#dDel").textContent="Delete";
   syncForm(); $("#drawerRoot").hidden=false; setTimeout(()=>(it.name?$("#f-amt"):$("#f-name")).focus(),30);
 }
 function closeDrawer(){$("#drawerRoot").hidden=true;editing=null}
 document.querySelectorAll("input[name=kind]").forEach(r=>r.addEventListener("change",()=>{fillCats(r.value);syncForm()}));
-["#f-freq","#f-cat","#f-amt","#f-members","#f-start"].forEach(s=>$(s).addEventListener("input",syncForm));
+["#f-freq","#f-cat","#f-amt","#f-members","#f-start","#f-usemem"].forEach(s=>$(s).addEventListener("input",syncForm));$("#f-usemem").addEventListener("change",syncForm);
 $("#dForm").addEventListener("submit",async e=>{
   e.preventDefault();
   const cat=$("#f-cat").value, row={book,kind:(document.querySelector("input[name=kind]:checked")||{}).value||"out",name:$("#f-name").value.trim(),
     amount:Number($("#f-amt").value||0),freq:$("#f-freq").value,start_date:$("#f-start").value,end_date:$("#f-freq").value==="once"?null:($("#f-end").value||null),
-    category:cat,members:cat==="Memberships"&&$("#f-members").value!==""?parseInt($("#f-members").value,10):null,active:$("#f-active").checked,notes:$("#f-notes").value.trim()||null};
+    category:cat,members:cat==="Memberships"&&$("#f-usemem").checked&&$("#f-members").value!==""?parseInt($("#f-members").value,10):null,active:$("#f-active").checked,notes:$("#f-notes").value.trim()||null};
   if(!row.name){$("#f-name").focus();return}
   if(editing&&editing.book!==book) row.book=editing.book;
   try{ const q=editing?sb.from("cf_items").update(row).eq("id",editing.id).select().single():sb.from("cf_items").insert(row).select().single();
