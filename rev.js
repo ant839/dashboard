@@ -14,6 +14,7 @@
   const TABS = [
     { href: 'dashboard.html', label: 'Home' },
     { href: 'braindump.html', label: 'Brain Dump' },
+    { href: 'training.html', label: 'Training' },
     { href: 'athletes.html', label: 'Programming' },
     { href: 'plan.html', label: 'Periodisation' },
     { href: 'leads.html', label: 'Leads' },
