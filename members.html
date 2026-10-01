@@ -238,9 +238,15 @@ function fail(e){console.error(e);toast("Couldn't save that. Check your connecti
 /* ---------- numbers ---------- */
 const activeTiers=p=>tiers.filter(t=>t.program===p&&t.active).sort((a,b)=>(b.is_base-a.is_base)||a.sort-b.sort||a.name.localeCompare(b.name));
 const baseTier=p=>tiers.find(t=>t.program===p&&t.is_base);
-function countOn(tierId,asOf){ let best=null; for(const c of counts){ if(c.tier_id===tierId&&c.day<=asOf&&(!best||c.day>best.day)) best=c; } return best?best.count:0; }
+function rowOn(tierId,asOf){ let best=null; for(const c of counts){ if(c.tier_id===tierId&&c.day<=asOf&&(!best||c.day>best.day)) best=c; } return best; }
+function countOn(tierId,asOf){ const r=rowOn(tierId,asOf); return r?r.count:0; }
+/* Base and custom types hold an exact weekly total; normal types are count x price. */
+const isFlex=t=>!!(t&&(t.is_base||t.is_custom));
+function incomeOn(t,asOf){ const r=rowOn(t.id,asOf); if(!r) return 0; return isFlex(t)&&r.income!=null?Number(r.income):r.count*Number(t.price_week); }
+const flexAvg=t=>{ const n=countOn(t.id,today()); return n?incomeOn(t,today())/n:Number(t.price_week)||0; };
+const tierIncomeWithDraft=t=>{ const n=countOn(t.id,today()), v=draft[t.id]??n; return isFlex(t)?Math.max(0,incomeOn(t,today())+(v-n)*flexAvg(t)):v*Number(t.price_week); };
 const progTotal=(p,asOf)=>activeTiers(p).reduce((a,t)=>a+countOn(t.id,asOf||today()),0);
-const progIncome=(p,asOf)=>activeTiers(p).reduce((a,t)=>a+countOn(t.id,asOf||today())*Number(t.price_week),0);
+const progIncome=(p,asOf)=>activeTiers(p).reduce((a,t)=>a+incomeOn(t,asOf||today()),0);
 function avgPrice(p){ const n=progTotal(p), inc=progIncome(p); if(n) return inc/n; const ts=activeTiers(p); return ts.length?ts.reduce((a,t)=>a+Number(t.price_week),0)/ts.length:0; }
 const sortedPhases=()=>phases.slice().sort((a,b)=>a.start_date.localeCompare(b.start_date));
 function currentPhase(){ const t=today(), ps=sortedPhases(); return ps.find(p=>p.start_date<=t&&p.end_date>=t)||ps.find(p=>p.start_date>t)||ps[ps.length-1]||null; }
@@ -344,9 +350,9 @@ function renderTiers(){
   let h="";
   ["rev","fndn"].forEach(p=>{ const ts=tiers.filter(t=>t.program===p).sort((a,b)=>a.sort-b.sort||a.name.localeCompare(b.name)); if(!ts.length) return;
     h+=`<div class="grp"><span class="dot" style="background:${PROGS[p].color}"></span>${PROGS[p].name} · ${ts.filter(t=>t.active).reduce((a,t)=>a+(draft[t.id]??countOn(t.id,today())),0)} members</div>`;
-    h+=ts.slice().sort((a,b)=>(b.is_base-a.is_base)||a.sort-b.sort).map(t=>{ const v=draft[t.id]??countOn(t.id,today()); return `<div class="tier"${t.active?"":` style="opacity:.45"`}><div class="tn" ${t.is_base?"data-base":`data-tier="${t.id}"`}><b>${esc(t.name)}${t.is_base?`<span class="base-tag">base</span>`:""}</b><span>${t.is_base?`avg $${Number(t.price_week).toFixed(2)}/wk · from ${fmt(t.created_at.slice(0,10))}`:money(t.price_week)+"/wk"}${t.active?"":" · hidden"}</span></div>
+    h+=ts.slice().sort((a,b)=>(b.is_base-a.is_base)||a.sort-b.sort).map(t=>{ const v=draft[t.id]??countOn(t.id,today()); return `<div class="tier"${t.active?"":` style="opacity:.45"`}><div class="tn" ${t.is_base?"data-base":`data-tier="${t.id}"`}><b>${esc(t.name)}${t.is_base?`<span class="base-tag">base</span>`:t.is_custom?`<span class="base-tag">custom</span>`:""}</b><span>${t.is_base?`avg $${flexAvg(t).toFixed(2)}/wk · from ${fmt(t.created_at.slice(0,10))}`:t.is_custom?`each person's own rate · avg $${flexAvg(t).toFixed(2)}/wk`:money(t.price_week)+"/wk"}${t.active?"":" · hidden"}</span></div>
       <div class="step"><button type="button" data-step="${t.id}" data-d="-1" aria-label="One fewer ${esc(t.name)}">−</button><input type="number" min="0" inputmode="numeric" value="${v}" data-cnt="${t.id}" aria-label="${esc(t.name)} members"><button type="button" data-step="${t.id}" data-d="1" aria-label="One more ${esc(t.name)}">+</button></div>
-      <div class="inc">${money(v*Number(t.price_week))}/wk</div></div>`; }).join("");
+      <div class="inc">${money(tierIncomeWithDraft(t))}/wk</div></div>`; }).join("");
   });
   $("#tiers").innerHTML=h||`<div class="empty">No membership types yet.</div>`;
   const dirty=Object.keys(draft).some(id=>draft[id]!==countOn(id,today()));
@@ -366,30 +372,62 @@ function render(){
 
 /* ---------- saving counts ---------- */
 async function saveCounts(map,undoMsg){
-  const t=today(), before={}; Object.keys(map).forEach(id=>before[id]=countOn(id,t));
-  const rows=Object.entries(map).map(([tier_id,count])=>({tier_id,day:t,count:Math.max(0,count|0)}));
+  const t=today(), before={}, rows=[];
+  Object.entries(map).forEach(([tier_id,v])=>{ const tier=tiers.find(x=>x.id===tier_id), r=rowOn(tier_id,t), n0=r?r.count:0;
+    before[tier_id]={count:n0,income:r&&r.income!=null?Number(r.income):null};
+    let count, income=null;
+    if(typeof v==="object"){ count=v.count; income=v.income; }
+    else { count=v; if(isFlex(tier)) income=incomeOn(tier,t)+(count-n0)*flexAvg(tier); }
+    count=Math.max(0,count|0); if(income!=null) income=count?Math.max(0,Math.round(income*100)/100):0;
+    rows.push({tier_id,day:t,count,income}); });
   const {data,error}=await sb.from("mem_counts").upsert(rows,{onConflict:"tier_id,day"}).select(); if(error) throw error;
   (data||[]).forEach(r=>{ const i=counts.findIndex(c=>c.tier_id===r.tier_id&&c.day===r.day); if(i>=0) counts[i]=r; else counts.push(r); });
   draft={}; render();
-  if(undoMsg) toast(undoMsg,"Undo",async()=>{ try{ await saveCounts(before); }catch(e){fail(e)} });
+  if(undoMsg) toast(typeof undoMsg==="function"?undoMsg():undoMsg,"Undo",async()=>{ try{ await saveCounts(before); }catch(e){fail(e)} });
+}
+async function customTier(p){
+  let t=tiers.find(x=>x.program===p&&x.is_custom); if(t) return t;
+  const {data,error}=await sb.from("mem_tiers").insert({program:p,name:"Custom amounts",price_week:0,sort:99,is_custom:true,active:true}).select().single(); if(error) throw error;
+  tiers.push(data); return data;
 }
 $("#saveCounts").addEventListener("click",async()=>{ try{ await saveCounts({...draft}); toast("Numbers saved for today"); }catch(e){fail(e)} });
 function pickTier(p,dir){
-  const ts=activeTiers(p).filter(t=>dir>0?!t.is_base:countOn(t.id,today())>0||!t.is_base); if(!ts.length) return toast("Add a membership type first.");
-  const go=async t=>{ try{ const n=countOn(t.id,today())+dir; if(n<0) return; await saveCounts({[t.id]:n},`${dir>0?"Joined":"Left"}: ${PROGS[p].short} ${t.name} · ${PROGS[p].short} now ${progTotal(p)+dir}`); }catch(e){fail(e)} };
-  if(ts.length===1) return go(ts[0]);
-  const el=document.createElement("div"); el.className="modal";
-  el.innerHTML=`<div class="box" role="dialog" aria-modal="true"><h4>${dir>0?"Who joined?":"Who left?"}</h4><p>${PROGS[p].name} · pick their membership</p>
-    ${ts.map(t=>`<button type="button" class="opt" data-pick="${t.id}">${esc(t.name)}<span>${t.is_base?"avg ":""}${money(t.price_week)}/wk · ${countOn(t.id,today())} now</span></button>`).join("")}
-    <button type="button" class="btn" data-x style="justify-self:end">Cancel</button></div>`;
+  const P=PROGS[p], std=activeTiers(p).filter(t=>!isFlex(t)), el=document.createElement("div"); el.className="modal";
+  const after=d=>`${P.short} now ${progTotal(p)}`;
+  const run=async(mk,msg)=>{ try{ el.remove(); const map=await mk(); await saveCounts(map,()=>`${msg} · ${after()}`); }catch(e){fail(e)} };
+  const joinStd=t=>run(()=>({[t.id]:countOn(t.id,today())+1}),`Joined: ${t.name} ${money(t.price_week)}/wk`);
+  const joinCustom=amt=>run(async()=>{ const ct=await customTier(p); return {[ct.id]:{count:countOn(ct.id,today())+1,income:incomeOn(ct,today())+amt}}; },`Joined at ${money(amt)}/wk`);
+  const leaveStd=t=>run(()=>({[t.id]:countOn(t.id,today())-1}),`Left: ${t.name}`);
+  const leaveFlex=(t,amt)=>run(()=>({[t.id]:{count:countOn(t.id,today())-1,income:incomeOn(t,today())-amt}}),`Left: ${t.is_base?"existing member":"custom member"} paying ${money(amt)}/wk`);
+  if(dir>0){
+    el.innerHTML=`<div class="box" role="dialog" aria-modal="true"><h4>Who joined?</h4><p>${P.name} · pick their membership, or type what they pay</p>
+      ${std.map(t=>`<button type="button" class="opt" data-std="${t.id}">${esc(t.name)}<span>${money(t.price_week)}/wk</span></button>`).join("")}
+      <div class="opt" style="gap:8px;cursor:default"><span style="color:var(--text);font-size:14px;flex:1">Custom amount</span><input type="number" min="0" step="0.01" inputmode="decimal" placeholder="$ / week" id="cust-amt" style="width:110px"><button type="button" class="btn sm primary" data-cust>Add</button></div>
+      <button type="button" class="btn" data-x style="justify-self:end">Cancel</button></div>`;
+  } else {
+    const opts=activeTiers(p).filter(t=>countOn(t.id,today())>0);
+    if(!opts.length) return toast(`No ${P.short} members to remove.`);
+    el.innerHTML=`<div class="box" role="dialog" aria-modal="true"><h4>Who left?</h4><p>${P.name} · pick their membership</p>
+      ${opts.map(t=>isFlex(t)?`<div class="opt" style="flex-wrap:wrap;gap:8px;cursor:default"><span style="color:var(--text);font-size:14px;flex:1">${esc(t.name)}<br><span>${countOn(t.id,today())} on their own rates · avg $${flexAvg(t).toFixed(2)}</span></span>
+          <input type="number" min="0" step="0.01" inputmode="decimal" value="${flexAvg(t).toFixed(2)}" data-amt="${t.id}" aria-label="What they were paying per week" style="width:96px"><button type="button" class="btn sm" data-flex="${t.id}">Remove</button></div>`
+        :`<button type="button" class="opt" data-std="${t.id}">${esc(t.name)}<span>${money(t.price_week)}/wk · ${countOn(t.id,today())} now</span></button>`).join("")}
+      <p style="margin-top:2px">For existing or custom members, change the amount to what they actually paid.</p>
+      <button type="button" class="btn" data-x style="justify-self:end">Cancel</button></div>`;
+  }
   document.body.appendChild(el);
-  el.addEventListener("click",e=>{ if(e.target===el||e.target.closest("[data-x]")) return el.remove(); const b=e.target.closest("[data-pick]"); if(b){ el.remove(); go(tiers.find(t=>t.id===b.dataset.pick)); } });
+  const ci=el.querySelector("#cust-amt"); if(ci) ci.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); el.querySelector("[data-cust]").click(); } });
+  el.addEventListener("click",e=>{
+    if(e.target===el||e.target.closest("[data-x]")) return el.remove();
+    const s1=e.target.closest("[data-std]"); if(s1){ const t=tiers.find(x=>x.id===s1.dataset.std); return dir>0?joinStd(t):leaveStd(t); }
+    if(e.target.closest("[data-cust]")){ const v=Number(ci.value); if(!(v>0)){ ci.focus(); return; } return joinCustom(v); }
+    const f=e.target.closest("[data-flex]"); if(f){ const t=tiers.find(x=>x.id===f.dataset.flex), v=Number(el.querySelector(`[data-amt="${t.id}"]`).value||0); return leaveFlex(t,v); }
+  });
 }
 
 /* ---------- starting point ---------- */
 function openBase(){
   const el=document.createElement("div"); el.className="modal";
-  const row=p=>{ const b=baseTier(p), n=b?countOn(b.id,today()):"", inc=b&&n!==""?Math.round(n*Number(b.price_week)*100)/100:"";
+  const row=p=>{ const b=baseTier(p), n=b?countOn(b.id,today()):"", inc=b&&n!==""?Math.round(incomeOn(b,today())*100)/100:"";
     return `<div class="grp" style="margin-top:6px"><span class="dot" style="background:${PROGS[p].color}"></span>${PROGS[p].name}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label class="f">Members today<input type="number" min="0" inputmode="numeric" id="bs-${p}-n" value="${n}"></label>
       <label class="f">Weekly income from them ($)<input type="number" min="0" step="0.01" inputmode="decimal" id="bs-${p}-i" value="${inc}"></label></div>
@@ -412,7 +450,7 @@ function openBase(){
         let b=baseTier(p);
         if(b){ const {data,error}=await sb.from("mem_tiers").update({price_week:avg,active:true}).eq("id",b.id).select().single(); if(error) throw error; Object.assign(b,data); }
         else { const {data,error}=await sb.from("mem_tiers").insert({program:p,name:"Existing members",price_week:avg,sort:0,is_base:true,active:true}).select().single(); if(error) throw error; tiers.push(data); b=data; }
-        map[b.id]=n;
+        map[b.id]={count:n,income:inc};
         /* new-member types start from zero on the base day unless already logged today */
         activeTiers(p).filter(t=>!t.is_base&&!counts.some(c=>c.tier_id===t.id&&c.day===today())).forEach(t=>map[t.id]=0);
       }
@@ -495,7 +533,7 @@ document.addEventListener("click",e=>{
 document.addEventListener("input",e=>{ const c=e.target.closest("[data-cnt]"); if(!c) return; draft[c.dataset.cnt]=Math.max(0,parseInt(c.value||"0",10)); const pos=c.selectionStart; renderLive(); const sb2=$("#saveCounts"); const dirty=Object.keys(draft).some(id=>draft[id]!==countOn(id,today())); sb2.disabled=!dirty; });
 /* show unsaved totals live on the tier group headers without losing input focus */
 function renderLive(){ document.querySelectorAll(".grp").forEach((g,i)=>{ const p=["rev","fndn"].filter(p=>tiers.some(t=>t.program===p))[i]; if(!p) return; const n=activeTiers(p).reduce((a,t)=>a+(draft[t.id]??countOn(t.id,today())),0); g.lastChild.textContent=`${PROGS[p].name} · ${n} members`; });
-  document.querySelectorAll(".tier").forEach(r=>{ const inp=r.querySelector("[data-cnt]"); if(!inp) return; const t=tiers.find(x=>x.id===inp.dataset.cnt); const v=draft[t.id]??countOn(t.id,today()); if(document.activeElement!==inp) inp.value=v; r.querySelector(".inc").textContent=`${money(v*Number(t.price_week))}/wk`; }); }
+  document.querySelectorAll(".tier").forEach(r=>{ const inp=r.querySelector("[data-cnt]"); if(!inp) return; const t=tiers.find(x=>x.id===inp.dataset.cnt); const v=draft[t.id]??countOn(t.id,today()); if(document.activeElement!==inp) inp.value=v; r.querySelector(".inc").textContent=`${money(tierIncomeWithDraft(t))}/wk`; }); }
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("#drawerRoot").hidden) closeDrawer(); if((e.key==="Enter"||e.key===" ")&&e.target.matches?.(".phase[data-phase]")){e.preventDefault();openPhase(e.target.dataset.phase)} });
 let rz; window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(drawChart,200)});
 
