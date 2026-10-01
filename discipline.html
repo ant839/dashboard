@@ -180,6 +180,8 @@ table.grid{border-collapse:separate;border-spacing:3px;min-width:100%}
 </head>
 <body>
 <div class="wrap" id="app">
+  <div class="viewsw" role="tablist" aria-label="View"><button type="button" role="tab" data-v="daily" class="on" aria-selected="true">Daily</button><button type="button" role="tab" data-v="goals" aria-selected="false">Life goals</button></div>
+  <div id="viewDaily">
   <section class="hero">
     <div>
       <div class="eyebrow" id="dateLine"></div>
@@ -213,6 +215,8 @@ table.grid{border-collapse:separate;border-spacing:3px;min-width:100%}
     <section class="gridcard"><div class="sec-h"><h2>The work</h2><span class="meta">What I built, learned, wrote and drilled</span></div><div class="logf" id="logf"></div><div id="log"></div></section>
     <section class="gridcard"><div class="sec-h"><h2>Daily non-negotiables</h2><button type="button" class="btn sm" id="addHabit">+ Add</button></div><div id="habits"></div></section>
   </div>
+  </div>
+  <div id="viewGoals" hidden></div>
 </div>
 
 <div id="drawerRoot" hidden>
@@ -234,6 +238,7 @@ table.grid{border-collapse:separate;border-spacing:3px;min-width:100%}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="rev.js?v=25"></script>
+<script src="life-goals.js?v=2"></script>
 <script>
 (function(){
 const $=s=>document.querySelector(s);
@@ -407,7 +412,11 @@ async function load(){
   habits=h.data||[]; checks=c.data||[]; if(m&&m.data&&m.data.value) meta={vision:[],pillars:{},...m.data.value};
   render();
 }
-revRequireLogin(()=>{ load();
+function setView(v){ document.querySelectorAll("[data-v]").forEach(b=>{b.classList.toggle("on",b.dataset.v===v);b.setAttribute("aria-selected",b.dataset.v===v)});
+  $("#viewDaily").hidden=v!=="daily"; $("#viewGoals").hidden=v!=="goals"; history.replaceState(null,"",v==="goals"?"#goals":location.pathname);
+  if(v==="goals"&&window.LifeGoals) LifeGoals.show(); }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-v]"); if(b) setView(b.dataset.v); });
+revRequireLogin(()=>{ if(location.hash==="#goals") setView("goals"); load();
   sb.channel("disc-live").on("postgres_changes",{event:"*",schema:"public",table:"disc_checks"},()=>{ if(document.activeElement&&document.activeElement.matches("[data-note]")) return; clearTimeout(load._t); load._t=setTimeout(load,500); }).subscribe();
   document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&!(document.activeElement&&document.activeElement.matches("[data-note]"))) load(); });
 });
