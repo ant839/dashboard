@@ -1113,9 +1113,9 @@ document.getElementById('filters').addEventListener('click',e=>{
   document.getElementById('q-text').textContent=q[0]; document.getElementById('q-by').textContent=q[1];
 })();
 (function(){
-  /* Five years to the dream life: day 1 is 3 Jan 2027, the last day is 2 Jan 2032. */
-  const start=new Date(2027,0,3), end=new Date(2032,0,3), DAY=864e5;
-  const total=Math.round((end-start)/DAY), now=new Date(); now.setHours(0,0,0,0);
+  /* The road to the dream life: day 1 is Mon 5 Oct 2026, the last day is Sat 3 Jan 2032 (1,917 days). */
+  const start=new Date(2026,9,5), last=new Date(2032,0,3), DAY=864e5, end=new Date(2032,0,4);
+  const total=Math.round((last-start)/DAY)+1, now=new Date(); now.setHours(0,0,0,0);
   const el=document.getElementById('dream'), n=x=>x.toLocaleString('en-AU');
   if(now<start){ const left=Math.round((start-now)/DAY); el.innerHTML=`<b>${n(left)}</b> day${left===1?'':'s'} until day 1 of ${n(total)} to living your dream life.`; }
   else { const d=Math.min(total,Math.floor((now-start)/DAY)+1);
