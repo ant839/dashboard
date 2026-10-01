@@ -1175,22 +1175,65 @@ document.getElementById('filters').addEventListener('click',e=>{
     if(t==='party') return `<svg class="scene" ${V}><defs><linearGradient id="sk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a1250"/><stop offset="1" stop-color="#0d0d24"/></linearGradient></defs><rect width="480" height="96" fill="url(#sk)"/>
       ${Array.from({length:40},(_,i)=>`<rect class="tw" style="animation-delay:${(rnd(i)*3).toFixed(2)}s" x="${(rnd(i+1)*300).toFixed(0)}" y="${(rnd(i+5)*90).toFixed(0)}" width="4" height="2" rx="1" transform="rotate(${(rnd(i+8)*180).toFixed(0)} ${(rnd(i+1)*300).toFixed(0)} ${(rnd(i+5)*90).toFixed(0)})" fill="${['#c8f06a','#ff8a65','#5ab4ff','#b08fff','#f5c542'][i%5]}"/>`).join('')}
       <g class="gl"><circle cx="120" cy="34" r="2" fill="#fff"/>${Array.from({length:12},(_,i)=>`<line x1="120" y1="34" x2="${120+Math.cos(i/12*6.283)*20}" y2="${34+Math.sin(i/12*6.283)*20}" stroke="#f5c542" stroke-width="1.2" stroke-linecap="round"/>`).join('')}</g></svg>`;
-    /* camping: night sky, moon, layered ranges, pines, tent and a flickering fire */
+    /* camping: night sky, the ute with its awning out, Ant in the chair by the fire, swag rolled out */
     return `<svg class="scene" ${V}><defs>
       <linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070b1f"/><stop offset=".55" stop-color="#16204a"/><stop offset="1" stop-color="#3b2d4f"/></linearGradient>
-      <radialGradient id="fg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffb347" stop-opacity=".55"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient>
-      <radialGradient id="mg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff6d8" stop-opacity=".35"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></radialGradient></defs>
-      <rect width="480" height="96" fill="url(#sk)"/>${stars(70,60)}
-      <circle cx="232" cy="20" r="22" fill="url(#mg)"/><circle cx="232" cy="20" r="8" fill="#fff4cf"/><circle cx="235.5" cy="17.5" r="7" fill="#16204a" opacity=".35"/>
-      <path d="M0,70 L40,48 L70,62 L112,36 L150,58 L190,42 L240,66 L290,46 L340,64 L400,44 L480,62 L480,96 L0,96 Z" fill="#232a52"/>
-      <path d="M0,80 L50,64 L95,76 L140,60 L190,74 L250,62 L310,78 L380,64 L480,76 L480,96 L0,96 Z" fill="#171c3a"/>
-      ${[14,30,46,268,286,304,330,356,380,404,430,456].map((x,i)=>pine(x,96,16+(i*7%14),'#0c1026')).join('')}
-      <path d="M0,96 L0,88 Q120,82 240,86 T480,88 L480,96 Z" fill="#0a0d1f"/>
-      <circle cx="150" cy="84" r="26" fill="url(#fg)" class="gl"/>
-      <g><path d="M78,90 L104,58 L130,90 Z" fill="#c8833a"/><path d="M104,58 L130,90 L118,90 Z" fill="#9c5f24"/><path d="M98,90 L104,72 L110,90 Z" fill="#2a1a0c"/><line x1="104" y1="58" x2="104" y2="53" stroke="#c8833a" stroke-width="1.4"/></g>
-      <g><rect x="140" y="88" width="20" height="3" rx="1.5" fill="#4a2c16" transform="rotate(14 150 89)"/><rect x="140" y="88" width="20" height="3" rx="1.5" fill="#5a3518" transform="rotate(-14 150 89)"/>
-        <path class="fl" d="M150,70 C156,78 158,84 150,89 C142,84 144,78 150,70 Z" fill="#ff8a2a"/><path class="fl" style="animation-delay:.2s" d="M150,76 C153,80 154,85 150,88 C146,85 147,80 150,76 Z" fill="#ffd36b"/></g>
-      ${[0,1,2].map(i=>`<circle class="tw" style="animation-delay:${i*.5}s" cx="${148+i*4}" cy="${62-i*7}" r=".9" fill="#ffb347"/>`).join('')}</svg>`;
+      <radialGradient id="fg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffb347" stop-opacity=".6"/><stop offset=".5" stop-color="#ff8a2a" stop-opacity=".18"/><stop offset="1" stop-color="#ff8a2a" stop-opacity="0"/></radialGradient>
+      <radialGradient id="mg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff6d8" stop-opacity=".35"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></radialGradient>
+      <linearGradient id="lit" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#262c4a"/><stop offset="1" stop-color="#4a3a44"/></linearGradient>
+      <linearGradient id="aw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a3f5e"/><stop offset="1" stop-color="#6a5240"/></linearGradient></defs>
+      <rect width="480" height="96" fill="url(#sk)"/>${stars(70,58)}
+      <circle cx="262" cy="18" r="22" fill="url(#mg)"/><circle cx="262" cy="18" r="7.5" fill="#fff4cf"/><circle cx="265.5" cy="15.5" r="6.5" fill="#16204a" opacity=".35"/>
+      <path d="M0,68 L40,48 L72,60 L112,38 L150,56 L196,42 L240,62 L290,46 L340,64 L400,44 L480,62 L480,96 L0,96 Z" fill="#232a52"/>
+      <path d="M0,80 L50,66 L95,76 L140,62 L190,74 L250,64 L310,78 L380,64 L480,76 L480,96 L0,96 Z" fill="#171c3a"/>
+      ${[8,20,300,318,340,362,386,410,436,460].map((x,i)=>pine(x,94,15+(i*7%13),'#0c1026')).join('')}
+      <path d="M0,96 L0,89 Q120,85 240,88 T480,89 L480,96 Z" fill="#0a0d1f"/>
+      <circle cx="198" cy="84" r="34" fill="url(#fg)" class="gl"/>
+
+      <!-- ute: cab facing left, canopy on the tray, roof rack -->
+      <g>
+        <path d="M28,84 L28,76 Q29,72.5 34,72 L49,71 L57,62.5 Q59,61 63,61 L74,61 L74,84 Z" fill="url(#lit)"/>
+        <path d="M53,71 L59,64.2 Q60,63.4 62,63.4 L71,63.4 L71,71 Z" fill="#11162e"/>
+        <rect x="76" y="57" width="66" height="27" rx="2" fill="url(#lit)"/><rect x="74" y="64" width="2" height="18" fill="#0b0d1f"/><path d="M76,74 L142,74" stroke="#1a1f38" stroke-width="1"/>
+        <rect x="82" y="61" width="24" height="8" rx="1.5" fill="#11162e"/><rect x="110" y="61" width="26" height="8" rx="1.5" fill="#11162e"/>
+        <line x1="78" y1="54.5" x2="140" y2="54.5" stroke="#4a4f6a" stroke-width="1.4"/><line x1="84" y1="54.5" x2="84" y2="57" stroke="#4a4f6a" stroke-width="1.2"/><line x1="134" y1="54.5" x2="134" y2="57" stroke="#4a4f6a" stroke-width="1.2"/><rect x="92" y="51.5" width="22" height="3" rx="1" fill="#2e3350"/>
+        <rect x="26" y="80" width="118" height="5" rx="1.5" fill="#1a1f38"/><path d="M38,80 a10,10 0 0 1 20,0 Z M114,80 a10,10 0 0 1 20,0 Z" fill="#0b0d1f"/>
+        <circle cx="48" cy="86" r="7.5" fill="#0b0d1f"/><circle cx="48" cy="86" r="3" fill="#3a3f5e"/>
+        <circle cx="124" cy="86" r="7.5" fill="#0b0d1f"/><circle cx="124" cy="86" r="3" fill="#3a3f5e"/>
+        <rect x="28.5" y="74.5" width="3" height="2" rx="1" fill="#ffd36b" opacity=".75"/><rect x="25" y="80" width="5" height="3" rx="1" fill="#2e3350"/>
+      </g>
+      <!-- awning rolled out off the back, on a pole -->
+      <rect x="138" y="53" width="5" height="4" rx="1.5" fill="#3a3f5e"/><path d="M141,54 L184,59.5 L184,64 L141,58.5 Z" fill="url(#aw)"/><path d="M184,64 q-2.5,2.2 -5,0 q-2.5,2.2 -5,0 q-2.5,2.2 -5,0 q-2.5,2.2 -5,0 q-2.5,2.2 -5,0 q-2.5,2 -5,-.6 L184,61 Z" fill="#6a5240"/>
+      <line x1="183" y1="62" x2="183" y2="90" stroke="#8a8f9e" stroke-width="1.1"/>
+      <line x1="183" y1="62" x2="191" y2="90" stroke="#8a8f9e" stroke-width=".5" opacity=".6"/>
+
+      <!-- Ant in the camp chair, leaned back, drink in hand, facing the fire -->
+      <g>
+        <path d="M156,90 L168,79 M168,90 L156,79" stroke="#2a2f4a" stroke-width="1.3"/>
+        <path d="M153,79 L171,79 L172,82 L154,82 Z" fill="#3b2f2a"/>
+        <path d="M153,79 L150,66 L154,65 L157,79 Z" fill="#3b2f2a"/>
+        <path d="M156,68 Q158,74 161,79 L167,79 L178,84 L183,89 L180,90 L174,86 L163,83 Q156,82 154,76 Z" fill="#1d2238"/>
+        <path d="M167,79 L178,84 L183,89" stroke="#7a4a2a" stroke-width="1" fill="none" opacity=".75"/>
+        <circle cx="155.5" cy="64.5" r="3.6" fill="#1d2238"/><path d="M158.6,63.6 a3.6,3.6 0 0 1 -1,4" stroke="#ff9a4a" stroke-width=".9" fill="none" opacity=".8"/>
+        <path d="M152,62.6 Q155.5,59.2 159.4,62.6 L161,63 L152,63 Z" fill="#141829"/>
+        <path d="M157,70 L163,73 L165,70" stroke="#1d2238" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <rect x="164" y="67.5" width="2.4" height="3.6" rx=".5" fill="#c8833a"/>
+      </g>
+
+      <!-- fire -->
+      <g><rect x="188" y="88" width="20" height="3" rx="1.5" fill="#4a2c16" transform="rotate(14 198 89)"/><rect x="188" y="88" width="20" height="3" rx="1.5" fill="#5a3518" transform="rotate(-14 198 89)"/>
+        <ellipse cx="198" cy="90.5" rx="12" ry="2" fill="#2a1a10"/>
+        <path class="fl" d="M198,70 C204,78 206,84 198,89 C190,84 192,78 198,70 Z" fill="#ff8a2a"/><path class="fl" style="animation-delay:.2s" d="M198,76 C201,80 202,85 198,88 C194,85 195,80 198,76 Z" fill="#ffd36b"/></g>
+      ${[0,1,2,3].map(i=>`<circle class="tw" style="animation-delay:${i*.45}s" cx="${195+i*3}" cy="${62-i*7}" r=".9" fill="#ffb347"/>`).join('')}
+
+      <!-- swag rolled out on the other side of the fire -->
+      <g>
+        <path d="M216,90 L216,86 Q217,79 230,78 L246,78 Q256,79 258,86 L258,90 Z" fill="#5b4a33"/>
+        <path d="M216,86 Q217,79 230,78 L236,78 Q226,80 224,90 L216,90 Z" fill="#8a6a42" opacity=".85"/>
+        <path d="M230,78 Q232,73 238,72 Q244,73 246,78" fill="none" stroke="#6b5a3e" stroke-width="1.4"/>
+        <rect x="248" y="83" width="8" height="4" rx="2" fill="#7a6a58"/>
+        <line x1="216" y1="90" x2="258" y2="90" stroke="#0a0d1f" stroke-width="1"/>
+      </g></svg>`;
   }
   const pad=n=>String(n).padStart(2,'0');
   function target(ev){ if(!ev.date) return null; const [y,m,d]=ev.date.split('-').map(Number); return new Date(y,m-1,d,ev.time?+ev.time.slice(0,2):0,ev.time?+ev.time.slice(3,5):0); }
