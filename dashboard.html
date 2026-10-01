@@ -423,6 +423,23 @@ select option { background: var(--surface2); }
 .q-mark { position: absolute; left: 18px; top: 6px; font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 56px; line-height: 1; color: var(--accent); opacity: 0.55; }
 .quote blockquote { margin: 0; font-size: 18px; font-weight: 300; line-height: 1.45; color: var(--text); letter-spacing: -0.005em; }
 .quote figcaption { margin-top: 6px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.cmdr { position: relative; display: grid; grid-template-columns: 168px 1fr; gap: 18px; align-items: center; margin: 0 0 18px; padding: 12px 52px 12px 12px; border-radius: 14px; border: 1px solid var(--border); background: linear-gradient(100deg, rgba(200,240,106,0.05), rgba(255,255,255,0.012) 60%); overflow: hidden; }
+.cmdr-fig { width: 168px; height: 112px; flex-shrink: 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--border2); padding: 0; background: #0b1026; cursor: pointer; display: block; }
+.cmdr-fig svg { width: 100%; height: 100%; display: block; }
+.cmdr-bubble { position: relative; background: var(--surface2); border: 1px solid var(--border2); border-radius: 14px; padding: 14px 18px 12px; cursor: pointer; min-height: 76px; display: flex; flex-direction: column; justify-content: center; }
+.cmdr-bubble::before { content: ''; position: absolute; left: -9px; top: 50%; width: 16px; height: 16px; background: var(--surface2); border-left: 1px solid var(--border2); border-bottom: 1px solid var(--border2); transform: translateY(-50%) rotate(45deg); }
+.cmdr-bubble:hover { border-color: rgba(200,240,106,0.35); }
+.cmdr-bubble p { font-size: 18px; font-weight: 400; line-height: 1.4; color: var(--text); letter-spacing: -0.005em; transition: opacity .25s, transform .25s; }
+.cmdr-bubble p.swap { opacity: 0; transform: translateY(4px); }
+.cmdr-by { display: flex; justify-content: space-between; gap: 10px; margin-top: 7px; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.cmdr-by #cmdrBy.real { color: var(--accent); }
+.cmdr-hint { color: var(--dim); }
+@keyframes breathe { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-1px) } }
+@keyframes steam { 0% { opacity: 0; transform: translateY(2px) } 40% { opacity: .5 } 100% { opacity: 0; transform: translateY(-8px) } }
+.cmdr .br { animation: breathe 4s ease-in-out infinite; }
+.cmdr .st { animation: steam 3s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .cmdr .br, .cmdr .st { animation: none; } }
+@media (max-width: 900px) { .cmdr { grid-template-columns: 96px 1fr; gap: 14px; padding: 10px 36px 10px 10px; } .cmdr-fig { width: 96px; height: 96px; } .cmdr-bubble p { font-size: 15px; } .cmdr-hint { display: none; } }
 .q-secret { position: absolute; right: 12px; bottom: 10px; color: var(--muted); opacity: 0.22; transition: opacity .2s, color .2s, transform .3s; padding: 6px; display: flex; }
 .q-secret:hover, .q-secret:focus-visible { opacity: 0.9; color: var(--accent); transform: rotate(45deg); }
 @media (max-width: 900px) { .quote { padding: 16px 40px 14px 44px; } .q-mark { left: 12px; font-size: 46px; } .quote blockquote { font-size: 16px; } }
@@ -452,14 +469,16 @@ select option { background: var(--surface2); }
   </div>
 </div>
 
-<figure class="quote" id="quote">
-  <span class="q-mark" aria-hidden="true">“</span>
-  <blockquote id="q-text"></blockquote>
-  <figcaption id="q-by"></figcaption>
+<section class="cmdr" id="cmdr" aria-label="The Commander">
+  <button type="button" class="cmdr-fig" id="cmdrFig" aria-label="Another one"></button>
+  <div class="cmdr-bubble" id="cmdrBubble" role="button" tabindex="0" aria-label="Tap for another">
+    <p id="cmdrText"></p>
+    <div class="cmdr-by"><span id="cmdrBy"></span><span class="cmdr-hint">tap for another</span></div>
+  </div>
   <a class="q-secret" href="discipline.html" aria-label="Open">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/></svg>
   </a>
-</figure>
+</section>
 
 <div class="metrics-row" id="metrics"></div>
 <div class="prog-track"><div class="prog-fill" id="prog" style="width:0%"></div></div>
@@ -1122,25 +1141,133 @@ document.getElementById('filters').addEventListener('click',e=>{
   renderTasks();
 });
 
+/* ---- The Commander: a faceless, bald, square-jawed figure in the camp-scene style, with a speech bubble.
+   Only the two lines marked real:true are Jocko Willink's own words; the rest are originals in that voice. ---- */
 (function(){
+  const REAL='Jocko Willink', ME='The Commander';
   const Q=[
-    ["By failing to prepare, you are preparing to fail.","Benjamin Franklin"],
-    ["Luck is what happens when preparation meets opportunity.","Seneca"],
-    ["Every battle is won before it is ever fought.","Sun Tzu"],
-    ["We don't rise to the level of our expectations, we fall to the level of our training.","Archilochus"],
-    ["Give me six hours to chop down a tree and I will spend the first four sharpening the axe.","Abraham Lincoln"],
-    ["First say to yourself what you would be, and then do what you have to do.","Epictetus"],
-    ["Before anything else, preparation is the key to success.","Alexander Graham Bell"],
-    ["Chance favours only the prepared mind.","Louis Pasteur"],
-    ["Plans are useless, but planning is indispensable.","Dwight D. Eisenhower"],
-    ["Well begun is half done.","Aristotle"],
-    ["No man is free who is not master of himself.","Epictetus"],
-    ["Waste no more time arguing what a good man should be. Be one.","Marcus Aurelius"],
-    ["It is not that we have a short time to live, but that we waste a lot of it.","Seneca"],
-    ["He who is best prepared can best serve his moment of inspiration.","Samuel Taylor Coleridge"]
+    /* his own words, credited */
+    ["Discipline equals freedom.",REAL],
+    ["Good.",REAL],
+    /* savage and funny */
+    ["Tired? Good. Tired means you're awake. Now go make something happen."],
+    ["Oh, you didn't feel like it today? Feelings don't lift the bar, princess."],
+    ["The snooze button is a vote for the softest version of you. Stop voting for him."],
+    ["Your excuses are boring. Your results could be legendary. Pick one."],
+    ["Nobody is coming to save you. Good. That means you get to do it yourself."],
+    ["Motivation is a rumour. Discipline turns up anyway."],
+    ["It's 0430. The world's asleep. That's your head start. Take it."],
+    ["You don't need a new program. You need to do the one you've already got."],
+    ["Skipped a session? The barbell doesn't care. It'll still be heavy tomorrow."],
+    ["Your comfort zone is lovely. Nice couch, good lighting. Nothing has ever grown there."],
+    ["Hard day? Good. Easy days have never built anything worth having."],
+    ["Put the phone down. The algorithm isn't going to build your life for you."],
+    ["The couch is undefeated against people who sit on it."],
+    ["You said 'tomorrow' yesterday. And the day before. I'm keeping count."],
+    ["Raining? Good. Train anyway. The weather doesn't get a vote."],
+    ["Want it to be easy? Then want less. Otherwise, get to work."],
+    ["The weight won't lift itself. I checked. Twice."],
+    ["You're not stuck. You're comfortable. Different problem, same fix: move."],
+    ["Earn the coffee. Then earn the second one."],
+    ["Excuses are just lies wearing a hoodie."],
+    ["Missed? Good. Now you know where the target isn't. Adjust. Fire again."],
+    ["Sore? Good. That's the old you moving out."],
+    ["Your future self is watching this exact moment. Don't embarrass him."],
+    ["Complain later. Lift now. You'll find there's less to complain about."],
+    ["Didn't sleep well? Neither did anyone who ever did anything hard. Go."],
+    ["Bad mood? Lovely. Take it to the gym and leave it under a heavy bar."],
+    ["Nobody cares how you feel about the work. Do the work, then the feelings sort themselves out."],
+    ["Waiting for the perfect moment is just failing politely."],
+    ["Busy? Everyone's busy. The committed ones are busy doing the thing."],
+    ["You don't have a time problem. You have a priorities problem. Fix the list."],
+    ["Cold shower? Good. Now you're awake and mildly annoyed. Use both."],
+    ["Your bed is warm. So is mediocrity. Get up."],
+    /* discipline and mindset */
+    ["Do the hard thing first. The rest of the day bows to you."],
+    ["Control what you can. Let go of what you can't. Attack everything in between."],
+    ["Discipline is choosing what you want most over what you want right now."],
+    ["When it all goes sideways: step back, breathe, look at it from above. Then act."],
+    ["Own it. All of it. You can't fix what you won't own."],
+    ["Leave the ego at the door. It's heavy and it's never once helped you lift."],
+    ["The standard is the standard. Every single day. Especially the bad ones."],
+    ["Slow is smooth. Smooth is fast."],
+    ["Too much on? Pick the biggest problem. Solve it. Then the next one."],
+    ["Small wins, stacked daily, become a fortress."],
+    ["The man you want to become is built at 5am when nobody is watching."],
+    ["Be the calmest person in the room and the hardest worker in the building."],
+    ["Win the morning. Win the day. String enough days together and you win the year."],
+    ["Respond. Don't react. The pause is where the power is."],
+    ["Every rep is a vote for the man you're becoming."],
+    ["Don't count the days. Make the days count."],
+    ["Fear is information, not instruction."],
+    ["You'll never feel ready. Ready is a decision, not a feeling."],
+    ["The obstacle isn't in the way. It is the way. Go through it."],
+    /* coaching and leading */
+    ["Leaders eat last and train first."],
+    ["Your athletes don't do what you say. They do what you do. Act accordingly."],
+    ["Build the business the way you build an athlete. One rep at a time. Every day."],
+    ["If the team fails, look in the mirror first. That's leadership."],
+    ["Coach the person, not just the lift. The lift will follow."],
+    /* tributes */
+    ["Somebody gave everything so you could have this ordinary morning. Don't waste it."],
+    ["Remember the ones who didn't come home. Live a life worth what they paid."],
+    ["Lest we forget. Then go out and earn it."],
+    ["Soldiers have carried packs heavier than your excuses through places darker than your worst day. Get moving."],
+    ["They stood the watch so you could sleep. Now get up and stand yours."],
+    ["Freedom was paid for in full by people who never got to enjoy it. Honour them with effort."],
+    ["Courage isn't the absence of fear. It's doing the job anyway. Ask any digger."],
+    ["On ANZAC Day we remember. Every other day we try to live up to it."],
+    ["Someone's last day was spent protecting the life you're living today. Make it count."],
+    /* inspiration */
+    ["You are one decision away from a completely different life. Make it today."],
+    ["Five years from now you'll wish you started today. So start."],
+    ["The dream isn't built on the big days. It's built on the boring ones you didn't skip."],
+    ["Get up. Lace up. Show up. Repeat until it's who you are."],
+    ["Hard choices, easy life. Easy choices, hard life. Choose."],
+    ["Pressure is a privilege. It means you're in the fight."]
   ];
-  const d=new Date(), day=Math.floor((d-new Date(d.getFullYear(),0,0))/864e5), q=Q[day%Q.length];
-  document.getElementById('q-text').textContent=q[0]; document.getElementById('q-by').textContent=q[1];
+  const fig=`<svg viewBox="0 0 168 112" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>
+    <linearGradient id="cdSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070b1f"/><stop offset=".7" stop-color="#1a2348"/><stop offset="1" stop-color="#3b2d4f"/></linearGradient>
+    <radialGradient id="cdDawn" cx=".5" cy="1" r=".7"><stop offset="0" stop-color="#ff9a4a" stop-opacity=".45"/><stop offset="1" stop-color="#ff9a4a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="cdSkin" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9c7354"/><stop offset=".55" stop-color="#c8936c"/><stop offset="1" stop-color="#a77a58"/></linearGradient>
+    <linearGradient id="cdArm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c08a63"/><stop offset="1" stop-color="#9c6f50"/></linearGradient>
+    <radialGradient id="cdShine" cx=".4" cy=".3" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
+    <rect width="168" height="112" fill="url(#cdSky)"/><rect width="168" height="112" fill="url(#cdDawn)"/>
+    ${[[14,12],[30,26],[150,14],[136,30],[120,8],[44,8],[158,40],[8,36]].map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="${i%2?.7:1}" fill="#fff" opacity=".7"/>`).join('')}
+    <text x="6" y="12" font-family="DM Mono,monospace" font-size="8" fill="#c8f06a" opacity=".85">0430</text>
+    <g class="br">
+      <path d="M14,112 L20,88 Q24,74 44,70 L70,65 L98,65 L124,70 Q144,74 148,88 L154,112 Z" fill="#141418"/>
+      <path d="M71,65 L84,73 L97,65" fill="none" stroke="#0a0a0d" stroke-width="2"/>
+      <path d="M73,52 L73,67 Q84,73 95,67 L95,52 Z" fill="#94694b"/>
+      <path d="M61,24 Q61,7 84,7 Q107,7 107,24 L107,44 Q107,50 103,54 L96,60 Q92,63 84,63 Q76,63 72,60 L65,54 Q61,50 61,44 Z" fill="url(#cdSkin)"/>
+      <ellipse cx="77" cy="15" rx="12" ry="6.5" fill="url(#cdShine)"/>
+      <path d="M61,31 Q57,31 57,37 Q58,43 62,43 Z M107,31 Q111,31 111,37 Q110,43 106,43 Z" fill="#a77a58"/>
+      <path d="M67,31 L80,34.5 M101,31 L88,34.5" stroke="#4e3628" stroke-width="2.6" stroke-linecap="round" fill="none" opacity=".8"/><path d="M68,35 L80,37 M100,35 L88,37" stroke="#6e4e3a" stroke-width="3" stroke-linecap="round" opacity=".35"/>
+      <path d="M61,44 Q61,50 65,54 L72,60 Q76,63 84,63 L84,58 Q76,58 70,54 Q64,50 64,42 Z" fill="#5e4232" opacity=".28"/><path d="M107,44 Q107,50 103,54 L96,60 Q92,63 84,63 L84,58 Q92,58 98,54 Q104,50 104,42 Z" fill="#5e4232" opacity=".22"/><path d="M77,52 L91,52" stroke="#5e4232" stroke-width="1.6" stroke-linecap="round" opacity=".45"/>
+      <ellipse cx="30" cy="93" rx="13" ry="11" fill="url(#cdArm)"/><ellipse cx="138" cy="93" rx="13" ry="11" fill="url(#cdArm)"/>
+      <path d="M17,86 Q22,74 40,71 L44,82 Q30,82 17,86 Z M151,86 Q146,74 128,71 L124,82 Q138,82 151,86 Z" fill="#141418"/>
+      <path d="M26,92 Q50,84 92,88 L126,90 Q134,91 134,98 Q133,105 125,105 L84,104 Q48,106 30,104 Q22,100 26,92 Z" fill="url(#cdArm)"/>
+      <path d="M142,94 Q120,86 78,90 L42,93 Q34,94 34,100 Q35,107 43,107 L86,106 Q122,108 140,104 Q146,100 142,94 Z" fill="#b58260"/>
+      <path d="M40,98 q7,-4 14,0 M48,103 q6,-3 12,0 M104,96 q7,-4 14,0" stroke="#3a3f5e" stroke-width="1.5" fill="none" opacity=".75"/>
+      <path d="M126,92 q5,1 6,6 M38,100 q-5,-1 -6,-5" stroke="#8a5f44" stroke-width="1.2" fill="none" opacity=".6"/>
+      <rect x="120" y="95" width="9" height="8" rx="1.5" fill="#1b1d22" stroke="#4a4f5a" stroke-width=".8"/>
+    </g>
+    </svg>`;
+  const figEl=document.getElementById('cmdrFig'), txt=document.getElementById('cmdrText'), by=document.getElementById('cmdrBy'), bub=document.getElementById('cmdrBubble');
+  figEl.innerHTML=fig;
+  /* shuffle once, then walk the deck so you don't see repeats until you've seen them all */
+  let deck=[], last=null;
+  try{ last=localStorage.getItem('cmdr-last'); }catch(e){}
+  const shuffle=()=>{ deck=Q.map((_,i)=>i); for(let i=deck.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [deck[i],deck[j]]=[deck[j],deck[i]]; } if(String(deck[deck.length-1])===last) deck.unshift(deck.pop()); };
+  function next(anim){
+    if(!deck.length) shuffle(); const i=deck.pop(), q=Q[i]; try{ localStorage.setItem('cmdr-last',String(i)); }catch(e){}
+    const show=()=>{ txt.textContent=q[0]; by.textContent=q[1]||ME; by.classList.toggle('real',q[1]===REAL); txt.classList.remove('swap'); };
+    if(anim){ txt.classList.add('swap'); setTimeout(show,220); } else show();
+  }
+  figEl.addEventListener('click',()=>next(true));
+  bub.addEventListener('click',()=>next(true));
+  bub.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); next(true); } });
+  next(false);
 })();
 /* ---- Something to look forward to: a scene banner with a live countdown ---- */
 (function(){
