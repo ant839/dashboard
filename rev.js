@@ -16,6 +16,7 @@
     { href: 'athletes.html', label: 'Programming' },
     { href: 'plan.html', label: 'Periodisation' },
     { href: 'leads.html', label: 'Leads' },
+    { href: 'members.html', label: 'Members' },
     { href: 'cashflow.html', label: 'Cash Flow' },
     { href: 'pt.html', label: 'PT Clients' }
   ];

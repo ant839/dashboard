@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0e0e0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=3">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3">
+<meta name="apple-mobile-web-app-title" content="Rev">
+<title>Members · Rev</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0e0f; --surface:#161618; --surface2:#1e1e21;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.14);
+  --text:#f0efe8; --muted:#888884; --dim:#4a4a48;
+  --accent:#c8f06a; --red:#ff5a5a; --amber:#f5a623; --teal:#3dd6b5; --purple:#b08fff;
+  --rev:#709c30; --fndn:#3f8fe6;
+  --radius:12px; --radius-sm:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html{color-scheme:dark}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;font-size:14px;min-height:100vh;padding:calc(22px + env(safe-area-inset-top,0px)) 26px calc(80px + env(safe-area-inset-bottom,0px));font-variant-numeric:tabular-nums}
+input,select,textarea,button{font-family:inherit;font-size:13px;color:var(--text)}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 11px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--border2)}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto}
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:16px}
+.eyebrow{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
+.btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.btn:hover{border-color:var(--border2)}
+.btn.primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+.btn.danger{color:var(--red)}
+.btn:disabled{opacity:.35;cursor:default}
+.btn.sm{padding:5px 10px;font-size:12px}
+.phase-pill{display:inline-flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;color:var(--muted)}
+.phase-pill b{color:var(--text);font-weight:500}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0}
+/* big cards */
+.bigs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.big{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden}
+.big::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
+.big .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.big .prog{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.pace{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:20px}
+.pace.ok{background:rgba(200,240,106,.12);color:var(--accent)} .pace.behind{background:rgba(245,166,35,.14);color:var(--amber)} .pace.done{background:rgba(61,214,181,.14);color:var(--teal)} .pace.none{background:rgba(255,255,255,.06);color:var(--muted)}
+.nums{display:grid;grid-template-columns:auto 1fr auto;align-items:end;gap:10px}
+.now .n{font-size:64px;font-weight:300;line-height:.95;letter-spacing:-.03em}
+.goal{text-align:right}
+.goal .n{font-size:40px;font-weight:300;line-height:1;letter-spacing:-.02em;color:var(--muted)}
+.lab{font-size:11px;color:var(--muted);margin-top:6px}
+.arrow{align-self:center;color:var(--dim);font-size:22px;text-align:center}
+.track{height:8px;background:rgba(255,255,255,.06);border-radius:4px;margin:14px 0 6px;position:relative;overflow:hidden}
+.track i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--c);transition:width .5s ease}
+.togo{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.togo b{color:var(--text);font-weight:500}
+.money{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.money .m{font-size:28px;font-weight:500;letter-spacing:-.02em;line-height:1.05}
+.money .m small{font-size:13px;font-weight:400;color:var(--muted);letter-spacing:0}
+.money .s{font-size:11px;color:var(--muted);margin-top:4px}
+.money .atgoal .m{color:var(--accent)}
+.money .gain{font-size:12px;color:var(--accent);margin-top:2px;font-weight:500}
+.acts{display:flex;gap:6px;margin-top:14px;align-items:center;flex-wrap:wrap}
+.acts .delta{margin-left:auto;font-size:11px;color:var(--muted)}
+.delta .up{color:var(--accent)} .delta .down{color:var(--red)}
+.btn.join{border-color:rgba(200,240,106,.35);color:var(--accent)}
+.btn.leave{color:var(--muted)}
+/* layout */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+.card-label{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:400}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{display:inline-block;width:14px;height:2px;border-radius:2px}
+.sw.t{height:0;border-top:2px dashed var(--muted);background:none}
+.chart{position:relative;user-select:none;-webkit-user-select:none}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{fill:var(--muted);font-size:10px;font-family:'DM Sans',system-ui,sans-serif}
+.chart .lbl{fill:var(--text);font-size:11px;font-weight:600}
+.chart .ph{fill:var(--text);font-size:11px;font-weight:500}
+.chart .gl{stroke:rgba(255,255,255,.06);stroke-width:1}
+.chart .base{stroke:rgba(255,255,255,.2);stroke-width:1}
+.chart .hit{fill:transparent}
+.chart path,.chart line,.chart text,.chart circle,.chart rect.nohit{pointer-events:none}
+.tip{position:absolute;pointer-events:none;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 10px;font-size:12px;min-width:150px;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.tip .r{display:flex;justify-content:space-between;gap:12px;color:var(--muted)} .tip .r b{color:var(--text);font-weight:500}
+.tip h5{font-size:12px;font-weight:600;margin-bottom:4px}
+.phases{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:12px}
+.phase{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;cursor:pointer;position:relative}
+.phase:hover{border-color:var(--border2)}
+.phase.current{border-color:var(--pc);box-shadow:0 0 0 1px var(--pc) inset}
+.phase .ph-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.phase .ph-n{font-size:15px;font-weight:500;flex:1;min-width:0}
+.phase .ph-st{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.phase.current .ph-st{color:var(--text)}
+.phase .ph-d{font-size:12px;color:var(--muted)}
+.phase .ph-t{display:flex;gap:14px;margin:10px 0 6px;flex-wrap:wrap}
+.phase .ph-t div{font-size:11px;color:var(--muted)} .phase .ph-t b{display:block;font-size:22px;font-weight:400;color:var(--text);letter-spacing:-.01em}
+.phase .ph-inc{font-size:13px;color:var(--accent);font-weight:500}
+.phase .ph-f{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5;white-space:pre-line}
+.phase.add{display:grid;place-items:center;border-style:dashed;color:var(--muted);min-height:140px;font-size:13px}
+.phase.add:hover{color:var(--text)}
+.lower{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;margin-top:12px;align-items:start}
+.tier{display:grid;grid-template-columns:1fr 110px 92px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.tier:last-child{border-bottom:0}
+.tier .tn{cursor:pointer;min-width:0} .tier .tn:hover b{color:var(--accent)}
+.tier .tn b{font-weight:500;display:block} .tier .tn span{font-size:11px;color:var(--muted)}
+.step{display:flex;align-items:center;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
+.step button{background:var(--surface2);border:0;width:30px;height:30px;font-size:15px;color:var(--muted)}
+.step button:hover{color:var(--text)}
+.step input{width:50px;text-align:center;border:0;border-radius:0;padding:6px 0;font-size:14px;background:var(--surface);-moz-appearance:textfield}
+.step input::-webkit-outer-spin-button,.step input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.tier .inc{text-align:right;font-family:'DM Mono',monospace;font-size:12px}
+.grp{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:12px 0 2px;display:flex;align-items:center;gap:7px}
+.grp:first-child{margin-top:0}
+.save-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+.hint{font-size:11px;color:var(--dim);line-height:1.4}
+.hist-row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)}
+.hist-row:last-child{border-bottom:0}
+.hist-row b{color:var(--text);font-weight:500}
+.empty{font-size:12px;color:var(--dim);padding:12px 0;line-height:1.5}
+.banner{display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:12px;background:rgba(200,240,106,.06);border:1px solid rgba(200,240,106,.22)}
+/* drawer / modal */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--surface);border-left:1px solid var(--border);z-index:21;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.drawer header{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--border)}
+.drawer h3{font-size:20px;font-weight:300}
+.drawer form{flex:1;overflow-y:auto;padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;align-content:start}
+.drawer footer{display:flex;gap:8px;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border)}
+.drawer footer div{display:flex;gap:8px}
+.f{display:grid;gap:6px;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;min-width:0}
+.f.full{grid-column:1/-1}
+.f input,.f select,.f textarea{font-size:14px;width:100%;min-width:0;text-transform:none;letter-spacing:0;font-weight:400}
+.colors{display:flex;gap:8px;flex-wrap:wrap}
+.colors input{position:absolute;opacity:0;pointer-events:none}
+.colors span{display:block;width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent}
+.colors input:checked+span{border-color:var(--text);box-shadow:0 0 0 2px var(--surface) inset}
+.colors input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.f .calc{font-size:12px;color:var(--accent);text-transform:none;letter-spacing:0;font-weight:500}
+.modal{position:fixed;inset:0;z-index:25;display:grid;place-items:center;padding:16px;background:rgba(0,0,0,.55)}
+.modal .box{background:var(--surface);border:1px solid var(--border2);border-radius:12px;width:min(360px,100%);padding:18px;display:grid;gap:10px}
+.modal h4{font-size:17px;font-weight:400}
+.modal p{font-size:12px;color:var(--muted);margin-top:-4px}
+.modal .opt{display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 13px;font-size:14px;text-align:left;width:100%}
+.modal .opt:hover{border-color:var(--accent)}
+.modal .opt span{font-size:12px;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--text);color:var(--bg);padding:10px 14px;border-radius:9px;display:flex;gap:14px;align-items:center;z-index:30;font-size:13px;max-width:calc(100% - 32px)}
+.toast button{border:0;background:none;color:inherit;font-weight:600;text-decoration:underline;padding:0}
+@media (max-width:1100px){.bigs{grid-template-columns:1fr 1fr}.big.total{grid-column:1/-1}}
+@media (max-width:860px){
+  body{padding-left:16px;padding-right:16px}
+  .bigs,.lower{grid-template-columns:1fr}
+  .now .n{font-size:56px} .goal .n{font-size:34px} .money .m{font-size:24px}
+  .phases{grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:82%;overflow-x:auto;scroll-snap-type:x mandatory;margin:12px -16px 0;padding:0 16px 6px}
+  .phase{scroll-snap-align:start}
+}
+@media (prefers-reduced-motion:no-preference){
+  .drawer{animation:slide .18s ease-out}@keyframes slide{from{transform:translateX(24px);opacity:.6}}
+  .big{animation:rise .4s ease-out both}.big:nth-child(2){animation-delay:.06s}.big:nth-child(3){animation-delay:.12s}@keyframes rise{from{transform:translateY(8px);opacity:0}}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="head">
+    <div><div class="eyebrow">Rev Barbell Club</div><h1>Members &amp; goals</h1></div>
+    <div class="phase-pill" id="phasePill"></div>
+  </div>
+  <div class="banner" id="firstRun" hidden>👋 <span>Start by entering today's member numbers in <b>Members by type</b> below, then tap <b>Save numbers</b>. Everything above fills in from there.</span></div>
+
+  <section class="bigs" id="bigs" aria-label="Members against goals"></section>
+
+  <section class="card">
+    <div class="card-label"><span>Phases · members over time</span>
+      <div class="legend"><span><i class="sw" style="background:var(--rev)"></i>Rev members</span><span><i class="sw" style="background:var(--fndn)"></i>FNDN members</span><span><i class="sw t"></i>Phase goal</span><span><i class="sw t" style="border-top-style:dotted;border-top-color:var(--text)"></i>Pace needed</span></div>
+    </div>
+    <div class="chart" id="chart"></div>
+  </section>
+
+  <div class="phases" id="phases"></div>
+
+  <div class="lower">
+    <section class="card">
+      <div class="card-label"><span>Members by type</span><button type="button" class="btn sm" id="addTier">+ Add type</button></div>
+      <div id="tiers"></div>
+      <div class="save-row"><span class="hint" id="saveHint">Change the numbers, then save. Each save is logged so you can see the trend.</span><button type="button" class="btn primary" id="saveCounts" disabled>Save numbers</button></div>
+    </section>
+    <section class="card">
+      <div class="card-label"><span>Recent changes</span></div>
+      <div id="history"></div>
+    </section>
+  </div>
+</div>
+
+<div id="drawerRoot" hidden>
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <header><h3 id="dTitle">Phase</h3><button class="btn" type="button" id="dClose">Close</button></header>
+    <form id="dForm" autocomplete="off"></form>
+    <footer><div><button class="btn danger" type="button" id="dDel">Delete</button></div><div><button class="btn" type="button" id="dCancel">Cancel</button><button class="btn primary" type="submit" form="dForm">Save</button></div></footer>
+  </aside>
+</div>
+
+<div class="toast" id="toast" hidden role="status"><span id="toastMsg"></span><button type="button" id="toastAct" hidden></button></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+<script src="rev.js?v=25"></script>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const parseD=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const today=()=>iso(new Date());
+const addDays=(s,n)=>{const d=parseD(s);d.setDate(d.getDate()+n);return iso(d)};
+const addMonths=(s,n)=>{const d=parseD(s);d.setMonth(d.getMonth()+n);return iso(d)};
+const days=(a,b)=>Math.round((parseD(b)-parseD(a))/864e5);
+const fmt=(s,o)=>parseD(s).toLocaleDateString("en-AU",o||{day:"numeric",month:"short"});
+const money=n=>"$"+Math.round(n).toLocaleString("en-AU");
+const kmoney=n=>n>=1e5?"$"+Math.round(n/1e3)+"k":n>=1e4?"$"+(n/1e3).toFixed(1).replace(/\.0$/,"")+"k":money(n);
+
+const PROGS={rev:{name:"Rev Barbell Club",short:"Rev",color:"var(--rev)",hex:"#709c30"},fndn:{name:"FNDN",short:"FNDN",color:"var(--fndn)",hex:"#3f8fe6"}};
+const PCOL={purple:"#b08fff",teal:"#3dd6b5",amber:"#f5a623",blue:"#5ab4ff",coral:"#ff8a65",lime:"#c8f06a"};
+let tiers=[], counts=[], phases=[], draft={}, drawerKind=null, editing=null;
+revRenderNav($("#app"));
+
+function toast(msg,lab,act){const t=$("#toast");$("#toastMsg").textContent=msg;const b=$("#toastAct");b.hidden=!act;b.textContent=lab||"";b.onclick=()=>{t.hidden=true;act&&act()};t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,act?6000:3000)}
+function fail(e){console.error(e);toast("Couldn't save that. Check your connection and try again.");load()}
+
+/* ---------- numbers ---------- */
+const activeTiers=p=>tiers.filter(t=>t.program===p&&t.active).sort((a,b)=>a.sort-b.sort||a.name.localeCompare(b.name));
+function countOn(tierId,asOf){ let best=null; for(const c of counts){ if(c.tier_id===tierId&&c.day<=asOf&&(!best||c.day>best.day)) best=c; } return best?best.count:0; }
+const progTotal=(p,asOf)=>activeTiers(p).reduce((a,t)=>a+countOn(t.id,asOf||today()),0);
+const progIncome=(p,asOf)=>activeTiers(p).reduce((a,t)=>a+countOn(t.id,asOf||today())*Number(t.price_week),0);
+function avgPrice(p){ const n=progTotal(p), inc=progIncome(p); if(n) return inc/n; const ts=activeTiers(p); return ts.length?ts.reduce((a,t)=>a+Number(t.price_week),0)/ts.length:0; }
+const sortedPhases=()=>phases.slice().sort((a,b)=>a.start_date.localeCompare(b.start_date));
+function currentPhase(){ const t=today(), ps=sortedPhases(); return ps.find(p=>p.start_date<=t&&p.end_date>=t)||ps.find(p=>p.start_date>t)||ps[ps.length-1]||null; }
+const target=(ph,p)=>!ph?null:p==="total"?((ph.rev_target??0)+(ph.fndn_target??0))||null:ph[p+"_target"];
+const progNow=p=>p==="total"?progTotal("rev")+progTotal("fndn"):progTotal(p);
+const progInc=p=>p==="total"?progIncome("rev")+progIncome("fndn"):progIncome(p);
+const progAgo=(p,d)=>p==="total"?progTotal("rev",addDays(today(),-d))+progTotal("fndn",addDays(today(),-d)):progTotal(p,addDays(today(),-d));
+const goalIncome=(ph,p)=>p==="total"?(ph.rev_target??progTotal("rev"))*avgPrice("rev")+(ph.fndn_target??progTotal("fndn"))*avgPrice("fndn"):target(ph,p)*avgPrice(p);
+const hasHistory=()=>counts.length>0;
+
+/* ---------- big cards ---------- */
+function bigCard(p){
+  const ph=currentPhase(), goal=target(ph,p), now=progNow(p), inc=progInc(p), c=p==="total"?"var(--text)":PROGS[p].color;
+  const ago30=hasHistory()?progAgo(p,30):now, d30=now-ago30;
+  let pace="none", paceT="No goal set", pct=0, togo="", weeksLeft=null, need=null;
+  if(goal){ pct=Math.min(100,Math.round(now/goal*100)); const left=goal-now; weeksLeft=Math.max(0,days(today(),ph.end_date)/7);
+    if(left<=0){ pace="done"; paceT="Goal hit 🎉"; togo=`<span><b>${-left}</b> over goal</span><span>${pct}%</span>`; }
+    else { need=weeksLeft>0?left/weeksLeft:left; const actual=d30/(30/7);
+      pace=actual>=need*0.9?"ok":"behind"; paceT=pace==="ok"?"On pace":"Behind pace";
+      togo=`<span><b>${left}</b> to go · ${weeksLeft>=1?Math.round(weeksLeft)+" weeks left":"due now"}</span><span>need ~${need<1?need.toFixed(1):Math.ceil(need*10)/10}/week</span>`; } }
+  const gInc=goal?goalIncome(ph,p):null, gain=gInc!=null?gInc-inc:null;
+  return `<article class="big${p==="total"?" total":""}" style="--c:${c}">
+    <div class="top"><span class="prog">${p==="total"?"All members":PROGS[p].name}</span><span class="pace ${pace}">${paceT}</span></div>
+    <div class="nums"><div class="now"><div class="n">${now}</div><div class="lab">members now</div></div><div class="arrow" aria-hidden="true">→</div>
+      <div class="goal"><div class="n">${goal??"–"}</div><div class="lab">${goal?`goal by ${fmt(ph.end_date)}`:p==="total"?"set goals in a phase":"tap a phase to set"}</div></div></div>
+    <div class="track" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="${p} progress to goal"><i style="width:${pct}%"></i></div>
+    <div class="togo">${togo||`<span>${goal?"":"No goal for this phase yet"}</span>`}</div>
+    <div class="money"><div><div class="m">${money(inc)}<small>/wk</small></div><div class="s">now · ${kmoney(inc*52/12)}/mo · ${kmoney(inc*52)}/yr</div></div>
+      <div class="atgoal"><div class="m">${gInc!=null?money(gInc):"–"}<small>/wk</small></div><div class="s">at goal${gInc!=null?` · ${kmoney(gInc*52)}/yr`:""}</div>${gain>0?`<div class="gain">+${money(gain)}/wk · +${kmoney(gain*52)} a year</div>`:""}</div></div>
+    <div class="acts">${p==="total"?"":`<button type="button" class="btn sm join" data-join="${p}">+ Joined</button><button type="button" class="btn sm leave" data-leave="${p}">− Left</button>`}
+      <span class="delta">${hasHistory()?(d30===0?"no change in 30 days":`<span class="${d30>0?"up":"down"}">${d30>0?"▲":"▼"} ${Math.abs(d30)}</span> in 30 days`):""}</span></div></article>`;
+}
+
+/* ---------- chart ---------- */
+function niceStep(raw){ if(raw<=0) return 1; const p=Math.pow(10,Math.floor(Math.log10(raw))), n=raw/p; return (n<=1?1:n<=2?2:n<=5?5:10)*p; }
+function drawChart(){
+  const el=$("#chart"), W=Math.max(300,Math.round(el.clientWidth||900)), small=W<560, H=small?250:300, padL=small?34:40, padR=small?12:20, padT=34, padB=24;
+  const ps=sortedPhases(), t=today();
+  const firstCount=counts.length?counts.reduce((a,c)=>c.day<a?c.day:a,counts[0].day):t;
+  let x0=[ps.length?ps[0].start_date:t,firstCount,addDays(t,-30)].sort()[0], x1=[ps.length?ps[ps.length-1].end_date:t,addDays(t,60)].sort().pop();
+  const span=Math.max(1,days(x0,x1)), X=d=>padL+(W-padL-padR)*days(x0,d)/span;
+  const dayList=[...new Set(counts.map(c=>c.day))].sort();
+  const series=p=>{ const pts=dayList.map(d=>[d,progTotal(p,d)]); if(pts.length&&pts[pts.length-1][0]<t) pts.push([t,progTotal(p,t)]); return pts; };
+  const S={rev:series("rev"),fndn:series("fndn")};
+  const yMaxRaw=Math.max(10,...ps.flatMap(p=>[p.rev_target||0,p.fndn_target||0]),...S.rev.map(x=>x[1]),...S.fndn.map(x=>x[1]))*1.12, st=niceStep(yMaxRaw/4), yMax=Math.ceil(yMaxRaw/st)*st;
+  const Y=v=>padT+(H-padT-padB)*(1-v/yMax);
+  let g="";
+  ps.forEach(ph=>{ const a=X(ph.start_date), b=X(addDays(ph.end_date,1)), col=PCOL[ph.color]||PCOL.purple, cur=ph===currentPhase();
+    g+=`<rect class="nohit" x="${a}" y="${padT-22}" width="${Math.max(1,b-a-2)}" height="${H-padT-padB+22}" fill="${col}" fill-opacity="${cur?.1:.05}" rx="4"/>`;
+    g+=`<rect class="nohit" x="${a}" y="${padT-22}" width="${Math.max(1,b-a-2)}" height="3" fill="${col}" rx="1.5"/>`;
+    const label=esc(ph.name), maxCh=Math.floor((b-a-12)/6.2); g+=`<text class="ph" x="${a+6}" y="${padT-8}">${maxCh>4?(label.length>maxCh?label.slice(0,maxCh-1)+"…":label):""}</text>`; });
+  for(let v=0;v<=yMax+1e-6;v+=st) g+=`<line class="${v?"gl":"base"}" x1="${padL}" x2="${W-padR}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${padL-6}" y="${Y(v)+3}" text-anchor="end">${v}</text>`;
+  /* goal steps */
+  ["rev","fndn"].forEach(p=>ps.forEach(ph=>{ const tg=ph[p+"_target"]; if(tg==null) return; const a=X(ph.start_date)+3, b=X(addDays(ph.end_date,1))-5;
+    g+=`<line x1="${a}" x2="${b}" y1="${Y(tg)}" y2="${Y(tg)}" stroke="${PROGS[p].hex}" stroke-width="2" stroke-dasharray="6 4" stroke-opacity=".75"/><text class="lbl" x="${b}" y="${Y(tg)-6}" text-anchor="end">${PROGS[p].short} ${tg}</text>`; }));
+  /* pace needed: from today's number to the current phase goal */
+  const cp=currentPhase();
+  if(cp&&cp.end_date>=t) ["rev","fndn"].forEach(p=>{ const tg=cp[p+"_target"]; if(tg==null||!counts.length) return; const now=progTotal(p);
+    if(tg>now) g+=`<line x1="${X(t)}" y1="${Y(now)}" x2="${X(addDays(cp.end_date,1))-5}" y2="${Y(tg)}" stroke="var(--text)" stroke-opacity=".45" stroke-width="1.5" stroke-dasharray="2 4"/>`; });
+  /* actual lines */
+  ["rev","fndn"].forEach(p=>{ const pts=S[p]; if(!pts.length) return;
+    const d="M"+pts.map(([d,v],i)=>`${X(d).toFixed(1)},${Y(v).toFixed(1)}`).join("L");
+    g+=`<path d="${d}" fill="none" stroke="${PROGS[p].hex}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    const [ld,lv]=pts[pts.length-1]; g+=`<circle cx="${X(ld)}" cy="${Y(lv)}" r="5" fill="${PROGS[p].hex}" stroke="var(--surface)" stroke-width="2"/><text class="lbl" x="${X(ld)+9}" y="${Y(lv)+4}">${lv}</text>`; });
+  /* today */
+  g+=`<line x1="${X(t)}" x2="${X(t)}" y1="${padT-22}" y2="${H-padB}" stroke="var(--text)" stroke-opacity=".35" stroke-width="1"/><text x="${X(t)}" y="${H-6}" text-anchor="middle" style="fill:var(--text)">Today</text>`;
+  /* month ticks */
+  for(let m=parseD(x0),i=0;i<36;i++){ const d=new Date(m.getFullYear(),m.getMonth()+i,1), s=iso(d); if(s>x1) break; if(s<x0) continue; const x=X(s); if(Math.abs(x-X(t))<28) continue; g+=`<text x="${x}" y="${H-6}" text-anchor="middle">${d.toLocaleDateString("en-AU",{month:"short"})}</text>`; }
+  /* hover strip */
+  const cols=Math.min(120,span); for(let i=0;i<cols;i++){ const d=addDays(x0,Math.round(span*i/cols)); g+=`<rect class="hit" data-d="${d}" x="${padL+(W-padL-padR)*i/cols}" y="${padT}" width="${(W-padL-padR)/cols+.5}" height="${H-padT-padB}"/>`; }
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Member numbers over time against phase goals">${g}</svg><div class="tip" hidden></div>`;
+  const svg=el.querySelector("svg"), tip=el.querySelector(".tip");
+  svg.addEventListener("pointermove",e=>{ const h=e.target.closest(".hit"); if(!h){tip.hidden=true;return} const d=h.dataset.d, ph=ps.find(p=>p.start_date<=d&&p.end_date>=d), box=svg.getBoundingClientRect(), sx=box.width/W;
+    const fut=d>t; tip.innerHTML=`<h5>${fmt(d,{day:"numeric",month:"short",year:"numeric"})}</h5>${ph?`<div class="r"><span>${esc(ph.name)}</span></div>`:""}
+      ${fut?"":`<div class="r"><span>Rev</span><b>${progTotal("rev",d)}</b></div><div class="r"><span>FNDN</span><b>${progTotal("fndn",d)}</b></div>`}
+      ${ph?`<div class="r"><span>Goal</span><b>${[ph.rev_target!=null?"Rev "+ph.rev_target:"",ph.fndn_target!=null?"FNDN "+ph.fndn_target:""].filter(Boolean).join(" · ")||"–"}</b></div>`:""}`;
+    tip.hidden=false; const tx=X(d)*sx, tw=tip.offsetWidth; tip.style.left=Math.min(Math.max(4,tx-tw/2),box.width-tw-4)+"px"; tip.style.top="0px"; });
+  svg.addEventListener("pointerleave",()=>tip.hidden=true);
+}
+
+/* ---------- phases + tiers + history ---------- */
+function renderPhases(){
+  const t=today(), cp=currentPhase();
+  $("#phases").innerHTML=sortedPhases().map((ph,i)=>{ const col=PCOL[ph.color]||PCOL.purple, status=ph.end_date<t?"Done":ph.start_date>t?"Next":"Now", cur=ph===cp&&status==="Now";
+    const inc=goalIncome(ph,"total"), wk=Math.max(0,Math.round(days(ph.start_date,ph.end_date)/7));
+    const hit=status==="Done"?["rev","fndn"].filter(p=>ph[p+"_target"]!=null).map(p=>progTotal(p,ph.end_date)>=ph[p+"_target"]?`${PROGS[p].short} ✓`:`${PROGS[p].short} ${progTotal(p,ph.end_date)}/${ph[p+"_target"]}`).join(" · "):"";
+    return `<article class="phase${cur?" current":""}" data-phase="${ph.id}" style="--pc:${col}" role="button" tabindex="0">
+      <div class="ph-top"><span class="dot" style="background:${col}"></span><span class="ph-n">${esc(ph.name)}</span><span class="ph-st">${status}</span></div>
+      <div class="ph-d">${fmt(ph.start_date)} to ${fmt(ph.end_date,{day:"numeric",month:"short",year:"numeric"})} · ${wk} weeks</div>
+      <div class="ph-t">${ph.rev_target!=null?`<div><b>${ph.rev_target}</b>Rev</div>`:""}${ph.fndn_target!=null?`<div><b>${ph.fndn_target}</b>FNDN</div>`:""}${ph.rev_target==null&&ph.fndn_target==null?`<div>No targets yet</div>`:""}</div>
+      ${ph.rev_target!=null||ph.fndn_target!=null?`<div class="ph-inc">${money(inc)}/wk · ${kmoney(inc*52)}/yr at goal</div>`:""}
+      ${hit?`<div class="ph-d" style="margin-top:4px">Finished: ${hit}</div>`:""}
+      ${ph.focus?`<div class="ph-f">${esc(ph.focus)}</div>`:""}</article>`; }).join("")+`<button type="button" class="phase add" id="addPhase">+ Add a phase</button>`;
+  const pill=$("#phasePill");
+  if(cp){ pill.hidden=false; const left=days(t,cp.end_date); pill.innerHTML=`<span class="dot" style="background:${PCOL[cp.color]||PCOL.purple}"></span><span><b>${esc(cp.name)}</b> · ${cp.start_date>t?`starts ${fmt(cp.start_date)}`:left>=0?`${Math.ceil(left/7)} weeks left`:"finished"}</span>`; } else pill.hidden=true;
+}
+function renderTiers(){
+  let h="";
+  ["rev","fndn"].forEach(p=>{ const ts=tiers.filter(t=>t.program===p).sort((a,b)=>a.sort-b.sort||a.name.localeCompare(b.name)); if(!ts.length) return;
+    h+=`<div class="grp"><span class="dot" style="background:${PROGS[p].color}"></span>${PROGS[p].name} · ${ts.filter(t=>t.active).reduce((a,t)=>a+(draft[t.id]??countOn(t.id,today())),0)} members</div>`;
+    h+=ts.map(t=>{ const v=draft[t.id]??countOn(t.id,today()); return `<div class="tier"${t.active?"":` style="opacity:.45"`}><div class="tn" data-tier="${t.id}"><b>${esc(t.name)}</b><span>${money(t.price_week)}/wk${t.active?"":" · hidden"}</span></div>
+      <div class="step"><button type="button" data-step="${t.id}" data-d="-1" aria-label="One fewer ${esc(t.name)}">−</button><input type="number" min="0" inputmode="numeric" value="${v}" data-cnt="${t.id}" aria-label="${esc(t.name)} members"><button type="button" data-step="${t.id}" data-d="1" aria-label="One more ${esc(t.name)}">+</button></div>
+      <div class="inc">${money(v*Number(t.price_week))}/wk</div></div>`; }).join("");
+  });
+  $("#tiers").innerHTML=h||`<div class="empty">No membership types yet.</div>`;
+  const dirty=Object.keys(draft).some(id=>draft[id]!==countOn(id,today()));
+  $("#saveCounts").disabled=!dirty; $("#saveHint").textContent=dirty?"Unsaved changes. Tap Save numbers to log them for today.":"Change the numbers, then save. Each save is logged so you can see the trend.";
+}
+function renderHistory(){
+  const dayList=[...new Set(counts.map(c=>c.day))].sort().reverse().slice(0,12);
+  $("#history").innerHTML=dayList.length?dayList.map((d,i)=>{ const prev=dayList[i+1]; const r=progTotal("rev",d), f=progTotal("fndn",d), pr=prev?progTotal("rev",prev):null, pf=prev?progTotal("fndn",prev):null;
+    const ch=(n,o)=>o==null||n===o?"":` <span style="color:${n>o?"var(--accent)":"var(--red)"}">${n>o?"+":""}${n-o}</span>`;
+    return `<div class="hist-row"><span>${fmt(d,{weekday:"short",day:"numeric",month:"short"})}</span><span>Rev <b>${r}</b>${ch(r,pr)} · FNDN <b>${f}</b>${ch(f,pf)}</span></div>`; }).join(""):`<div class="empty">Nothing logged yet.</div>`;
+}
+function render(){
+  $("#firstRun").hidden=hasHistory();
+  $("#bigs").innerHTML=["rev","fndn","total"].map(bigCard).join("");
+  drawChart(); renderPhases(); renderTiers(); renderHistory();
+}
+
+/* ---------- saving counts ---------- */
+async function saveCounts(map,undoMsg){
+  const t=today(), before={}; Object.keys(map).forEach(id=>before[id]=countOn(id,t));
+  const rows=Object.entries(map).map(([tier_id,count])=>({tier_id,day:t,count:Math.max(0,count|0)}));
+  const {data,error}=await sb.from("mem_counts").upsert(rows,{onConflict:"tier_id,day"}).select(); if(error) throw error;
+  (data||[]).forEach(r=>{ const i=counts.findIndex(c=>c.tier_id===r.tier_id&&c.day===r.day); if(i>=0) counts[i]=r; else counts.push(r); });
+  draft={}; render();
+  if(undoMsg) toast(undoMsg,"Undo",async()=>{ try{ await saveCounts(before); }catch(e){fail(e)} });
+}
+$("#saveCounts").addEventListener("click",async()=>{ try{ await saveCounts({...draft}); toast("Numbers saved for today"); }catch(e){fail(e)} });
+function pickTier(p,dir){
+  const ts=activeTiers(p); if(!ts.length) return toast("Add a membership type first.");
+  const go=async t=>{ try{ const n=countOn(t.id,today())+dir; if(n<0) return; await saveCounts({[t.id]:n},`${dir>0?"Joined":"Left"}: ${PROGS[p].short} ${t.name} · ${PROGS[p].short} now ${progTotal(p)+dir}`); }catch(e){fail(e)} };
+  if(ts.length===1) return go(ts[0]);
+  const el=document.createElement("div"); el.className="modal";
+  el.innerHTML=`<div class="box" role="dialog" aria-modal="true"><h4>${dir>0?"Who joined?":"Who left?"}</h4><p>${PROGS[p].name} · pick their membership</p>
+    ${ts.map(t=>`<button type="button" class="opt" data-pick="${t.id}">${esc(t.name)}<span>${money(t.price_week)}/wk · ${countOn(t.id,today())} now</span></button>`).join("")}
+    <button type="button" class="btn" data-x style="justify-self:end">Cancel</button></div>`;
+  document.body.appendChild(el);
+  el.addEventListener("click",e=>{ if(e.target===el||e.target.closest("[data-x]")) return el.remove(); const b=e.target.closest("[data-pick]"); if(b){ el.remove(); go(tiers.find(t=>t.id===b.dataset.pick)); } });
+}
+
+/* ---------- drawers ---------- */
+function openPhase(id){
+  drawerKind="phase"; editing=id?phases.find(p=>p.id===id):null;
+  const ps=sortedPhases(), last=ps[ps.length-1], st=last?addDays(last.end_date,1):today();
+  const ph=editing||{name:`Phase ${ps.length+1}`,start_date:st,end_date:addDays(addMonths(st,3),-1),rev_target:last?last.rev_target:null,fndn_target:last?last.fndn_target:null,color:Object.keys(PCOL)[ps.length%6],focus:""};
+  $("#dTitle").textContent=editing?"Edit phase":"New phase";
+  $("#dForm").innerHTML=`<label class="f full">Name<input id="p-name" required maxlength="60" value="${esc(ph.name)}" placeholder="e.g. Phase 2 · Summer push"></label>
+    <label class="f">Starts<input id="p-start" type="date" required value="${ph.start_date}"></label>
+    <label class="f">Ends<input id="p-end" type="date" required value="${ph.end_date}"></label>
+    <div class="f full"><div style="display:flex;gap:5px;flex-wrap:wrap">${[1,3,6].map(m=>`<button type="button" class="btn sm" data-len="${m}">${m} month${m>1?"s":""}</button>`).join("")}</div></div>
+    <label class="f">Rev goal (members)<input id="p-rev" type="number" min="0" inputmode="numeric" value="${ph.rev_target??""}"><span class="calc" id="p-revc"></span></label>
+    <label class="f">FNDN goal (members)<input id="p-fndn" type="number" min="0" inputmode="numeric" value="${ph.fndn_target??""}"><span class="calc" id="p-fndnc"></span></label>
+    <div class="f full"><span>Colour</span><div class="colors">${Object.entries(PCOL).map(([k,v])=>`<label><input type="radio" name="pcol" value="${k}"${k===(ph.color||"purple")?" checked":""}><span style="background:${v}" title="${k}"></span></label>`).join("")}</div></div>
+    <label class="f full">Focus for this phase<textarea id="p-focus" rows="4" placeholder="What you'll do to get there: intro course, referral push, open day, content plan…">${esc(ph.focus||"")}</textarea></label>`;
+  const calc=()=>["rev","fndn"].forEach(p=>{ const v=$("#p-"+p).value; $("#p-"+p+"c").textContent=v!==""?`${money(+v*avgPrice(p))}/wk · ${kmoney(+v*avgPrice(p)*52)}/yr`:""; });
+  ["#p-rev","#p-fndn"].forEach(s=>$(s).addEventListener("input",calc)); calc();
+  $("#dForm").querySelectorAll("[data-len]").forEach(b=>b.addEventListener("click",()=>{ $("#p-end").value=addDays(addMonths($("#p-start").value||today(),+b.dataset.len),-1); }));
+  $("#dDel").hidden=!editing; delete $("#dDel").dataset.armed; $("#dDel").textContent="Delete";
+  $("#drawerRoot").hidden=false;
+}
+function openTier(id){
+  drawerKind="tier"; editing=id?tiers.find(t=>t.id===id):null;
+  const t=editing||{program:"rev",name:"",price_week:"",active:true};
+  $("#dTitle").textContent=editing?"Membership type":"New membership type";
+  $("#dForm").innerHTML=`<label class="f full">Name<input id="t-name" required maxlength="40" value="${esc(t.name)}" placeholder="e.g. Standard, Gold, Student"></label>
+    <label class="f">Program<select id="t-prog"><option value="rev"${t.program==="rev"?" selected":""}>Rev Barbell Club</option><option value="fndn"${t.program==="fndn"?" selected":""}>FNDN</option></select></label>
+    <label class="f">Price per week ($)<input id="t-price" type="number" min="0" step="0.01" inputmode="decimal" required value="${t.price_week}"></label>
+    <label class="f full" style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-weight:400;font-size:13px;color:var(--text)"><input type="checkbox" id="t-active" style="width:auto;accent-color:var(--accent)"${t.active?" checked":""}> Counted in totals (untick to hide an old membership type)</label>`;
+  $("#dDel").hidden=!editing; delete $("#dDel").dataset.armed; $("#dDel").textContent="Delete";
+  $("#drawerRoot").hidden=false;
+}
+function closeDrawer(){ $("#drawerRoot").hidden=true; editing=null; }
+$("#dForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  try{
+    if(drawerKind==="phase"){
+      const n=v=>v===""?null:parseInt(v,10);
+      const row={name:$("#p-name").value.trim(),start_date:$("#p-start").value,end_date:$("#p-end").value,rev_target:n($("#p-rev").value),fndn_target:n($("#p-fndn").value),color:(document.querySelector("input[name=pcol]:checked")||{}).value||"purple",focus:$("#p-focus").value.trim()||null};
+      if(!row.name) return; if(row.end_date<row.start_date) return toast("The end date is before the start date.");
+      const q=editing?sb.from("mem_phases").update(row).eq("id",editing.id).select().single():sb.from("mem_phases").insert(row).select().single();
+      const {data,error}=await q; if(error) throw error; const i=phases.findIndex(p=>p.id===data.id); if(i>=0) phases[i]=data; else phases.push(data);
+      closeDrawer(); render(); toast(`Saved ${data.name}`);
+    } else {
+      const row={name:$("#t-name").value.trim(),program:$("#t-prog").value,price_week:Number($("#t-price").value||0),active:$("#t-active").checked};
+      if(!row.name) return; if(!editing) row.sort=tiers.filter(t=>t.program===row.program).length+1;
+      const q=editing?sb.from("mem_tiers").update(row).eq("id",editing.id).select().single():sb.from("mem_tiers").insert(row).select().single();
+      const {data,error}=await q; if(error) throw error; const i=tiers.findIndex(t=>t.id===data.id); if(i>=0) tiers[i]=data; else tiers.push(data);
+      closeDrawer(); render(); toast(`Saved ${data.name}`);
+    }
+  }catch(err){fail(err)}
+});
+$("#dDel").addEventListener("click",async()=>{ const b=$("#dDel"); if(!editing) return;
+  if(!b.dataset.armed){ b.dataset.armed="1"; b.textContent=drawerKind==="tier"?"Deletes its history too. Tap again":"Tap again to delete"; return; }
+  try{ const tbl=drawerKind==="phase"?"mem_phases":"mem_tiers"; const {error}=await sb.from(tbl).delete().eq("id",editing.id); if(error) throw error;
+    if(drawerKind==="phase") phases=phases.filter(p=>p.id!==editing.id); else { tiers=tiers.filter(t=>t.id!==editing.id); counts=counts.filter(c=>c.tier_id!==editing.id); }
+    closeDrawer(); render(); toast("Deleted"); }catch(err){fail(err)} });
+["#dClose","#dCancel","#scrim"].forEach(s=>$(s).addEventListener("click",closeDrawer));
+
+/* ---------- events ---------- */
+document.addEventListener("click",e=>{
+  const j=e.target.closest("[data-join]"); if(j) return pickTier(j.dataset.join,1);
+  const l=e.target.closest("[data-leave]"); if(l) return pickTier(l.dataset.leave,-1);
+  if(e.target.closest("#addPhase")) return openPhase(null);
+  const ph=e.target.closest("[data-phase]"); if(ph) return openPhase(ph.dataset.phase);
+  if(e.target.closest("#addTier")) return openTier(null);
+  const tn=e.target.closest("[data-tier]"); if(tn) return openTier(tn.dataset.tier);
+  const st=e.target.closest("[data-step]"); if(st){ const id=st.dataset.step; draft[id]=Math.max(0,(draft[id]??countOn(id,today()))+(+st.dataset.d)); renderTiers(); renderLive(); }
+});
+document.addEventListener("input",e=>{ const c=e.target.closest("[data-cnt]"); if(!c) return; draft[c.dataset.cnt]=Math.max(0,parseInt(c.value||"0",10)); const pos=c.selectionStart; renderLive(); const sb2=$("#saveCounts"); const dirty=Object.keys(draft).some(id=>draft[id]!==countOn(id,today())); sb2.disabled=!dirty; });
+/* show unsaved totals live on the tier group headers without losing input focus */
+function renderLive(){ document.querySelectorAll(".grp").forEach((g,i)=>{ const p=["rev","fndn"].filter(p=>tiers.some(t=>t.program===p))[i]; if(!p) return; const n=activeTiers(p).reduce((a,t)=>a+(draft[t.id]??countOn(t.id,today())),0); g.lastChild.textContent=`${PROGS[p].name} · ${n} members`; });
+  document.querySelectorAll(".tier").forEach(r=>{ const inp=r.querySelector("[data-cnt]"); if(!inp) return; const t=tiers.find(x=>x.id===inp.dataset.cnt); const v=draft[t.id]??countOn(t.id,today()); if(document.activeElement!==inp) inp.value=v; r.querySelector(".inc").textContent=`${money(v*Number(t.price_week))}/wk`; }); }
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("#drawerRoot").hidden) closeDrawer(); if((e.key==="Enter"||e.key===" ")&&e.target.matches?.(".phase[data-phase]")){e.preventDefault();openPhase(e.target.dataset.phase)} });
+let rz; window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(drawChart,200)});
+
+async function load(){
+  const [t,c,p]=await Promise.all([sb.from("mem_tiers").select("*"),sb.from("mem_counts").select("*").order("day"),sb.from("mem_phases").select("*")]);
+  if(t.error||c.error||p.error){ $("#bigs").innerHTML=`<div class="empty">Couldn't load members. Refresh to try again.</div>`; return; }
+  tiers=t.data||[]; counts=c.data||[]; phases=p.data||[]; render();
+}
+revRequireLogin(()=>{ load();
+  const ch=sb.channel("mem-live"); ["mem_tiers","mem_counts","mem_phases"].forEach(tb=>ch.on("postgres_changes",{event:"*",schema:"public",table:tb},()=>{ if(Object.keys(draft).length) return; clearTimeout(load._t); load._t=setTimeout(load,400); })); ch.subscribe();
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&!Object.keys(draft).length) load(); });
+});
+})();
+</script>
+</body>
+</html>
