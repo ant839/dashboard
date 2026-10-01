@@ -13,15 +13,15 @@
 
   const TABS = [
     { href: 'dashboard.html', label: 'Home' },
-    { href: 'braindump.html', label: 'Brain Dump' },
+    { href: 'pt.html', label: 'PT Clients' },
     { href: 'training.html', label: 'Training' },
+    { href: 'braindump.html', label: 'Brain Dump' },
+    { href: 'social.html', label: 'Social' },
     { href: 'athletes.html', label: 'Programming' },
     { href: 'plan.html', label: 'Periodisation' },
-    { href: 'leads.html', label: 'Leads' },
     { href: 'members.html', label: 'Members' },
-    { href: 'social.html', label: 'Social' },
-    { href: 'cashflow.html', label: 'Cash Flow' },
-    { href: 'pt.html', label: 'PT Clients' }
+    { href: 'leads.html', label: 'Leads' },
+    { href: 'cashflow.html', label: 'Cash Flow' }
   ];
 
   const css = `
