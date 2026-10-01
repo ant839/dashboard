@@ -434,7 +434,7 @@ select option { background: var(--surface2); }
 .quote blockquote { margin: 0; font-size: 18px; font-weight: 300; line-height: 1.45; color: var(--text); letter-spacing: -0.005em; }
 .quote figcaption { margin-top: 6px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
 .cmdr { position: relative; display: grid; grid-template-columns: 168px 1fr; gap: 18px; align-items: center; margin: 0 0 18px; padding: 12px 52px 12px 12px; border-radius: 14px; border: 1px solid var(--border); background: linear-gradient(100deg, rgba(200,240,106,0.05), rgba(255,255,255,0.012) 60%); overflow: hidden; }
-.cmdr-fig { width: 168px; height: 112px; flex-shrink: 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--border2); padding: 0; background: #0b1026; cursor: pointer; display: block; }
+.cmdr-fig { width: 168px; height: 112px; flex-shrink: 0; overflow: visible; border: 0; padding: 0; background: transparent; cursor: pointer; display: block; }
 .cmdr-fig svg { width: 100%; height: 100%; display: block; }
 .cmdr-bubble { position: relative; background: var(--surface2); border: 1px solid var(--border2); border-radius: 14px; padding: 14px 18px 12px; cursor: pointer; min-height: 76px; display: flex; flex-direction: column; justify-content: center; }
 .cmdr-bubble::before { content: ''; position: absolute; left: -9px; top: 50%; width: 16px; height: 16px; background: var(--surface2); border-left: 1px solid var(--border2); border-bottom: 1px solid var(--border2); transform: translateY(-50%) rotate(45deg); }
@@ -1228,24 +1228,22 @@ document.getElementById('filters').addEventListener('click',e=>{
     ["Hard choices, easy life. Easy choices, hard life. Choose."],
     ["Pressure is a privilege. It means you're in the fight."]
   ];
-  const fig=`<svg viewBox="0 0 168 112" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>
-    <linearGradient id="cdSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070b1f"/><stop offset=".7" stop-color="#1a2348"/><stop offset="1" stop-color="#3b2d4f"/></linearGradient>
-    <radialGradient id="cdDawn" cx=".5" cy="1" r=".7"><stop offset="0" stop-color="#ff9a4a" stop-opacity=".45"/><stop offset="1" stop-color="#ff9a4a" stop-opacity="0"/></radialGradient>
+  const fig=`<svg viewBox="0 0 168 112" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><defs>
     <linearGradient id="cdSkin" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9c7354"/><stop offset=".55" stop-color="#c8936c"/><stop offset="1" stop-color="#a77a58"/></linearGradient>
     <linearGradient id="cdArm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c08a63"/><stop offset="1" stop-color="#9c6f50"/></linearGradient>
     <radialGradient id="cdShine" cx=".4" cy=".3" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
-    <rect width="168" height="112" fill="url(#cdSky)"/><rect width="168" height="112" fill="url(#cdDawn)"/>
-    ${[[14,12],[30,26],[150,14],[136,30],[120,8],[44,8],[158,40],[8,36]].map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="${i%2?.7:1}" fill="#fff" opacity=".7"/>`).join('')}
-    <text x="6" y="12" font-family="DM Mono,monospace" font-size="8" fill="#c8f06a" opacity=".85">0430</text>
     <g class="br">
-      <path d="M14,112 L20,88 Q24,74 44,70 L70,65 L98,65 L124,70 Q144,74 148,88 L154,112 Z" fill="#141418"/>
-      <path d="M71,65 L84,73 L97,65" fill="none" stroke="#0a0a0d" stroke-width="2"/>
-      <path d="M73,52 L73,67 Q84,73 95,67 L95,52 Z" fill="#94694b"/>
-      <path d="M61,24 Q61,7 84,7 Q107,7 107,24 L107,44 Q107,50 103,54 L96,60 Q92,63 84,63 Q76,63 72,60 L65,54 Q61,50 61,44 Z" fill="url(#cdSkin)"/>
-      <ellipse cx="77" cy="15" rx="12" ry="6.5" fill="url(#cdShine)"/>
-      <path d="M61,31 Q57,31 57,37 Q58,43 62,43 Z M107,31 Q111,31 111,37 Q110,43 106,43 Z" fill="#a77a58"/>
-      <path d="M67,31 L80,34.5 M101,31 L88,34.5" stroke="#4e3628" stroke-width="2.6" stroke-linecap="round" fill="none" opacity=".8"/><path d="M68,35 L80,37 M100,35 L88,37" stroke="#6e4e3a" stroke-width="3" stroke-linecap="round" opacity=".35"/>
-      <path d="M61,44 Q61,50 65,54 L72,60 Q76,63 84,63 L84,58 Q76,58 70,54 Q64,50 64,42 Z" fill="#5e4232" opacity=".28"/><path d="M107,44 Q107,50 103,54 L96,60 Q92,63 84,63 L84,58 Q92,58 98,54 Q104,50 104,42 Z" fill="#5e4232" opacity=".22"/><path d="M77,52 L91,52" stroke="#5e4232" stroke-width="1.6" stroke-linecap="round" opacity=".45"/>
+      <path d="M12,112 L18,88 Q24,74 46,70 L66,66 Q84,74 102,66 L122,70 Q144,74 150,88 L156,112 Z" fill="#141418"/>
+      <path d="M62,46 L62,58 Q50,62 40,70.5 L66,66.5 Q84,74.5 102,66.5 L128,70.5 Q118,62 106,58 L106,46 Z" fill="#94694b"/>
+      <path d="M62,58 Q50,62 40,70.5 L48,70 Q56,65 65,62 Z M106,58 Q118,62 128,70.5 L120,70 Q112,65 103,62 Z" fill="#7a5640" opacity=".55"/>
+      <path d="M69,57 L79,69 M99,57 L89,69" stroke="#6b4a37" stroke-width="2.4" stroke-linecap="round" opacity=".45"/>
+      <path d="M66,66.5 Q84,74.5 102,66.5" fill="none" stroke="#0a0a0d" stroke-width="2"/>
+      <path d="M60,25 Q60,5 84,5 Q108,5 108,25 L110,47 L109,57.5 Q108.5,62 103,63 L65,63 Q59.5,62 59,57.5 L58,47 Z" fill="url(#cdSkin)"/>
+      <ellipse cx="77" cy="14" rx="12" ry="6.5" fill="url(#cdShine)"/>
+      <path d="M60,30 Q55.5,30 55.5,36.5 Q56.5,43 60.5,43 Z M108,30 Q112.5,30 112.5,36.5 Q111.5,43 107.5,43 Z" fill="#a77a58"/>
+      <path d="M66,30.5 L80,34 M102,30.5 L88,34" stroke="#4e3628" stroke-width="2.8" stroke-linecap="round" fill="none" opacity=".85"/><path d="M67,35 L80,37 M101,35 L88,37" stroke="#6e4e3a" stroke-width="3" stroke-linecap="round" opacity=".35"/>
+      <path d="M58,47 L59,57.5 Q59.5,62 65,63 L84,63 L84,59.5 L67,59.5 Q62.5,58.5 62,55 L61.5,45 Z" fill="#5e4232" opacity=".34"/><path d="M110,47 L109,57.5 Q108.5,62 103,63 L84,63 L84,59.5 L101,59.5 Q105.5,58.5 106,55 L106.5,45 Z" fill="#5e4232" opacity=".28"/>
+      <path d="M77,51 L91,51" stroke="#5e4232" stroke-width="1.7" stroke-linecap="round" opacity=".5"/><path d="M84,58.5 L84,62" stroke="#5e4232" stroke-width="1.2" stroke-linecap="round" opacity=".45"/>
       <ellipse cx="30" cy="93" rx="13" ry="11" fill="url(#cdArm)"/><ellipse cx="138" cy="93" rx="13" ry="11" fill="url(#cdArm)"/>
       <path d="M17,86 Q22,74 40,71 L44,82 Q30,82 17,86 Z M151,86 Q146,74 128,71 L124,82 Q138,82 151,86 Z" fill="#141418"/>
       <path d="M26,92 Q50,84 92,88 L126,90 Q134,91 134,98 Q133,105 125,105 L84,104 Q48,106 30,104 Q22,100 26,92 Z" fill="url(#cdArm)"/>
