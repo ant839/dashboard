@@ -433,10 +433,10 @@ select option { background: var(--surface2); }
 .q-mark { position: absolute; left: 18px; top: 6px; font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 56px; line-height: 1; color: var(--accent); opacity: 0.55; }
 .quote blockquote { margin: 0; font-size: 18px; font-weight: 300; line-height: 1.45; color: var(--text); letter-spacing: -0.005em; }
 .quote figcaption { margin-top: 6px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-.cmdr { position: relative; display: grid; grid-template-columns: 168px 1fr; gap: 18px; align-items: center; margin: 0 0 18px; padding: 12px 52px 12px 12px; border-radius: 14px; border: 1px solid var(--border); background: linear-gradient(100deg, rgba(200,240,106,0.05), rgba(255,255,255,0.012) 60%); overflow: hidden; }
-.cmdr-fig { width: 168px; height: 112px; flex-shrink: 0; overflow: visible; border: 0; padding: 0; background: transparent; cursor: pointer; display: block; }
+.cmdr { position: relative; display: grid; grid-template-columns: 168px 1fr; gap: 18px; align-items: center; margin: 0 0 18px; padding: 12px 52px 0 12px; border-radius: 14px; border: 1px solid var(--border); background: linear-gradient(100deg, rgba(200,240,106,0.05), rgba(255,255,255,0.012) 60%); overflow: hidden; }
+.cmdr-fig { width: 168px; height: 100%; min-height: 128px; align-self: stretch; flex-shrink: 0; overflow: visible; border: 0; padding: 0; background: transparent; cursor: pointer; display: block; }
 .cmdr-fig svg { width: 100%; height: 100%; display: block; }
-.cmdr-bubble { position: relative; background: var(--surface2); border: 1px solid var(--border2); border-radius: 14px; padding: 14px 18px 12px; cursor: pointer; min-height: 76px; display: flex; flex-direction: column; justify-content: center; }
+.cmdr-bubble { margin-bottom: 12px; position: relative; background: var(--surface2); border: 1px solid var(--border2); border-radius: 14px; padding: 14px 18px 12px; cursor: pointer; min-height: 76px; display: flex; flex-direction: column; justify-content: center; }
 .cmdr-bubble::before { content: ''; position: absolute; left: -9px; top: 50%; width: 16px; height: 16px; background: var(--surface2); border-left: 1px solid var(--border2); border-bottom: 1px solid var(--border2); transform: translateY(-50%) rotate(45deg); }
 .cmdr-bubble:hover { border-color: rgba(200,240,106,0.35); }
 .cmdr-bubble p { font-size: 18px; font-weight: 400; line-height: 1.4; color: var(--text); letter-spacing: -0.005em; transition: opacity .25s, transform .25s; }
@@ -449,7 +449,7 @@ select option { background: var(--surface2); }
 .cmdr .br { animation: breathe 4s ease-in-out infinite; }
 .cmdr .st { animation: steam 3s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .cmdr .br, .cmdr .st { animation: none; } }
-@media (max-width: 900px) { .cmdr { grid-template-columns: 96px 1fr; gap: 14px; padding: 10px 36px 10px 10px; } .cmdr-fig { width: 96px; height: 96px; } .cmdr-bubble p { font-size: 15px; } .cmdr-hint { display: none; } }
+@media (max-width: 900px) { .cmdr { grid-template-columns: 124px 1fr; gap: 12px; padding: 10px 36px 0 8px; } .cmdr-fig { width: 124px; min-height: 110px; } .cmdr-bubble { margin-bottom: 10px; } .cmdr-bubble p { font-size: 15px; } .cmdr-hint { display: none; } }
 .q-secret { position: absolute; right: 12px; bottom: 10px; color: var(--muted); opacity: 0.22; transition: opacity .2s, color .2s, transform .3s; padding: 6px; display: flex; }
 .q-secret:hover, .q-secret:focus-visible { opacity: 0.9; color: var(--accent); transform: rotate(45deg); }
 @media (max-width: 900px) { .quote { padding: 16px 40px 14px 44px; } .q-mark { left: 12px; font-size: 46px; } .quote blockquote { font-size: 16px; } }
@@ -1228,14 +1228,14 @@ document.getElementById('filters').addEventListener('click',e=>{
     ["Hard choices, easy life. Easy choices, hard life. Choose."],
     ["Pressure is a privilege. It means you're in the fight."]
   ];
-  const fig=`<svg viewBox="0 0 168 112" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><defs>
+  const fig=`<svg viewBox="14 3 140 109" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><defs>
     <linearGradient id="cdSkin" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9c7354"/><stop offset=".55" stop-color="#c8936c"/><stop offset="1" stop-color="#a77a58"/></linearGradient>
     <linearGradient id="cdArm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c08a63"/><stop offset="1" stop-color="#9c6f50"/></linearGradient>
     <radialGradient id="cdShine" cx=".4" cy=".3" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
     <g class="br">
       <path d="M12,112 L18,88 Q24,74 46,70 L66,66 Q84,74 102,66 L122,70 Q144,74 150,88 L156,112 Z" fill="#141418"/>
-      <path d="M62,46 L62,58 Q50,62 40,70.5 L66,66.5 Q84,74.5 102,66.5 L128,70.5 Q118,62 106,58 L106,46 Z" fill="#94694b"/>
-      <path d="M62,58 Q50,62 40,70.5 L48,70 Q56,65 65,62 Z M106,58 Q118,62 128,70.5 L120,70 Q112,65 103,62 Z" fill="#7a5640" opacity=".55"/>
+      <path d="M63,46 L63,60 Q55,64 49,69.5 L66,66.5 Q84,74.5 102,66.5 L119,69.5 Q113,64 105,60 L105,46 Z" fill="#94694b"/>
+      <path d="M63,60 Q55,64 49,69.5 L54,69 Q59,65 65,62.5 Z M105,60 Q113,64 119,69.5 L114,69 Q109,65 103,62.5 Z" fill="#7a5640" opacity=".5"/>
       <path d="M69,57 L79,69 M99,57 L89,69" stroke="#6b4a37" stroke-width="2.4" stroke-linecap="round" opacity=".45"/>
       <path d="M66,66.5 Q84,74.5 102,66.5" fill="none" stroke="#0a0a0d" stroke-width="2"/>
       <path d="M60,25 Q60,5 84,5 Q108,5 108,25 L110,47 L109,57.5 Q108.5,62 103,63 L65,63 Q59.5,62 59,57.5 L58,47 Z" fill="url(#cdSkin)"/>
