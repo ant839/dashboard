@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Rev">
 <title>Home · Rev</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet" />
 <style>
 :root {
   --bg: #0e0e0f; --surface: #161618; --surface2: #1e1e21;
@@ -385,6 +385,16 @@ select option { background: var(--surface2); }
   .right-top { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
 
+.quote { position: relative; margin: 0 0 18px; padding: 18px 56px 16px 58px; border-radius: 12px; background: linear-gradient(100deg, rgba(200,240,106,0.07), rgba(255,255,255,0.015) 55%); border: 1px solid var(--border); overflow: hidden; }
+.quote::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(var(--accent), rgba(200,240,106,0.15)); }
+.q-mark { position: absolute; left: 16px; top: -6px; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 72px; line-height: 1; color: var(--accent); opacity: 0.55; }
+.quote blockquote { margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 22px; line-height: 1.35; color: var(--text); letter-spacing: 0.005em; }
+.quote figcaption { margin-top: 6px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.q-secret { position: absolute; right: 12px; bottom: 10px; color: var(--muted); opacity: 0.22; transition: opacity .2s, color .2s, transform .3s; padding: 6px; display: flex; }
+.q-secret:hover, .q-secret:focus-visible { opacity: 0.9; color: var(--accent); transform: rotate(45deg); }
+@media (max-width: 900px) { .quote { padding: 16px 40px 14px 44px; } .q-mark { left: 10px; font-size: 58px; } .quote blockquote { font-size: 19px; } }
+@media (prefers-reduced-motion: no-preference) { .quote blockquote { animation: qfade .8s ease-out both; } @keyframes qfade { from { opacity: 0; transform: translateY(4px); } } }
+
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
@@ -406,6 +416,15 @@ select option { background: var(--surface2); }
     </button>
   </div>
 </div>
+
+<figure class="quote" id="quote">
+  <span class="q-mark" aria-hidden="true">“</span>
+  <blockquote id="q-text"></blockquote>
+  <figcaption id="q-by"></figcaption>
+  <a class="q-secret" href="discipline.html" aria-label="Open">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/></svg>
+  </a>
+</figure>
 
 <div class="metrics-row" id="metrics"></div>
 <div class="prog-track"><div class="prog-fill" id="prog" style="width:0%"></div></div>
@@ -1068,6 +1087,26 @@ document.getElementById('filters').addEventListener('click',e=>{
   renderTasks();
 });
 
+(function(){
+  const Q=[
+    ["By failing to prepare, you are preparing to fail.","Benjamin Franklin"],
+    ["Luck is what happens when preparation meets opportunity.","Seneca"],
+    ["Every battle is won before it is ever fought.","Sun Tzu"],
+    ["We don't rise to the level of our expectations, we fall to the level of our training.","Archilochus"],
+    ["Give me six hours to chop down a tree and I will spend the first four sharpening the axe.","Abraham Lincoln"],
+    ["First say to yourself what you would be, and then do what you have to do.","Epictetus"],
+    ["Before anything else, preparation is the key to success.","Alexander Graham Bell"],
+    ["Chance favours only the prepared mind.","Louis Pasteur"],
+    ["Plans are useless, but planning is indispensable.","Dwight D. Eisenhower"],
+    ["Well begun is half done.","Aristotle"],
+    ["No man is free who is not master of himself.","Epictetus"],
+    ["Waste no more time arguing what a good man should be. Be one.","Marcus Aurelius"],
+    ["It is not that we have a short time to live, but that we waste a lot of it.","Seneca"],
+    ["He who is best prepared can best serve his moment of inspiration.","Samuel Taylor Coleridge"]
+  ];
+  const d=new Date(), day=Math.floor((d-new Date(d.getFullYear(),0,0))/864e5), q=Q[day%Q.length];
+  document.getElementById('q-text').textContent=q[0]; document.getElementById('q-by').textContent=q[1];
+})();
 loadCachedEvents();
 gcalReturnNotice();
 sb.auth.getSession().then(({data})=>{if(data.session)fetchAllCalendarEvents().then(render);});
