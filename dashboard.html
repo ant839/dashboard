@@ -1147,7 +1147,7 @@ document.getElementById('filters').addEventListener('click',e=>{
   const LF_KEY='lookforward', el=document.getElementById('lf');
   let events=[{id:'camp',title:'Camping trip',date:'',theme:'camping'}], idx=0, timer=null;
   try{ const c=JSON.parse(localStorage.getItem('lf-cache')||'null'); if(c&&c.length) events=c; }catch(e){}
-  const THEMES={camping:'Camping under the stars',beach:'Beach sunset',snow:'Mountains',comp:'Competition',travel:'Travel',party:'Celebration'};
+  const THEMES={camping:'Camping under the stars',comp:'BJJ comp',lifting:'Weightlifting meet',beach:'Beach sunset',snow:'Mountains',travel:'Travel',party:'Celebration'};
   const rnd=(i)=>{ const x=Math.sin(i*999)*10000; return x-Math.floor(x); };
   const stars=(n,h)=>Array.from({length:n},(_,i)=>`<circle class="${i%3?'':'tw'}" style="animation-delay:${(rnd(i+7)*3).toFixed(2)}s" cx="${(rnd(i)*480).toFixed(1)}" cy="${(rnd(i+50)*h).toFixed(1)}" r="${(0.4+rnd(i+90)*0.9).toFixed(2)}" fill="#fff" opacity="${(0.4+rnd(i+30)*0.6).toFixed(2)}"/>`).join('');
   const pine=(x,base,h,c)=>`<path d="M${x},${base-h} L${x-h*0.28},${base-h*0.45} L${x-h*0.12},${base-h*0.45} L${x-h*0.36},${base} L${x+h*0.36},${base} L${x+h*0.12},${base-h*0.45} L${x+h*0.28},${base-h*0.45} Z" fill="${c}"/>`;
@@ -1162,7 +1162,35 @@ document.getElementById('filters').addEventListener('click',e=>{
       <path d="M0,96 L60,46 L95,70 L150,22 L205,72 L250,40 L320,96 Z" fill="#e8f0fb"/><path d="M150,22 L132,40 L142,38 L150,46 L158,36 L168,40 Z M60,46 L50,56 L60,54 L68,60 L74,52 Z M250,40 L240,50 L250,49 L258,54 L262,48 Z" fill="#fff"/>
       <path d="M0,96 L80,70 L140,84 L210,62 L290,90 L340,96 Z" fill="#9fb9d6"/>${[30,62,100,180,230,270].map((x,i)=>pine(x,96,18+(i%3)*6,'#1d3550')).join('')}
       ${Array.from({length:28},(_,i)=>`<circle class="tw" style="animation-delay:${(rnd(i)*3).toFixed(2)}s" cx="${(rnd(i+3)*480).toFixed(0)}" cy="${(rnd(i+9)*90).toFixed(0)}" r="1.1" fill="#fff"/>`).join('')}</svg>`;
-    if(t==='comp') return `<svg class="scene" ${V}><defs><radialGradient id="sp" cx=".28" cy="0" r=".9"><stop offset="0" stop-color="#3b3a2a"/><stop offset=".6" stop-color="#15151a"/><stop offset="1" stop-color="#0b0b0e"/></radialGradient><linearGradient id="bm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(255,236,170,.35)"/><stop offset="1" stop-color="rgba(255,236,170,0)"/></linearGradient></defs>
+    if(t==='comp') return `<svg class="scene" ${V}><defs>
+      <radialGradient id="ar" cx=".3" cy=".1" r="1"><stop offset="0" stop-color="#26283a"/><stop offset=".55" stop-color="#121320"/><stop offset="1" stop-color="#08080e"/></radialGradient>
+      <linearGradient id="bm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(255,244,214,.38)"/><stop offset="1" stop-color="rgba(255,244,214,0)"/></linearGradient>
+      <linearGradient id="mt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f62b8"/><stop offset="1" stop-color="#1d3f7c"/></linearGradient></defs>
+      <rect width="480" height="96" fill="url(#ar)"/>
+      ${Array.from({length:46},(_,i)=>`<circle cx="${(i*11+4)%480}" cy="${58+(i%3)*5}" r="${3+(i%2)}" fill="#161827"/>`).join('')}
+      <path d="M96,0 L196,0 L262,92 L30,92 Z" fill="url(#bm)" class="gl"/>
+      <rect x="20" y="10" width="54" height="22" rx="3" fill="#0d0e16" stroke="#2a2c3e"/><rect x="24" y="14" width="22" height="14" rx="1.5" fill="#f5f5f0"/><rect x="48" y="14" width="22" height="14" rx="1.5" fill="#2f62b8"/>
+      <text x="35" y="25" text-anchor="middle" font-family="DM Mono,monospace" font-size="10" fill="#111">2</text><text x="59" y="25" text-anchor="middle" font-family="DM Mono,monospace" font-size="10" fill="#fff">0</text>
+      <path d="M22,92 L58,74 L234,74 L270,92 Z" fill="#a8302f"/><path d="M40,90 L66,77 L226,77 L252,90 Z" fill="url(#mt)"/>
+      <ellipse cx="146" cy="88" rx="44" ry="3" fill="#0d1a35" opacity=".6"/>
+      <g class="bb">
+        <path d="M118,87 L122,74 L127,74 L125,87 Z M131,87 L131,74 L136,74 L139,87 Z" fill="#ececea"/>
+        <path d="M118,74 Q117,60 124,52 L136,52 Q142,58 141,74 Z" fill="#f5f5f0"/>
+        <rect x="118" y="65" width="23" height="3" fill="#5a3a1e"/><rect x="138" y="65" width="4" height="7" fill="#5a3a1e"/>
+        <circle cx="128" cy="45" r="5.5" fill="#d9b48c"/><path d="M122.5,44 q5.5,-7 11,0 q-1,-4 -5.5,-4.5 q-4.5,.5 -5.5,4.5" fill="#2a1d14"/>
+        <path d="M136,54 L150,57 L154,55" stroke="#f5f5f0" stroke-width="4" stroke-linecap="round" fill="none"/>
+        <path d="M120,56 Q124,64 150,63" stroke="#f5f5f0" stroke-width="3.6" stroke-linecap="round" fill="none"/>
+      </g>
+      <g class="bb" style="animation-delay:.4s">
+        <path d="M152,87 L156,74 L161,74 L161,87 Z M165,87 L167,74 L172,74 L176,87 Z" fill="#244f99"/>
+        <path d="M153,74 Q152,58 158,52 L170,52 Q177,60 176,74 Z" fill="#2c5bb0"/>
+        <rect x="153" y="65" width="23" height="3" fill="#111"/><rect x="152" y="65" width="4" height="7" fill="#111"/>
+        <circle cx="166" cy="45" r="5.5" fill="#c99a72"/><path d="M160.5,44.5 q5.5,-7.5 11,0 q-1,-4.5 -5.5,-4.8 q-4.5,.3 -5.5,4.8" fill="#151515"/>
+        <path d="M158,55 L146,59 L141,57" stroke="#2c5bb0" stroke-width="4" stroke-linecap="round" fill="none"/>
+        <path d="M174,57 Q168,66 146,64" stroke="#2c5bb0" stroke-width="3.6" stroke-linecap="round" fill="none"/>
+      </g>
+      ${stars(10,30)}</svg>`;
+    if(t==='lifting') return `<svg class="scene" ${V}><defs><radialGradient id="sp" cx=".28" cy="0" r=".9"><stop offset="0" stop-color="#3b3a2a"/><stop offset=".6" stop-color="#15151a"/><stop offset="1" stop-color="#0b0b0e"/></radialGradient><linearGradient id="bm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(255,236,170,.35)"/><stop offset="1" stop-color="rgba(255,236,170,0)"/></linearGradient></defs>
       <rect width="480" height="96" fill="url(#sp)"/><path d="M110,0 L170,0 L230,96 L50,96 Z" fill="url(#bm)" class="gl"/>
       <rect x="40" y="84" width="200" height="12" fill="#26262c"/><rect x="62" y="64" width="12" height="6" rx="1" fill="#2e2e36"/>
       <g class="bb"><rect x="58" y="57" width="164" height="3" rx="1.5" fill="#d9d9d4"/><rect x="66" y="40" width="9" height="37" rx="2" fill="#d7263d"/><rect x="76" y="44" width="7" height="29" rx="2" fill="#1f62d6"/><rect x="205" y="40" width="9" height="37" rx="2" fill="#d7263d"/><rect x="197" y="44" width="7" height="29" rx="2" fill="#1f62d6"/></g>
