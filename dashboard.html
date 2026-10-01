@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Rev">
 <title>Home · Rev</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
 :root {
   --bg: #0e0e0f; --surface: #161618; --surface2: #1e1e21;
@@ -387,12 +387,12 @@ select option { background: var(--surface2); }
 
 .quote { position: relative; margin: 0 0 18px; padding: 18px 56px 16px 58px; border-radius: 12px; background: linear-gradient(100deg, rgba(200,240,106,0.07), rgba(255,255,255,0.015) 55%); border: 1px solid var(--border); overflow: hidden; }
 .quote::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(var(--accent), rgba(200,240,106,0.15)); }
-.q-mark { position: absolute; left: 16px; top: -6px; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 72px; line-height: 1; color: var(--accent); opacity: 0.55; }
-.quote blockquote { margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 22px; line-height: 1.35; color: var(--text); letter-spacing: 0.005em; }
+.q-mark { position: absolute; left: 18px; top: 6px; font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 56px; line-height: 1; color: var(--accent); opacity: 0.55; }
+.quote blockquote { margin: 0; font-size: 18px; font-weight: 300; line-height: 1.45; color: var(--text); letter-spacing: -0.005em; }
 .quote figcaption { margin-top: 6px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
 .q-secret { position: absolute; right: 12px; bottom: 10px; color: var(--muted); opacity: 0.22; transition: opacity .2s, color .2s, transform .3s; padding: 6px; display: flex; }
 .q-secret:hover, .q-secret:focus-visible { opacity: 0.9; color: var(--accent); transform: rotate(45deg); }
-@media (max-width: 900px) { .quote { padding: 16px 40px 14px 44px; } .q-mark { left: 10px; font-size: 58px; } .quote blockquote { font-size: 19px; } }
+@media (max-width: 900px) { .quote { padding: 16px 40px 14px 44px; } .q-mark { left: 12px; font-size: 46px; } .quote blockquote { font-size: 16px; } }
 @media (prefers-reduced-motion: no-preference) { .quote blockquote { animation: qfade .8s ease-out both; } @keyframes qfade { from { opacity: 0; transform: translateY(4px); } } }
 
 ::-webkit-scrollbar { width: 4px; }
