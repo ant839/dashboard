@@ -1,450 +1,269 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-<title>Brain Dump</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0e0e0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=3">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3">
+<meta name="apple-mobile-web-app-title" content="Rev">
+<title>Brain Dump · Rev</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #0e0e0f; --surface: #161618; --surface2: #1e1e21;
-  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.14);
-  --text: #f0efe8; --muted: #888884; --dim: #4a4a48;
-  --accent: #c8f06a; --accent-dim: rgba(200,240,106,0.12);
-  --red: #ff5a5a; --red-dim: rgba(255,90,90,0.12);
-  --blue: #5ab4ff; --blue-dim: rgba(90,180,255,0.12);
-  --amber: #f5a623; --amber-dim: rgba(245,166,35,0.12);
-  --teal: #3dd6b5; --teal-dim: rgba(61,214,181,0.12);
-  --radius: 14px; --radius-sm: 10px;
+:root{
+  --bg:#0e0e0f; --surface:#161618; --surface2:#1e1e21;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.14);
+  --text:#f0efe8; --muted:#888884; --dim:#4a4a48;
+  --accent:#c8f06a; --accent-dim:rgba(200,240,106,0.12);
+  --red:#ff5a5a; --red-dim:rgba(255,90,90,0.14);
+  --amber:#f5a623; --amber-dim:rgba(245,166,35,0.14);
+  --blue:#5ab4ff; --blue-dim:rgba(90,180,255,0.12);
+  --purple:#b08fff; --purple-dim:rgba(176,143,255,0.13);
+  --teal:#3dd6b5; --teal-dim:rgba(61,214,181,0.12);
+  --radius:10px; --radius-sm:6px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; }
-body {
-  background: var(--bg); color: var(--text);
-  font-family: 'DM Sans', sans-serif; font-size: 15px;
-  display: flex; flex-direction: column;
-  max-width: 540px; margin: 0 auto;
-  padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 16px);
-  height: 100%;
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html{color-scheme:dark}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;font-size:14px;min-height:100vh;padding:calc(22px + env(safe-area-inset-top,0px)) 26px calc(80px + env(safe-area-inset-bottom,0px))}
+input,select,textarea,button{font-family:inherit;font-size:13px;color:var(--text)}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 11px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--border2)}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto}
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:16px}
+.eyebrow{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+h1{font-size:28px;font-weight:300;letter-spacing:-.02em}
+.btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.btn:hover{border-color:var(--border2)}
+.btn.primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+.btn:disabled{opacity:.5;cursor:default}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+.card-label{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+/* capture */
+.cap textarea{width:100%;min-height:120px;resize:vertical;font-size:15px;line-height:1.5;padding:12px 14px}
+.cap-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
+.cap-foot .grow{flex:1}
+.hint{font-size:11px;color:var(--muted);line-height:1.5}
+.chipset{display:flex;gap:4px;flex-wrap:wrap}
+.chipset button{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--muted)}
+.chipset button.on{background:var(--surface2);border-color:var(--accent);color:var(--text)}
+
+/* list */
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:22px 0 10px}
+.bar input[type=search]{flex:1 1 180px;max-width:280px}
+.day{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin:18px 0 8px;display:flex;gap:8px;align-items:center}
+.day::after{content:'';flex:1;height:1px;background:var(--border)}
+.dump{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;border-left:3px solid var(--accent)}
+.dump.done{border-left-color:var(--dim);opacity:.65}
+.dump.rough{border-left-color:var(--amber)}
+.d-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.d-title{flex:1;font-size:15px;font-weight:500;line-height:1.35}
+.d-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:3px;font-weight:400}
+.tag{font-size:10px;font-weight:600;padding:1px 8px;border-radius:20px;letter-spacing:.04em;text-transform:lowercase}
+.tag-gym{background:var(--blue-dim);color:var(--blue)}
+.tag-business{background:var(--teal-dim);color:var(--teal)}
+.tag-personal{background:var(--amber-dim);color:var(--amber)}
+.tag-social{background:var(--purple-dim);color:var(--purple)}
+.tag-ideas{background:var(--accent-dim);color:var(--accent)}
+.rough-note{color:var(--amber)}
+.mic{width:11px;height:11px;vertical-align:-1px}
+ul.pts{list-style:none;display:flex;flex-direction:column}
+ul.pts li{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-top:1px solid var(--border);font-size:14px;line-height:1.45}
+ul.pts li:first-child{border-top:0}
+ul.pts li::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:7px;flex-shrink:0}
+.dump.done ul.pts li::before{background:var(--dim)}
+ul.pts li span{flex:1}
+.to-task{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:11px;padding:2px 8px;white-space:nowrap;flex-shrink:0}
+.to-task:hover{color:var(--text);border-color:var(--border2)}
+.to-task.sent{color:var(--accent);border-color:transparent;cursor:default}
+.raw{margin-top:8px;font-size:12px;color:var(--muted);line-height:1.55;background:var(--surface2);border-radius:var(--radius-sm);padding:10px 12px;white-space:pre-wrap}
+.d-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.d-acts button{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:11px;padding:4px 10px}
+.d-acts button:hover{color:var(--text);border-color:var(--border2)}
+.d-acts .del:hover{color:var(--red)}
+.edit input{width:100%;margin-bottom:8px;font-size:14px}
+.edit textarea{width:100%;min-height:140px;font-size:14px;line-height:1.5}
+.empty{color:var(--dim);font-size:13px;text-align:center;padding:30px 0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 14px;display:flex;gap:12px;align-items:center;font-size:13px;z-index:50;max-width:calc(100vw - 32px)}
+.toast button{background:none;border:0;color:var(--accent);font-weight:600}
+@media (max-width:640px){
+  body{padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(70px + env(safe-area-inset-bottom,0px))}
+  h1{font-size:24px}
+  .dump{padding:12px 13px}
 }
-
-/* Header */
-.header { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 12px; flex-shrink: 0; }
-.header h1 { font-size: 18px; font-weight: 500; }
-.clear-btn { background: none; border: none; color: var(--dim); font-size: 13px; cursor: pointer; padding: 6px; font-family: inherit; }
-.clear-btn:active { color: var(--red); }
-
-/* Chat window */
-.chat-window {
-  flex: 1; overflow-y: auto; display: flex; flex-direction: column;
-  gap: 10px; padding: 4px 0 12px;
-  -webkit-overflow-scrolling: touch;
-}
-.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 12px; padding: 40px 0; }
-.empty-icon { font-size: 48px; opacity: 0.15; }
-.empty-text { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.6; }
-
-.bubble { padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.55; max-width: 88%; word-break: break-word; }
-.bubble.user { background: var(--surface2); border: 1px solid var(--border); align-self: flex-end; border-radius: 16px 16px 4px 16px; }
-.bubble.assistant { background: var(--accent-dim); border: 1px solid rgba(200,240,106,0.15); color: var(--text); align-self: flex-start; border-radius: 16px 16px 16px 4px; }
-.bubble.thinking { color: var(--muted); font-style: italic; align-self: flex-start; font-size: 13px; background: none; border: none; padding-left: 4px; }
-.bubble-label { font-size: 10px; font-weight: 600; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px; }
-
-/* Bottom controls */
-.bottom { flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; padding-top: 8px; border-top: 1px solid var(--border); }
-
-/* Big mic button */
-.mic-btn {
-  width: 100%; padding: 18px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  font-family: inherit; font-size: 15px; font-weight: 500;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  transition: all 0.15s;
-  -webkit-user-select: none; user-select: none;
-}
-.mic-btn.recording { background: var(--red-dim); border-color: var(--red); color: var(--red); }
-.mic-btn.processing { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
-.mic-btn.speaking { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
-.mic-icon { font-size: 22px; line-height: 1; }
-.voice-status { font-size: 12px; color: var(--muted); text-align: center; min-height: 14px; }
-
-/* Text input row */
-.text-row { display: flex; gap: 8px; }
-.text-input {
-  flex: 1; background: var(--surface2); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); color: var(--text);
-  font-family: inherit; font-size: 14px;
-  padding: 10px 12px; outline: none; resize: none;
-  min-height: 42px; max-height: 80px; line-height: 1.5;
-}
-.text-input:focus { border-color: var(--border2); }
-.text-input::placeholder { color: var(--dim); }
-.send-btn {
-  background: var(--surface2); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); color: var(--text);
-  font-size: 18px; padding: 0 14px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; min-width: 46px;
-}
-.send-btn:disabled { opacity: 0.35; }
-
-/* Convert & save */
-.action-btn {
-  width: 100%; padding: 14px; border-radius: var(--radius);
-  border: none; font-family: inherit; font-size: 15px; font-weight: 500;
-  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-}
-.convert-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); }
-.convert-btn.ready { background: var(--blue-dim); border-color: var(--blue); color: var(--blue); }
-.convert-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.save-btn { background: var(--accent-dim); border: 1px solid rgba(200,240,106,0.3); color: var(--accent); }
-.save-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
-/* Tasks */
-.tasks-wrap { display: flex; flex-direction: column; gap: 8px; }
-.tasks-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-.task-item { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; }
-.task-text { flex: 1; font-size: 13px; line-height: 1.4; }
-.tag-pill {
-  font-size: 10px; font-weight: 600; padding: 3px 9px;
-  border-radius: 20px; cursor: pointer; border: none;
-  font-family: inherit; flex-shrink: 0;
-}
-.tag-gym { background: var(--blue-dim); color: var(--blue); }
-.tag-business { background: var(--teal-dim); color: var(--teal); }
-.tag-personal { background: var(--amber-dim); color: var(--amber); }
-.tag-urgent { background: var(--red-dim); color: var(--red); }
-.remove-task { background: none; border: none; color: var(--dim); font-size: 18px; cursor: pointer; padding: 0 2px; line-height: 1; flex-shrink: 0; }
-
-.status-bar { font-size: 13px; text-align: center; min-height: 18px; color: var(--muted); }
-.status-bar.ok { color: var(--accent); }
-.status-bar.err { color: var(--red); }
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 0; }
 </style>
 </head>
 <body>
-
-<div class="header">
-  <h1>🧠 Brain dump</h1>
-  <button class="clear-btn" onclick="clearAll()">Clear</button>
-</div>
-
-<div class="chat-window" id="chat-window">
-  <div class="empty-state" id="empty-state">
-    <div class="empty-icon">🎙️</div>
-    <div class="empty-text">Tap the mic and start talking.<br>I'll listen and reply out loud.<br>Convert when you're done.</div>
-  </div>
-</div>
-
-<div class="bottom">
-  <button class="mic-btn" id="mic-btn" onclick="toggleRecording()">
-    <span class="mic-icon" id="mic-icon">🎙️</span>
-    <span id="mic-label">Tap to start talking</span>
-  </button>
-  <div class="voice-status" id="voice-status"></div>
-
-  <div class="text-row">
-    <textarea class="text-input" id="text-input" placeholder="Or type here..." rows="1" onkeydown="handleKey(event)"></textarea>
-    <button class="send-btn" id="send-btn" onclick="sendText()">↑</button>
+<div id="app"></div>
+<div class="wrap">
+  <div class="head">
+    <div><div class="eyebrow">Get it out of your head</div><h1>Brain Dump</h1></div>
   </div>
 
-  <button class="action-btn convert-btn" id="convert-btn" onclick="convertToTasks()" disabled>
-    ✦ Convert to tasks
-  </button>
-
-  <div id="tasks-wrap" style="display:none;" class="tasks-wrap">
-    <div class="tasks-label">Review before saving</div>
-    <div id="tasks-list"></div>
-    <button class="action-btn save-btn" id="save-btn" onclick="saveToGithub()">
-      ↗ Save to dashboard
-    </button>
+  <div class="card cap">
+    <div class="card-label">New dump</div>
+    <textarea id="dumpIn" placeholder="Whatever's in your head. Ramble, it gets split into points."></textarea>
+    <div class="cap-foot">
+      <div class="chipset" id="capTag" role="group" aria-label="Tag">
+        <button type="button" data-t="" class="on">No tag</button><button type="button" data-t="gym">Gym</button><button type="button" data-t="business">Business</button><button type="button" data-t="social">Social</button><button type="button" data-t="personal">Personal</button><button type="button" data-t="ideas">Ideas</button>
+      </div>
+      <span class="grow"></span>
+      <button class="btn primary" id="saveBtn" type="button">Save dump</button>
+    </div>
+    <p class="hint" style="margin-top:8px">Typed here it gets a quick split into points. Dumps from your car thread come in properly cleaned up.</p>
   </div>
 
-  <div class="status-bar" id="status-bar"></div>
+  <div class="bar">
+    <div class="chipset" id="filt">
+      <button type="button" data-f="open" class="on">Open</button><button type="button" data-f="done">Done</button><button type="button" data-f="all">All</button>
+    </div>
+    <input type="search" id="q" placeholder="Search dumps" aria-label="Search dumps">
+  </div>
+  <div id="list"><div class="empty">Loading…</div></div>
 </div>
 
+<div class="toast" id="toast" hidden role="status"><span id="toastMsg"></span><button type="button" id="toastAct" hidden></button></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+<script src="rev.js?v=27"></script>
 <script>
-const ANTHROPIC_KEY = '';
-const GITHUB_TOKEN = '';
-const GITHUB_REPO = 'ant839/dashboard';
-const TASKS_FILE = 'tasks.json';
-const TAGS = ['personal','gym','business','urgent'];
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const MIC='<svg class="mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+const TASK_TAG={gym:"gym",business:"business",social:"business",personal:"personal"};
 
-let conversation = [];
-let convertedTasks = [];
-let mediaRecorder = null;
-let audioChunks = [];
-let isRecording = false;
-let isBusy = false;
+let dumps=[], filter="open", query="", capTag="", editing=null, openRaw=new Set();
+revRenderNav($("#app"));
 
-function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function toast(msg,actLabel,act){const t=$("#toast");$("#toastMsg").textContent=msg;const b=$("#toastAct");b.hidden=!act;b.textContent=actLabel||"";b.onclick=()=>{t.hidden=true;act&&act()};t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,act?7000:3000)}
+function fail(e){console.error(e);toast("Couldn't save that. Check your connection and try again.");load()}
 
-function renderChat() {
-  const win = document.getElementById('chat-window');
-  const empty = document.getElementById('empty-state');
-  const msgs = conversation.filter(m => true);
-  if (!msgs.length) {
-    win.innerHTML = '';
-    const es = document.createElement('div');
-    es.className = 'empty-state'; es.id = 'empty-state';
-    es.innerHTML = '<div class="empty-icon">🎙️</div><div class="empty-text">Tap the mic and start talking.<br>I\'ll listen and reply out loud.<br>Convert when you\'re done.</div>';
-    win.appendChild(es);
-    document.getElementById('convert-btn').disabled = true;
-    document.getElementById('convert-btn').className = 'action-btn convert-btn';
-    return;
+/* Quick tidy for typed dumps: strip filler, split into one idea per line, capitalise.
+   The car thread does the real clean-up; this just makes typed ones readable. */
+const FILLER=/\b(u+m+|u+h+|e+r+m+|a+h+|you know|i mean|sort of|kind of|basically|so yeah|yeah so|okay so|ok so)\b,?\s*/gi;
+function quickTidy(text){
+  let t=String(text).replace(/\r/g,"").trim();
+  let parts;
+  const lines=t.split("\n").map(s=>s.trim()).filter(Boolean);
+  if(lines.length>1) parts=lines;
+  else parts=t.replace(/\s+/g," ").split(/(?<=[.!?])\s+|\s+(?:and then|also|another thing is|another thing)\s+/i);
+  return parts.map(p=>p.replace(/^[-*•\d.)\s]+/,"").replace(FILLER,"").replace(/\blike,\s*/gi,"")
+      .replace(/\b(to|just|i|we|gonna|should|could) like\b/gi,"$1").replace(/^(?:(?:and|so|but|then|also|ok|okay|right|oh)\b[,\s]*)+/i,"").replace(/\s+/g," ").replace(/[.,;\s]+$/,"").trim())
+    .filter(p=>p.length>2).map(p=>p[0].toUpperCase()+p.slice(1));
+}
+function titleFrom(points){const w=(points[0]||"Brain dump").split(" ");return w.slice(0,6).join(" ")+(w.length>6?"…":"")}
+
+async function saveDump(){
+  const raw=$("#dumpIn").value.trim(); if(!raw) return;
+  const points=quickTidy(raw); const btn=$("#saveBtn"); btn.disabled=true;
+  const {data,error}=await sb.from("brain_dumps").insert({title:titleFrom(points),points:points.length?points:[raw],raw,tag:capTag||null,source:"dashboard",tidied:false}).select().single();
+  btn.disabled=false;
+  if(error) return fail(error);
+  $("#dumpIn").value=""; merge(data); render(); toast("Saved");
+}
+
+function merge(r){const i=dumps.findIndex(d=>d.id===r.id); if(i<0) dumps.unshift(r); else dumps[i]=r;}
+function dayLabel(ts){
+  const d=new Date(ts), t=new Date(), y=new Date(); y.setDate(t.getDate()-1);
+  if(iso(d)===iso(t)) return "Today"; if(iso(d)===iso(y)) return "Yesterday";
+  return d.toLocaleDateString("en-AU",{weekday:"short",day:"numeric",month:"short"});
+}
+const timeOf=ts=>new Date(ts).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"}).replace(" ","").toLowerCase();
+
+function dumpCard(d){
+  const sent=new Set(d.sent||[]);
+  if(editing===d.id) return `<div class="dump" data-id="${d.id}"><div class="edit">
+      <input id="edTitle" value="${esc(d.title||"")}" placeholder="Heading" aria-label="Heading">
+      <textarea id="edPts" aria-label="Points, one per line">${esc((d.points||[]).join("\n"))}</textarea>
+      <p class="hint" style="margin:6px 0 0">One point per line.</p>
+      <div class="d-acts"><button type="button" data-act="edsave" style="color:var(--accent);border-color:var(--accent)">Save</button><button type="button" data-act="edcancel">Cancel</button></div>
+    </div></div>`;
+  return `<div class="dump${d.status==="done"?" done":""}${!d.tidied&&d.status!=="done"?" rough":""}" data-id="${d.id}">
+    <div class="d-top"><div class="d-title">${esc(d.title||"Brain dump")}
+      <div class="d-meta">${timeOf(d.created_at)}${d.source==="voice"?` · ${MIC} car`:""}${d.tag?` <span class="tag tag-${esc(d.tag)}">${esc(d.tag)}</span>`:""}${!d.tidied?` · <span class="rough-note">quick split</span>`:""}</div></div></div>
+    <ul class="pts">${(d.points||[]).map((p,i)=>`<li><span>${esc(p)}</span>${sent.has(i)?`<button class="to-task sent" type="button" disabled>✓ In tasks</button>`:`<button class="to-task" type="button" data-act="task" data-i="${i}" aria-label="Add to tasks">+ Task</button>`}</li>`).join("")}</ul>
+    ${d.raw&&openRaw.has(d.id)?`<div class="raw">${esc(d.raw)}</div>`:""}
+    <div class="d-acts">
+      <button type="button" data-act="done">${d.status==="done"?"Reopen":"Done"}</button>
+      <button type="button" data-act="copy">Copy</button>
+      <button type="button" data-act="edit">Edit</button>
+      ${d.raw?`<button type="button" data-act="raw">${openRaw.has(d.id)?"Hide":"Show"} what I said</button>`:""}
+      <button type="button" class="del" data-act="del">Delete</button>
+    </div></div>`;
+}
+
+function render(){
+  let v=dumps.slice().sort((a,b)=>a.created_at<b.created_at?1:-1);
+  if(filter!=="all") v=v.filter(d=>d.status===filter);
+  if(query) v=v.filter(d=>[d.title,d.raw,...(d.points||[])].join(" ").toLowerCase().includes(query));
+  if(!v.length){$("#list").innerHTML=`<div class="empty">${query?"Nothing matches that search":filter==="open"?"Head's clear. Nothing open.":"Nothing here yet"}</div>`;return}
+  let html="", last="";
+  v.forEach(d=>{const l=dayLabel(d.created_at); if(l!==last){html+=`<div class="day">${l}</div>`;last=l} html+=dumpCard(d)});
+  $("#list").innerHTML=html;
+  if(editing){const t=$("#edPts"); t&&t.focus();}
+}
+
+async function update(d,patch){const prev={...d};Object.assign(d,patch);render();
+  const {data,error}=await sb.from("brain_dumps").update(patch).eq("id",d.id).select().single();
+  if(error){Object.assign(d,prev);render();return fail(error)} merge(data);render();}
+
+$("#list").addEventListener("click",async e=>{
+  const b=e.target.closest("[data-act]"); if(!b) return;
+  const d=dumps.find(x=>x.id===b.closest("[data-id]").dataset.id); if(!d) return;
+  const act=b.dataset.act;
+  if(act==="task"){
+    const i=+b.dataset.i; b.disabled=true;
+    const {error}=await sb.from("tasks").insert({title:d.points[i],tag:TASK_TAG[d.tag]||"personal",source:"braindump"});
+    if(error){b.disabled=false;return fail(error)}
+    await update(d,{sent:[...new Set([...(d.sent||[]),i])]}); toast("Added to your tasks on Home");
   }
-  win.innerHTML = msgs.map(m => {
-    if (m.role === 'user') return `<div class="bubble user"><div class="bubble-label">You</div>${escH(m.content)}</div>`;
-    if (m.role === '_thinking') return `<div class="bubble thinking">Thinking...</div>`;
-    return `<div class="bubble assistant"><div class="bubble-label">Claude</div>${escH(m.content)}</div>`;
-  }).join('');
-  win.scrollTop = win.scrollHeight;
-  const hasEnough = conversation.filter(m => m.role !== '_thinking').length >= 2;
-  document.getElementById('convert-btn').disabled = !hasEnough;
-  document.getElementById('convert-btn').className = 'action-btn convert-btn' + (hasEnough ? ' ready' : '');
-}
-
-function setMicState(state) {
-  const btn = document.getElementById('mic-btn');
-  const icon = document.getElementById('mic-icon');
-  const label = document.getElementById('mic-label');
-  btn.className = 'mic-btn';
-  if (state === 'idle') { icon.textContent = '🎙️'; label.textContent = 'Tap to start talking'; }
-  else if (state === 'recording') { btn.classList.add('recording'); icon.textContent = '⏹️'; label.textContent = 'Recording — tap to stop'; }
-  else if (state === 'processing') { btn.classList.add('processing'); icon.textContent = '⏳'; label.textContent = 'Transcribing...'; }
-  else if (state === 'speaking') { btn.classList.add('speaking'); icon.textContent = '🔊'; label.textContent = 'Claude is speaking — tap to interrupt'; }
-}
-
-async function toggleRecording() {
-  if (isBusy && !isRecording) return;
-  if (window.speechSynthesis && window.speechSynthesis.speaking) {
-    window.speechSynthesis.cancel(); setMicState('idle'); return;
+  if(act==="done") update(d,{status:d.status==="done"?"open":"done"});
+  if(act==="raw"){openRaw.has(d.id)?openRaw.delete(d.id):openRaw.add(d.id);render()}
+  if(act==="copy"){const txt=[d.title,...(d.points||[])].join("\n");try{await navigator.clipboard.writeText(txt);toast("Copied")}catch(_){toast("Couldn't copy on this device")}}
+  if(act==="edit"){editing=d.id;render()}
+  if(act==="edcancel"){editing=null;render()}
+  if(act==="edsave"){
+    const pts=$("#edPts").value.split("\n").map(s=>s.trim()).filter(Boolean); if(!pts.length) return toast("Add at least one point");
+    const title=$("#edTitle").value.trim()||titleFrom(pts); editing=null;
+    update(d,{title,points:pts,tidied:true,sent:[]});
   }
-  if (!isRecording) { await startRecording(); }
-  else { await stopRecording(); }
-}
-
-async function startRecording() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorder = new MediaRecorder(stream);
-    audioChunks = [];
-    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-    mediaRecorder.start(100);
-    isRecording = true;
-    setMicState('recording');
-    document.getElementById('voice-status').textContent = '';
-  } catch(e) {
-    document.getElementById('voice-status').textContent = 'Mic blocked — check browser permissions.';
+  if(act==="del"){
+    dumps=dumps.filter(x=>x.id!==d.id); render();
+    const {error}=await sb.from("brain_dumps").delete().eq("id",d.id);
+    if(error) return fail(error);
+    const {id,...rest}=d;
+    toast("Dump deleted","Undo",async()=>{const {data,error}=await sb.from("brain_dumps").insert({id,...rest}).select().single(); if(error) return fail(error); merge(data); render();});
   }
-}
+});
+$("#saveBtn").addEventListener("click",saveDump);
+$("#dumpIn").addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.metaKey||e.ctrlKey)){e.preventDefault();saveDump()}});
+$("#capTag").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;capTag=b.dataset.t;$("#capTag").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b))});
+$("#filt").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;filter=b.dataset.f;$("#filt").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));render()});
+$("#q").addEventListener("input",e=>{query=e.target.value.trim().toLowerCase();render()});
 
-async function stopRecording() {
-  if (!mediaRecorder || !isRecording) return;
-  isRecording = false; isBusy = true;
-  setMicState('processing');
-  return new Promise(resolve => {
-    mediaRecorder.onstop = async () => {
-      mediaRecorder.stream.getTracks().forEach(t => t.stop());
-      const blob = new Blob(audioChunks, { type: 'audio/webm' });
-      const text = await transcribeAudio(blob);
-      document.getElementById('voice-status').textContent = '';
-      if (text && text.trim()) { await sendMessage(text.trim()); }
-      else { setMicState('idle'); }
-      isBusy = false; resolve();
-    };
-    mediaRecorder.stop();
-  });
+async function load(){
+  const {data,error}=await sb.from("brain_dumps").select("*").order("created_at",{ascending:false}).limit(300);
+  if(error){$("#list").innerHTML=`<div class="empty">Couldn't load dumps. Refresh to try again.</div>`;return}
+  dumps=data||[]; if(!editing) render();
 }
-
-async function transcribeAudio(blob) {
-  try {
-    const b64 = await new Promise(res => {
-      const r = new FileReader();
-      r.onloadend = () => res(r.result.split(',')[1]);
-      r.readAsDataURL(blob);
-    });
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6', max_tokens: 400,
-        messages: [{ role: 'user', content: [
-          { type: 'document', source: { type: 'base64', media_type: 'audio/webm', data: b64 } },
-          { type: 'text', text: 'Transcribe this audio exactly as spoken. Return only the transcription, nothing else.' }
-        ]}]
-      })
-    });
-    const data = await res.json();
-    return data.content?.[0]?.text || '';
-  } catch(e) {
-    document.getElementById('voice-status').textContent = 'Transcription failed — try typing.';
-    return '';
-  }
-}
-
-function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); }
-}
-
-async function sendText() {
-  const inp = document.getElementById('text-input');
-  const text = inp.value.trim();
-  if (!text || isBusy) return;
-  inp.value = ''; isBusy = true;
-  document.getElementById('send-btn').disabled = true;
-  await sendMessage(text);
-  isBusy = false;
-  document.getElementById('send-btn').disabled = false;
-}
-
-async function sendMessage(text) {
-  conversation.push({ role: 'user', content: text });
-  conversation.push({ role: '_thinking', content: '' });
-  renderChat();
-  try {
-    const msgs = conversation.filter(m => m.role !== '_thinking').map(m => ({ role: m.role, content: m.content }));
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6', max_tokens: 300,
-        system: "You are Claude in Ant Usmar's voice brain dump tool. He uses this on his phone, often while driving. Ant owns Rev Barbell Club (Olympic weightlifting gym, ~60 members) in Balcatta Perth WA, trains BJJ competing August 2026, runs @antstrengthcoach on Instagram, building IntelliFight wearable startup. Help him capture and clarify what he needs to do. Keep replies to 1-2 short sentences max. Conversational and punchy. No lists, no em dashes, no fluff. If he's just dumping tasks, confirm and ask if there's more.",
-        messages: msgs
-      })
-    });
-    const data = await res.json();
-    const reply = data.content?.[0]?.text || 'Something went wrong.';
-    conversation = conversation.filter(m => m.role !== '_thinking');
-    conversation.push({ role: 'assistant', content: reply });
-    speakReply(reply);
-  } catch(e) {
-    conversation = conversation.filter(m => m.role !== '_thinking');
-    conversation.push({ role: 'assistant', content: 'Connection error — try again.' });
-    setMicState('idle');
-  }
-  renderChat();
-}
-
-function speakReply(text) {
-  if (!window.speechSynthesis) { setMicState('idle'); return; }
-  window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.rate = 1.05;
-  utt.onstart = () => setMicState('speaking');
-  utt.onend = () => setMicState('idle');
-  utt.onerror = () => setMicState('idle');
-  window.speechSynthesis.speak(utt);
-}
-
-async function convertToTasks() {
-  const btn = document.getElementById('convert-btn');
-  btn.disabled = true; btn.textContent = '⏳ Converting...';
-  const transcript = conversation.filter(m => m.role !== '_thinking')
-    .map(m => (m.role === 'user' ? 'Me: ' : 'Claude: ') + m.content).join('\n');
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6', max_tokens: 1000,
-        system: `Extract every actionable task from this conversation. Return ONLY a valid JSON array, no markdown, no preamble, no explanation.
-Each item: { "text": "action verb task", "tag": "gym|business|personal|urgent" }
-gym = training/coaching/gym ops/Rev Barbell. business = admin/marketing/content/money/emails/Instagram/IntelliFight. urgent = time-sensitive. personal = everything else.
-Start each task with a verb. Keep text concise.`,
-        messages: [{ role: 'user', content: transcript }]
-      })
-    });
-    const data = await res.json();
-    const raw = data.content?.[0]?.text || '[]';
-    convertedTasks = JSON.parse(raw.replace(/```json|```/g, '').trim());
-    renderTasks();
-  } catch(e) {
-    setStatus('Conversion failed — try again.', 'err');
-  }
-  btn.disabled = false; btn.textContent = '✦ Convert to tasks';
-  btn.className = 'action-btn convert-btn ready';
-}
-
-function renderTasks() {
-  const wrap = document.getElementById('tasks-wrap');
-  const list = document.getElementById('tasks-list');
-  if (!convertedTasks.length) { wrap.style.display = 'none'; return; }
-  wrap.style.display = 'flex';
-  list.innerHTML = convertedTasks.map((t, i) => `
-    <div class="task-item" style="margin-bottom:6px;">
-      <span class="task-text">${escH(t.text)}</span>
-      <button class="tag-pill tag-${t.tag}" onclick="cycleTag(${i})">${t.tag}</button>
-      <button class="remove-task" onclick="removeTask(${i})">×</button>
-    </div>`).join('');
-  wrap.scrollIntoView({ behavior: 'smooth' });
-}
-
-function cycleTag(i) {
-  const cur = TAGS.indexOf(convertedTasks[i].tag);
-  convertedTasks[i].tag = TAGS[(cur + 1) % TAGS.length];
-  renderTasks();
-}
-
-function removeTask(i) {
-  convertedTasks.splice(i, 1);
-  if (!convertedTasks.length) { document.getElementById('tasks-wrap').style.display = 'none'; return; }
-  renderTasks();
-}
-
-async function saveToGithub() {
-  if (!convertedTasks.length) return;
-  const btn = document.getElementById('save-btn');
-  btn.disabled = true; btn.textContent = '⏳ Saving...';
-  try {
-    const fileRes = await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/contents/${TASKS_FILE}?t=${Date.now()}`,
-      { headers: { Authorization: 'Bearer ' + GITHUB_TOKEN, Accept: 'application/vnd.github+json' } }
-    );
-    let sha = null, existing = [];
-    if (fileRes.ok) {
-      const fd = await fileRes.json();
-      sha = fd.sha;
-      existing = JSON.parse(atob(fd.content.replace(/\n/g, '')));
-    }
-    const newTasks = [...existing, ...convertedTasks.map(t => ({ ...t, done: false, id: Date.now() + Math.random() }))];
-    const putRes = await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/contents/${TASKS_FILE}`,
-      { method: 'PUT',
-        headers: { Authorization: 'Bearer ' + GITHUB_TOKEN, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: 'Tasks from voice brain dump', content: btoa(JSON.stringify(newTasks, null, 2)), ...(sha ? { sha } : {}) })
-      }
-    );
-    if (putRes.ok) {
-      setStatus(convertedTasks.length + ' tasks saved to dashboard!', 'ok');
-      convertedTasks = [];
-      setTimeout(() => { document.getElementById('tasks-wrap').style.display = 'none'; setStatus(''); }, 3000);
-    } else { throw new Error(); }
-  } catch(e) {
-    setStatus('Save failed — check connection.', 'err');
-  }
-  btn.disabled = false; btn.textContent = '↗ Save to dashboard';
-}
-
-function setStatus(msg, type='') {
-  const el = document.getElementById('status-bar');
-  el.textContent = msg; el.className = 'status-bar' + (type ? ' '+type : '');
-}
-
-function clearAll() {
-  window.speechSynthesis && window.speechSynthesis.cancel();
-  conversation = []; convertedTasks = [];
-  document.getElementById('tasks-wrap').style.display = 'none';
-  setStatus('');
-  renderChat();
-}
-
-renderChat();
+revRequireLogin(()=>{load();
+  sb.channel("dumps-live").on("postgres_changes",{event:"*",schema:"public",table:"brain_dumps"},p=>{
+    if(editing) return;
+    if(p.eventType==="DELETE") dumps=dumps.filter(d=>d.id!==p.old.id); else merge(p.new);
+    render();
+  }).subscribe();
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")load()});
+});
+})();
 </script>
 </body>
 </html>
