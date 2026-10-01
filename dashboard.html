@@ -85,7 +85,9 @@ select option { background: var(--surface2); }
 
 /* Tasks */
 .task-input-row { display: flex; gap: 7px; margin-bottom: 10px; }
-.task-input-row input { flex: 1; }
+.task-input-row input { flex: 1; min-width: 0; }
+.task-input-row select { flex-shrink: 0; }
+.task-input-row .btn { flex-shrink: 0; }
 .task-input-row select { width: 100px; }
 .filter-row { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
 .pill { font-size: 11px; padding: 2px 9px; border-radius: 20px; border: 1px solid var(--border); color: var(--muted); background: none; cursor: pointer; transition: all 0.15s; }
@@ -110,6 +112,14 @@ select option { background: var(--surface2); }
 .task-del { background: none; border: none; color: var(--dim); cursor: pointer; padding: 2px 3px; font-size: 14px; opacity: 0; transition: opacity 0.15s; }
 .task-item:hover .task-del { opacity: 1; }
 .task-del:hover { color: var(--red); }
+.task-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.task-meta { display: flex; gap: 8px; font-size: 10.5px; color: var(--muted); align-items: center; }
+.task-meta .over { color: var(--red); font-weight: 600; }
+.task-meta .soon { color: var(--accent); }
+.task-note { font-size: 11px; color: var(--muted); line-height: 1.35; }
+.task-voice { width: 10px; height: 10px; flex-shrink: 0; color: var(--muted); }
+.task-done-hdr { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; padding: 10px 0 4px; border-bottom: 1px solid var(--border); }
+.task-sync { font-size: 10px; color: var(--dim); text-align: center; padding: 6px 0 0; }
 .empty { font-size: 12px; color: var(--dim); padding: 12px 0; text-align: center; }
 
 /* Schedule lists */
@@ -635,9 +645,6 @@ select option { background: var(--surface2); }
 const KEY = 'ant_dash_v8';
 const TOKEN_KEY = 'ant_gcal_token';
 const CHAT_KEY = 'ant_chat_v1';
-const GITHUB_TOKEN = ''; // old token was exposed and has been cancelled; Brain Dump tasks move to Supabase next
-const GITHUB_REPO = 'ant839/dashboard';
-const TASKS_FILE = 'tasks.json';
 const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -655,7 +662,8 @@ const EV_PALETTES = [
 
 let state = { tasks: [], schedule: [], focusWords: {} };
 let calEvents = [];
-let githubTasks = [];
+let tasks = [];        // rows from the Supabase tasks table
+let tasksReady = false; // false until the first load after sign-in
 let chatHistory = [];
 let taskFilter = 'all';
 let calConnected = false;
@@ -738,7 +746,8 @@ function getAllDayForDay(d) {
 // ---- Metrics ----
 function renderMetrics() {
   const rt=window.revRoutineToday||{done:0,total:0};
-  const total=state.tasks.length+githubTasks.length+rt.total, done=state.tasks.filter(t=>t.done).length+githubTasks.filter(t=>t.done).length+rt.done;
+  const tv=visibleTasks(tasks);
+  const total=tv.length+rt.total, done=tv.filter(t=>t.done).length+rt.done;
   const pct=total?Math.round((done/total)*100):0;
   const today=new Date(), tom=new Date(today); tom.setDate(today.getDate()+1);
   const todayEvs=getEventsForDay(today).length+state.schedule.length;
@@ -752,49 +761,99 @@ function renderMetrics() {
   document.getElementById('prog').style.width=pct+'%';
 }
 
-// ---- Tasks ----
+// ---- Tasks (Supabase table `tasks`, written to by the dashboard and by voice chats) ----
+function isoDay(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+// Open tasks, plus anything ticked off today. Older finished tasks stay in the table but leave the list.
+function visibleTasks(list){const t=isoDay(new Date());return list.filter(x=>!x.done||(x.done_at&&isoDay(new Date(x.done_at))===t));}
+function dueLabel(due){
+  if(!due) return '';
+  const t=isoDay(new Date()), tm=new Date(); tm.setDate(tm.getDate()+1);
+  if(due<t){const n=Math.round((new Date(t)-new Date(due))/864e5);return `<span class="over">${n===1?'Due yesterday':'Overdue '+n+'d'}</span>`;}
+  if(due===t) return '<span class="soon">Due today</span>';
+  if(due===isoDay(tm)) return '<span class="soon">Due tomorrow</span>';
+  const d=new Date(due+'T00:00'); const days=(d-new Date(t+'T00:00'))/864e5;
+  return 'Due '+(days<7?DAY_SHORT[d.getDay()]:d.getDate()+' '+MON_SHORT[d.getMonth()]);
+}
+// Urgent first, then by due date (no date last), then oldest first.
+function orderTasks(list){
+  return list.slice().sort((a,b)=>{
+    const u=(b.tag==='urgent')-(a.tag==='urgent'); if(u) return u;
+    const ad=a.due||'9999-12-31', bd=b.due||'9999-12-31'; if(ad!==bd) return ad<bd?-1:1;
+    return (a.created_at||'')<(b.created_at||'')?-1:1;
+  });
+}
+const MIC='<svg class="task-voice" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-label="Added by voice"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+function taskRow(t){
+  const meta=[dueLabel(t.due), t.source==='voice'?MIC+'voice':''].filter(Boolean).join(' · ');
+  return `<div class="task-item" data-id="${t.id}">
+    <div class="task-check${t.done?' done':''}" role="checkbox" aria-checked="${t.done}" tabindex="0" onclick="toggleTask('${t.id}')" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();toggleTask('${t.id}')}"></div>
+    <div class="task-body">
+      <span class="task-text${t.done?' done':''}">${escHtml(t.title)}</span>
+      ${t.notes&&!t.done?`<span class="task-note">${escHtml(t.notes)}</span>`:''}
+      ${meta&&!t.done?`<span class="task-meta">${meta}</span>`:''}
+    </div>
+    <span class="task-tag tag-${t.tag}">${t.tag}</span>
+    <button class="task-del" onclick="delTask('${t.id}')" aria-label="Delete task">×</button>
+  </div>`;
+}
 function renderTasks() {
   const list=document.getElementById('task-list');
-  let local=state.tasks;
-  let remote=githubTasks;
-  if(taskFilter!=='all'){
-    local=local.filter(t=>t.tag===taskFilter);
-    remote=remote.filter(t=>t.tag===taskFilter);
-  }
-  let html='';
-
-  if(remote.length){
-    html+=`<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;padding:6px 0 4px;border-bottom:1px solid var(--border);margin-bottom:4px;">From Brain Dump</div>`;
-    html+=remote.map(t=>`<div class="task-item">
-      <div class="task-check${t.done?' done':''}" onclick="toggleGithubTask('${t.id}')"></div>
-      <span class="task-text${t.done?' done':''}">${escHtml(t.text)}</span>
-      <span class="task-tag tag-${t.tag}">${t.tag}</span>
-      <button class="task-del" onclick="deleteGithubTask('${t.id}')">×</button>
-    </div>`).join('');
-  }
-
-  if(local.length){
-    if(remote.length) html+=`<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;padding:6px 0 4px;border-bottom:1px solid var(--border);margin-bottom:4px;margin-top:8px;">Local</div>`;
-    html+=local.map(t=>{
-      const i=state.tasks.indexOf(t);
-      return`<div class="task-item">
-        <div class="task-check${t.done?' done':''}" onclick="toggleTask(${i})"></div>
-        <span class="task-text${t.done?' done':''}">${escHtml(t.text)}</span>
-        <span class="task-tag tag-${t.tag}">${t.tag}</span>
-        <button class="task-del" onclick="delTask(${i})">×</button>
-      </div>`;
-    }).join('');
-  }
-
-  if(!html) html='<div class="empty">No tasks</div>';
-  list.innerHTML=html;
+  if(!tasksReady){list.innerHTML='<div class="empty">Loading tasks…</div>';return;}
+  let v=visibleTasks(tasks);
+  if(taskFilter!=='all') v=v.filter(t=>t.tag===taskFilter);
+  const open=orderTasks(v.filter(t=>!t.done)), done=v.filter(t=>t.done).sort((a,b)=>(b.done_at||'')<(a.done_at||'')?-1:1);
+  let html=open.map(taskRow).join('');
+  if(done.length) html+=`<div class="task-done-hdr">Done today · ${done.length}</div>`+done.map(taskRow).join('');
+  list.innerHTML=html||'<div class="empty">'+(taskFilter==='all'?'Nothing on the list':'No '+taskFilter+' tasks')+'</div>';
 }
-window.toggleTask=i=>{state.tasks[i].done=!state.tasks[i].done;save();render();};
-window.delTask=i=>{state.tasks.splice(i,1);save();render();};
-function addTask(){
-  const inp=document.getElementById('task-input');const text=inp.value.trim();if(!text)return;
-  state.tasks.push({text,tag:document.getElementById('task-tag').value,done:false});
-  inp.value='';save();render();
+function mergeTask(row){const i=tasks.findIndex(t=>t.id===row.id); if(i<0) tasks.push(row); else tasks[i]=row;}
+async function loadTasks(){
+  const since=new Date(); since.setHours(0,0,0,0);
+  const {data,error}=await sb.from('tasks').select('*').or('done.eq.false,done_at.gte.'+since.toISOString());
+  if(error){console.error('tasks load',error);return;}
+  tasks=data||[]; tasksReady=true; renderTasks(); renderMetrics();
+}
+window.toggleTask=async id=>{
+  const t=tasks.find(x=>x.id===id); if(!t) return;
+  const prev={done:t.done,done_at:t.done_at};
+  t.done=!t.done; t.done_at=t.done?new Date().toISOString():null; renderTasks(); renderMetrics();
+  const {data,error}=await sb.from('tasks').update({done:t.done}).eq('id',id).select().single();
+  if(error){Object.assign(t,prev); renderTasks(); renderMetrics(); alert('Could not save that tick: '+error.message);} else mergeTask(data);
+};
+window.delTask=async id=>{
+  const keep=tasks; tasks=tasks.filter(x=>x.id!==id); renderTasks(); renderMetrics();
+  const {error}=await sb.from('tasks').delete().eq('id',id);
+  if(error){tasks=keep; renderTasks(); renderMetrics(); alert('Could not delete: '+error.message);}
+};
+async function addTask(){
+  const inp=document.getElementById('task-input');const title=inp.value.trim();if(!title)return;
+  const tag=document.getElementById('task-tag').value;
+  inp.value='';
+  const {data,error}=await sb.from('tasks').insert({title,tag,source:'dashboard'}).select().single();
+  if(error){inp.value=title; alert('Could not add task: '+error.message); return;}
+  mergeTask(data); renderTasks(); renderMetrics();
+}
+// One-time move of tasks that were only saved in this browser.
+async function migrateLocalTasks(){
+  const old=(state.tasks||[]).filter(t=>t&&t.text&&!t.done);
+  if(!state.tasks||!state.tasks.length) return;
+  if(old.length){
+    const {error}=await sb.from('tasks').insert(old.map(t=>({title:t.text,tag:t.tag||'personal',source:'dashboard'})));
+    if(error){console.error('task migration',error);return;}
+  }
+  state.tasks=[]; save();
+}
+function startTasks(){
+  sb.auth.getSession().then(async({data})=>{
+    if(!data.session){tasksReady=true; document.getElementById('task-list').innerHTML='<div class="empty">Sign in to see tasks</div>'; return;}
+    await migrateLocalTasks();
+    await loadTasks();
+    sb.channel('tasks-live').on('postgres_changes',{event:'*',schema:'public',table:'tasks'},p=>{
+      if(p.eventType==='DELETE') tasks=tasks.filter(t=>t.id!==p.old.id); else mergeTask(p.new);
+      renderTasks(); renderMetrics();
+    }).subscribe();
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')loadTasks();});
+  });
 }
 
 // ---- Focus words ----
@@ -946,60 +1005,6 @@ function render(){
   renderFocusBanners();
 }
 
-
-// ---- GitHub Tasks ----
-async function fetchGithubTasks() {
-  if (!GITHUB_TOKEN) { githubTasks = []; return; }
-  try {
-    const res = await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/contents/${TASKS_FILE}?t=${Date.now()}`,
-      { headers: { Authorization: 'Bearer ' + GITHUB_TOKEN, Accept: 'application/vnd.github+json' } }
-    );
-    if (res.status === 404) { githubTasks = []; return; }
-    const data = await res.json();
-    githubTasks = JSON.parse(atob(data.content.replace(/\n/g, '')));
-  } catch(e) { console.error('GitHub tasks fetch error', e); }
-}
-
-async function toggleGithubTask(id) {
-  try {
-    const res = await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/contents/${TASKS_FILE}`,
-      { headers: { Authorization: 'Bearer ' + GITHUB_TOKEN, Accept: 'application/vnd.github+json' } }
-    );
-    const data = await res.json();
-    const tasks = JSON.parse(atob(data.content.replace(/\n/g, '')));
-    const t = tasks.find(t => t.id == id);
-    if (t) t.done = !t.done;
-    const putRes = await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/contents/${TASKS_FILE}`,
-      { method: 'PUT',
-        headers: { Authorization: 'Bearer ' + GITHUB_TOKEN, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: 'Toggle task', content: btoa(JSON.stringify(tasks, null, 2)), sha: data.sha })
-      }
-    );
-    if (putRes.ok) { await fetchGithubTasks(); renderTasks(); renderMetrics(); }
-  } catch(e) { console.error(e); }
-}
-
-async function deleteGithubTask(id) {
-  try {
-    const res = await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/contents/${TASKS_FILE}`,
-      { headers: { Authorization: 'Bearer ' + GITHUB_TOKEN, Accept: 'application/vnd.github+json' } }
-    );
-    const data = await res.json();
-    const tasks = JSON.parse(atob(data.content.replace(/\n/g, ''))).filter(t => t.id != id);
-    const putRes = await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/contents/${TASKS_FILE}`,
-      { method: 'PUT',
-        headers: { Authorization: 'Bearer ' + GITHUB_TOKEN, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: 'Delete task', content: btoa(JSON.stringify(tasks, null, 2)), sha: data.sha })
-      }
-    );
-    if (putRes.ok) { await fetchGithubTasks(); renderTasks(); renderMetrics(); }
-  } catch(e) { console.error(e); }
-}
 
 // ---- Chat ----
 function renderChat(){
@@ -1449,13 +1454,12 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 
 load();
 loadChat();
-fetchGithubTasks();
 render();
+startTasks();
 renderChat();
 setInterval(render,60000);
 window.addEventListener('rev:routine',renderMetrics);
 setInterval(()=>{if(calConnected)fetchAllCalendarEvents().then(render);},10*60*1000);
-setInterval(()=>{fetchGithubTasks().then(()=>{renderTasks();renderMetrics();});},2*60*1000);
 </script>
 </body>
 </html>
