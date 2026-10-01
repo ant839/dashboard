@@ -11,7 +11,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=3">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3">
 <meta name="apple-mobile-web-app-title" content="Rev">
-<title>Discipline</title>
+<title>Build</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -134,6 +134,10 @@ table.grid{border-collapse:separate;border-spacing:3px;min-width:100%}
 .ylegend{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--muted);margin-top:10px}
 .ylegend i{width:11px;height:11px;border-radius:3px;display:inline-block}
 .lower{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;align-items:start}
+.logf{display:flex;gap:5px;flex-wrap:wrap;margin:-2px 0 8px}
+.logf button{background:none;border:1px solid var(--border);border-radius:20px;padding:4px 11px;font-size:11px;color:var(--muted)}
+.logf button.on{border-color:var(--gold-line);color:var(--text);background:var(--gold-dim)}
+.log-count{font-size:11px;color:var(--muted);margin-bottom:4px}
 .log-row{padding:10px 0;border-bottom:1px solid var(--border)}
 .log-row:last-child{border-bottom:0}
 .log-row .lh{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
@@ -179,7 +183,7 @@ table.grid{border-collapse:separate;border-spacing:3px;min-width:100%}
   <section class="hero">
     <div>
       <div class="eyebrow" id="dateLine"></div>
-      <h1>Become the man<br>you <em>want to be.</em></h1>
+      <h1>Build the man<br>you <em>want to become.</em></h1>
       <div class="streaks" id="streaks"></div>
     </div>
     <div class="ring" id="ring" aria-label="Today's progress"></div>
@@ -206,7 +210,7 @@ table.grid{border-collapse:separate;border-spacing:3px;min-width:100%}
   </section>
 
   <div class="lower">
-    <section class="gridcard"><div class="sec-h"><h2>The work</h2><span class="meta">What I learned, wrote and drilled</span></div><div id="log"></div></section>
+    <section class="gridcard"><div class="sec-h"><h2>The work</h2><span class="meta">What I built, learned, wrote and drilled</span></div><div class="logf" id="logf"></div><div id="log"></div></section>
     <section class="gridcard"><div class="sec-h"><h2>Daily non-negotiables</h2><button type="button" class="btn sm" id="addHabit">+ Add</button></div><div id="habits"></div></section>
   </div>
 </div>
@@ -242,7 +246,7 @@ const fmt=(s,o)=>parseD(s).toLocaleDateString("en-AU",o||{weekday:"long",day:"nu
 const PILLARS=[["mindset","Mindset","I"],["physical","Physical","II"],["financial","Financial","III"],["philosophical","Philosophical","IV"]];
 const PNAME=Object.fromEntries(PILLARS.map(p=>[p[0],p[1]]));
 const ROMAN=["I","II","III","IV","V","VI","VII","VIII"];
-let habits=[], checks=[], meta={vision:[],pillars:{}}, day=today(), gridEnd=today(), logAll=false, month=today().slice(0,7), editing=null, editingPillar=null, editingVision=false;
+let habits=[], checks=[], meta={vision:[],pillars:{}}, day=today(), gridEnd=today(), logAll=false, logFilter="all", month=today().slice(0,7), editing=null, editingPillar=null, editingVision=false;
 
 revRenderNav($("#app"));
 function toast(msg,lab,act){const t=$("#toast");$("#toastMsg").textContent=msg;const b=$("#toastAct");b.hidden=!act;b.textContent=lab||"";b.onclick=()=>{t.hidden=true;act&&act()};t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,act?5000:2500)}
@@ -313,10 +317,15 @@ function renderYear(){
   $("#year").innerHTML=h; $("#yearMeta").textContent=`${perfect} clean day${perfect===1?"":"s"} in the last year`;
 }
 function renderLog(){
-  const noteHabits=new Set(habits.filter(h=>h.note_prompt).map(h=>h.id));
-  const allRows=checks.filter(c=>c.note&&noteHabits.has(c.habit_id)).sort((a,b)=>b.day.localeCompare(a.day)||String(b.created_at||"").localeCompare(String(a.created_at||""))), rows=allRows.slice(0,logAll?60:8);
-  $("#log").innerHTML=rows.length?rows.map(c=>{ const h=habits.find(x=>x.id===c.habit_id); return `<div class="log-row"><div class="lh"><span style="color:var(--p-${h.pillar})">${esc(h.name)}</span><span>${fmt(c.day,{day:"numeric",month:"short"})}</span></div><p>${esc(c.note)}</p></div>`; }).join("")+(allRows.length>8?`<button type="button" class="btn sm ghost" data-logmore style="margin-top:10px">${logAll?"Show less":`Show all ${Math.min(60,allRows.length)}`}</button>`:"")
-    :`<div class="empty">Every note you add to Learn, Write and BJJ builds up here.</div>`;
+  const noteH=active().filter(h=>h.note_prompt).concat(habits.filter(h=>!h.active&&h.note_prompt)), ids=new Set(noteH.map(h=>h.id));
+  if(logFilter!=="all"&&!ids.has(logFilter)) logFilter="all";
+  const withNotes=noteH.filter(h=>checks.some(c=>c.habit_id===h.id&&c.note));
+  $("#logf").innerHTML=withNotes.length>1?[["all","All"],...withNotes.map(h=>[h.id,h.name])].map(([k,l])=>`<button type="button" data-logf="${k}" class="${logFilter===k?"on":""}" aria-pressed="${logFilter===k}">${esc(l)}</button>`).join(""):"";
+  const allRows=checks.filter(c=>c.note&&ids.has(c.habit_id)&&(logFilter==="all"||c.habit_id===logFilter)).sort((a,b)=>b.day.localeCompare(a.day)||String(b.created_at||"").localeCompare(String(a.created_at||""))), rows=allRows.slice(0,logAll?120:8);
+  const fh=logFilter!=="all"?habits.find(h=>h.id===logFilter):null;
+  const head=fh?`<div class="log-count">${allRows.length} entr${allRows.length===1?"y":"ies"} · ${checks.filter(c=>c.habit_id===fh.id&&c.done&&c.day>=addDays(today(),-29)).length} of the last 30 days</div>`:"";
+  $("#log").innerHTML=rows.length?head+rows.map(c=>{ const h=habits.find(x=>x.id===c.habit_id); return `<div class="log-row"><div class="lh"><span style="color:var(--p-${h.pillar})">${esc(h.name)}</span><span>${fmt(c.day,{day:"numeric",month:"short"})}</span></div><p>${esc(c.note)}</p></div>`; }).join("")+(allRows.length>8?`<button type="button" class="btn sm ghost" data-logmore style="margin-top:10px">${logAll?"Show less":`Show all ${Math.min(120,allRows.length)}`}</button>`:"")
+    :`<div class="empty">Every note you add to Build the business, Learn, Write, BJJ and Sleep builds up here.</div>`;
 }
 function renderHabits(){
   const all=habits.slice().sort((a,b)=>(b.active-a.active)||a.sort-b.sort);
@@ -352,6 +361,7 @@ document.addEventListener("click",async e=>{
   const ps=e.target.closest("[data-psave]"); if(ps){ const k=ps.dataset.psave; meta.pillars[k]=document.querySelector(`[data-ptxt="${k}"]`).value.split("\n").map(s=>s.trim()).filter(Boolean); editingPillar=null; try{ await saveMeta(); renderPillars(); toast(`${PNAME[k]} saved`); }catch(x){fail(x)} return; }
   const he=e.target.closest("[data-hedit]"); if(he) return openHabit(he.dataset.hedit);
   if(e.target.closest("[data-logmore]")){ logAll=!logAll; renderLog(); return; }
+  const lf=e.target.closest("[data-logf]"); if(lf){ logFilter=lf.dataset.logf; logAll=false; renderLog(); return; }
 });
 /* notes save as you type (debounced), and writing a note ticks the standard */
 const noteT={};
