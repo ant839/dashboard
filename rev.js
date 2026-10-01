@@ -17,6 +17,7 @@
     { href: 'plan.html', label: 'Periodisation' },
     { href: 'leads.html', label: 'Leads' },
     { href: 'members.html', label: 'Members' },
+    { href: 'social.html', label: 'Social' },
     { href: 'cashflow.html', label: 'Cash Flow' },
     { href: 'pt.html', label: 'PT Clients' }
   ];
