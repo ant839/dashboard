@@ -169,7 +169,7 @@ input[type=range]{width:100%;accent-color:var(--accent);background:none;border:0
   <div class="head">
     <div><div class="eyebrow">Money</div><h1>Cash flow</h1></div>
     <div class="head-acts">
-      <div class="seg2" id="bookSw" role="tablist" aria-label="Book"><button type="button" data-book="business" role="tab">Business</button><button type="button" data-book="personal" role="tab">Personal</button></div>
+      <div class="seg2" id="bookSw" role="tablist" aria-label="Book"><button type="button" data-book="business" role="tab" title="Rev Barbell Club">Business</button><button type="button" data-book="personal" role="tab" title="You, including PT income">Personal</button></div>
       <div class="chips" id="horizon" role="group" aria-label="How far ahead"><button type="button" data-h="13">3 mo</button><button type="button" data-h="26">6 mo</button><button type="button" data-h="52">12 mo</button></div>
     </div>
   </div>
@@ -256,8 +256,8 @@ const fmt=(s,o)=>parseD(s).toLocaleDateString("en-AU",o||{day:"numeric",month:"s
 const money=(n,dp)=>(n<0?"−":"")+"$"+Math.abs(Math.round(dp?n*100:n)/(dp?100:1)).toLocaleString("en-AU",{maximumFractionDigits:dp?2:0,minimumFractionDigits:0});
 const kfmt=n=>{const a=Math.abs(n);return (n<0?"−":"")+"$"+(a>=1e6?(a/1e6).toFixed(1)+"m":a>=1e4?Math.round(a/1e3)+"k":a>=1e3?(a/1e3).toFixed(1).replace(/\.0$/,"")+"k":Math.round(a))};
 
-const CATS={business:{in:["Memberships","PT","Programming","Merch","Events","Other"],out:["Rent","Wages","Software","Equipment","Insurance","Utilities","Marketing","Tax & super","Loan","Owner pay","Other"]},
-  personal:{in:["Pay","Owner pay","Side income","Other"],out:["Housing","Car","Bills","Food","Insurance","Subscriptions","Savings","Health & fitness","Fun","Other"]}};
+const CATS={business:{in:["Memberships","Programming","Merch","Events","Other"],out:["Rent","Wages","Software","Equipment","Insurance","Utilities","Marketing","Tax & super","Loan","Owner pay","Other"]},
+  personal:{in:["PT","Owner pay","Pay","Side income","Other"],out:["Housing","Car","Bills","Food","Insurance","Subscriptions","Savings","Health & fitness","Fun","Other"]}};
 const QUICK={business:{in:[["Memberships","Memberships","weekly",60,60],["Programming clients","Programming","weekly"],["Merch","Merch","monthly"]],
   out:[["Rent","Rent","monthly"],["Coaches","Wages","weekly"],["GymDesk","Software","monthly"],["Everfit","Software","monthly"],["Insurance","Insurance","yearly"],["BAS","Tax & super","quarterly"],["Power","Utilities","quarterly"],["Owner pay","Owner pay","weekly"]]},
   personal:{in:[["Pay from Rev","Owner pay","weekly"],["Other income","Side income","monthly"]],
@@ -290,7 +290,7 @@ function occurrences(it,from,to){
   return out;
 }
 function ptFlows(from,to){
-  if(!ptOn||book!=="business"||!window.PT) return [];
+  if(!ptOn||book!=="personal"||!window.PT) return [];
   const out=[], seen=new Set();
   for(let ws=weekStart(from); ws<=to; ws=addDays(ws,7)){
     let f; try{f=PT.weekForecast(ws)}catch(e){continue}
@@ -410,7 +410,7 @@ function render(){
   $("#mOut").textContent=money(monthOut); $("#mOutSub").textContent=`${items.filter(i=>i.book===book&&i.kind==="out"&&i.active&&i.freq!=="once").length} regular bill${items.filter(i=>i.book===book&&i.kind==="out"&&i.active&&i.freq!=="once").length===1?"":"s"}`;
   /* alert */
   const below=P.weeks.filter(w=>w.bal<floor), al=$("#alert");
-  if(!items.some(i=>i.book===book)&&!(ptOn&&book==="business")){ al.hidden=false; al.className="alert"; $("#alertIc").textContent="👋"; $("#alertTx").innerHTML=`Start by tapping <b>Balance now</b> to enter what's in the ${book} account, then add your regular money in and out below. The chart fills in as you go.`; }
+  if(!items.some(i=>i.book===book)&&!(ptOn&&book==="personal")){ al.hidden=false; al.className="alert"; $("#alertIc").textContent="👋"; $("#alertTx").innerHTML=`Start by tapping <b>Balance now</b> to enter what's in the ${book} account, then add your regular money in and out below. The chart fills in as you go.`; }
   else if(below.length){ al.hidden=false; al.className="alert bad"; $("#alertIc").textContent="⚠️"; $("#alertTx").textContent=`Drops below ${P.buffer>0?"your "+money(P.buffer)+" buffer":"$0"} in the week of ${fmt(below[0].ws)}${below.length>1?` and is below it for ${below.length} of the next ${horizon} weeks`:""}. Lowest is ${money(L.bal)}.`; }
   else { al.hidden=false; al.className="alert ok"; $("#alertIc").textContent="✓"; $("#alertTx").textContent=`Stays above ${P.buffer>0?"your "+money(P.buffer)+" buffer":"$0"} for the next ${horizon===13?"3":horizon===26?"6":"12"} months${on?" with this what-if":""}.`; }
   $("#lgWhatIf").hidden=!on;
@@ -440,7 +440,7 @@ function renderCats(){
   const mine=items.filter(i=>i.book===book&&i.active&&i.freq!=="once");
   const sum=k=>{const m={};mine.filter(i=>i.kind===k).forEach(i=>{const c=i.category||"Other";m[c]=(m[c]||0)+itemAmount(i)*PER_MONTH[i.freq]});return Object.entries(m).sort((a,b)=>b[1]-a[1])};
   const ins=sum("in"), outs=sum("out");
-  if(ptOn&&book==="business"&&window.PT){ try{ const ws=weekStart(today()); let t=0; for(let k=0;k<8;k++) t+=PT.weekForecast(addDays(ws,k*7)).total; if(t) ins.push(["PT (from PT tab)",t/8*52/12]); ins.sort((a,b)=>b[1]-a[1]); }catch(e){} }
+  if(ptOn&&book==="personal"&&window.PT){ try{ const ws=weekStart(today()); let t=0; for(let k=0;k<8;k++) t+=PT.weekForecast(addDays(ws,k*7)).total; if(t) ins.push(["PT (from PT tab)",t/8*52/12]); ins.sort((a,b)=>b[1]-a[1]); }catch(e){} }
   const max=Math.max(1,...ins.map(x=>x[1]),...outs.map(x=>x[1]));
   const rows=(arr,col)=>arr.map(([c,v])=>`<div class="cat-row" title="${esc(c)}: ${money(v)} a month"><span>${esc(c)}</span><div class="bar" style="width:${Math.max(1,v/max*100)}%;background:${col}"></div><span class="v">${money(v)}</span></div>`).join("");
   const tin=ins.reduce((a,x)=>a+x[1],0), tout=outs.reduce((a,x)=>a+x[1],0);
@@ -466,15 +466,15 @@ function renderLists(P){
       <div class="right"><div class="amt ${it.kind}">${money(a,true)}</div><div class="pm">${it.freq==="once"?"one-off":money(a*PER_MONTH[it.freq])+"/mo"}</div></div></div>`; };
   const list=k=>mine.filter(i=>i.kind===k).sort((a,b)=>(b.active-a.active)||itemAmount(b)*(PER_MONTH[b.freq]||.01)-itemAmount(a)*(PER_MONTH[a.freq]||.01));
   let inHtml="";
-  if(book==="business"){ let wk=0; try{ if(window.PT&&PT.store.clients.length){ const ws=weekStart(today()); for(let k=0;k<8;k++) wk+=PT.weekForecast(addDays(ws,k*7)).total; wk/=8; } }catch(e){}
+  if(book==="personal"){ let wk=0; try{ if(window.PT&&PT.store.clients.length){ const ws=weekStart(today()); for(let k=0;k<8;k++) wk+=PT.weekForecast(addDays(ws,k*7)).total; wk/=8; } }catch(e){}
     inHtml+=`<div class="item${ptOn?"":" off"}" data-ptlink><label class="switch" title="Include PT income"><input type="checkbox" id="ptToggle"${ptOn?" checked":""} aria-label="Include PT income from the PT Clients tab"><span class="slider"></span></label>
-      <div class="body"><div class="nm">PT clients<span class="auto">auto</span></div><div class="sub">From the PT Clients tab: weekly, fortnightly and package payments</div></div>
+      <div class="body"><div class="nm">PT clients<span class="auto">auto</span></div><div class="sub">Your PT income, straight from the PT Clients tab: weekly, fortnightly and package payments</div></div>
       <div class="right"><div class="amt in">${money(wk)}</div><div class="pm">avg a week</div></div></div>`; }
   inHtml+=list("in").map(row).join("");
   $("#inList").innerHTML=inHtml||`<div class="empty">Nothing yet.</div>`;
   $("#outList").innerHTML=list("out").map(row).join("")||`<div class="empty">Nothing yet. Tap a suggestion below to start.</div>`;
   const tot=k=>mine.filter(i=>i.kind===k&&i.active).reduce((a,i)=>a+itemAmount(i)*PER_MONTH[i.freq],0);
-  $("#inTot").textContent=money(tot("in"))+"/mo"+(book==="business"&&ptOn?" + PT":""); $("#outTot").textContent=money(tot("out"))+"/mo";
+  $("#inTot").textContent=money(tot("in"))+"/mo"+(book==="personal"&&ptOn?" + PT":""); $("#outTot").textContent=money(tot("out"))+"/mo";
   const names=new Set(mine.map(i=>i.name.toLowerCase()));
   ["in","out"].forEach(k=>{ $("#"+k+"Quick").innerHTML=QUICK[book][k].filter(q=>!names.has(q[0].toLowerCase())).map((q,i)=>`<button type="button" data-quick="${k}|${QUICK[book][k].indexOf(q)}">+ ${esc(q[0])}</button>`).join(""); });
 }
@@ -540,7 +540,7 @@ function openBalance(){
 
 /* ---------- events ---------- */
 document.addEventListener("click",async e=>{
-  const bk=e.target.closest("[data-book]"); if(bk){ book=bk.dataset.book; selWeek=null; animate=true; wi={members:null,weekly:0,oneoff:0,oneWeek:4}; ptOn=book==="business"&&(books.business?books.business.include_pt!==false:true); try{localStorage.setItem("cf-book",book)}catch(x){} render(); return; }
+  const bk=e.target.closest("[data-book]"); if(bk){ book=bk.dataset.book; selWeek=null; animate=true; wi={members:null,weekly:0,oneoff:0,oneWeek:4}; ptOn=book==="personal"&&(books.personal?books.personal.include_pt!==false:true); try{localStorage.setItem("cf-book",book)}catch(x){} render(); return; }
   const h=e.target.closest("[data-h]"); if(h){ horizon=+h.dataset.h; selWeek=null; animate=true; wi.oneWeek=Math.min(wi.oneWeek,horizon-1); try{localStorage.setItem("cf-h",horizon)}catch(x){} render(); return; }
   if(e.target.closest("#balBtn")) return openBalance();
   if(e.target.closest(".switch")) return;
@@ -552,7 +552,7 @@ document.addEventListener("click",async e=>{
   const ed=e.target.closest("[data-edit]"); if(ed) return openDrawer(ed.dataset.edit);
 });
 document.addEventListener("change",async e=>{
-  if(e.target.id==="ptToggle"){ ptOn=e.target.checked; render(); try{ const {data,error}=await sb.from("cf_books").update({include_pt:ptOn}).eq("book","business").select().single(); if(error) throw error; books.business=data; }catch(x){fail(x)} return; }
+  if(e.target.id==="ptToggle"){ ptOn=e.target.checked; render(); try{ const {data,error}=await sb.from("cf_books").update({include_pt:ptOn}).eq("book","personal").select().single(); if(error) throw error; books.personal=data; }catch(x){fail(x)} return; }
   const t=e.target.closest("[data-toggle]"); if(!t) return;
   const it=items.find(i=>i.id===t.dataset.toggle); if(!it) return;
   it.active=t.checked; render();
@@ -574,7 +574,7 @@ async function load(){
   const [b,i]=await Promise.all([sb.from("cf_books").select("*"),sb.from("cf_items").select("*").order("created_at")]);
   if(b.error||i.error){ $("#chart").innerHTML=`<div class="empty">Couldn't load cash flow. Refresh to try again.</div>`; return; }
   books=Object.fromEntries((b.data||[]).map(r=>[r.book,r])); items=i.data||[];
-  ptOn=book==="business"&&(books.business?books.business.include_pt!==false:true);
+  ptOn=book==="personal"&&(books.personal?books.personal.include_pt!==false:true);
   render();
   if(window.PT&&!PT.store.clients.length){ try{ await PT.load(); render(); }catch(e){} }
 }
