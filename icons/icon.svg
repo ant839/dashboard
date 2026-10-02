@@ -39,21 +39,33 @@
   <!-- rolling hills at dusk -->
   <path d="M0,232 Q70,196 150,214 Q230,232 300,200 Q390,166 512,206 L512,512 L0,512 Z" fill="#3b3a5c"/>
   <path d="M0,262 Q90,226 190,250 Q280,272 360,240 Q440,212 512,236 L512,512 L0,512 Z" fill="#33503f"/>
+  <!-- big two-storey homestead (left) -->
+  <g>
+    <!-- main two-storey block -->
+    <rect x="-6" y="182" width="150" height="96" fill="#ece1cb"/>
+    <path d="M-16,186 L32,140 L104,140 L152,186 Z" fill="#5e3530"/>
+    <rect x="18" y="150" width="9" height="22" fill="#5e3530"/><rect x="108" y="146" width="9" height="20" fill="#5e3530"/>
+    <!-- dormer -->
+    <path d="M56,170 L68,154 L80,170 Z" fill="#5e3530"/><rect x="62" y="166" width="12" height="10" fill="#ffd27a"/>
+    <!-- upstairs windows -->
+    <rect x="6" y="196" width="16" height="18" fill="#ffd27a"/><rect x="34" y="196" width="16" height="18" fill="#ffd27a"/>
+    <rect x="86" y="196" width="16" height="18" fill="#ffd27a"/><rect x="114" y="196" width="16" height="18" fill="#ffd27a"/>
+    <!-- wraparound verandah -->
+    <path d="M-10,230 L148,230 L156,242 L-10,242 Z" fill="#7a4a3f"/>
+    <g stroke="#f4ecdc" stroke-width="3"><path d="M2,242 V278 M38,242 V278 M74,242 V278 M110,242 V278 M144,242 V278"/></g>
+    <path d="M-10,264 H152" stroke="#f4ecdc" stroke-width="2.5"/>
+    <!-- downstairs windows and front door -->
+    <rect x="12" y="248" width="18" height="16" fill="#ffd27a"/><rect x="48" y="248" width="18" height="16" fill="#ffd27a"/>
+    <rect x="80" y="246" width="16" height="32" fill="#5a3b2a"/>
+    <rect x="114" y="248" width="18" height="16" fill="#ffd27a"/>
+    <rect x="-6" y="182" width="150" height="96" fill="#000" opacity=".12"/>
+  </g>
   <path d="M0,300 Q110,262 230,286 Q330,306 420,276 Q470,262 512,270 L512,512 L0,512 Z" fill="#2c4636"/>
   <path d="M0,262 Q90,226 190,250 Q280,272 360,240 Q440,212 512,236" fill="none" stroke="#f3b866" stroke-width="2" opacity=".35"/>
   <!-- fence line -->
   <g stroke="#1e2f26" stroke-width="2.5" opacity=".8">
-    <path d="M0,286 Q60,272 120,276" fill="none"/>
-    <path d="M10,282 v12 M40,277 v12 M70,274 v12 M100,274 v12"/>
-  </g>
-  <!-- house (left) -->
-  <g>
-    <rect x="22" y="222" width="62" height="40" fill="#e9dcc4"/>
-    <path d="M14,224 L53,194 L92,224 Z" fill="#6b3b33"/>
-    <rect x="68" y="198" width="8" height="16" fill="#6b3b33"/>
-    <rect x="30" y="232" width="13" height="12" fill="#ffd27a"/><rect x="61" y="232" width="13" height="12" fill="#ffd27a"/>
-    <rect x="47" y="240" width="11" height="22" fill="#5a3b2a"/>
-    <rect x="22" y="222" width="62" height="40" fill="#000" opacity=".12"/>
+    <path d="M0,292 Q60,282 120,284" fill="none"/>
+    <path d="M10,288 v12 M40,284 v12 M70,282 v12 M100,282 v12"/>
   </g>
   <!-- barn (right) -->
   <g>
