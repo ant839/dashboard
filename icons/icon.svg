@@ -36,7 +36,45 @@
     <circle cx="60" cy="70" r="2.2" opacity=".8"/><circle cx="110" cy="40" r="1.6" opacity=".6"/><circle cx="430" cy="58" r="2.2" opacity=".8"/>
     <circle cx="470" cy="120" r="1.6" opacity=".6"/><circle cx="40" cy="150" r="1.6" opacity=".55"/><circle cx="380" cy="30" r="1.6" opacity=".6"/>
   </g>
-  <path d="M0,380 Q120,330 256,350 T512,330 L512,512 L0,512 Z" fill="#1d1a33" opacity=".7"/>
+  <!-- rolling hills at dusk -->
+  <path d="M0,232 Q70,196 150,214 Q230,232 300,200 Q390,166 512,206 L512,512 L0,512 Z" fill="#3b3a5c"/>
+  <path d="M0,262 Q90,226 190,250 Q280,272 360,240 Q440,212 512,236 L512,512 L0,512 Z" fill="#33503f"/>
+  <path d="M0,300 Q110,262 230,286 Q330,306 420,276 Q470,262 512,270 L512,512 L0,512 Z" fill="#2c4636"/>
+  <path d="M0,262 Q90,226 190,250 Q280,272 360,240 Q440,212 512,236" fill="none" stroke="#f3b866" stroke-width="2" opacity=".35"/>
+  <!-- fence line -->
+  <g stroke="#1e2f26" stroke-width="2.5" opacity=".8">
+    <path d="M0,286 Q60,272 120,276" fill="none"/>
+    <path d="M10,282 v12 M40,277 v12 M70,274 v12 M100,274 v12"/>
+  </g>
+  <!-- house (left) -->
+  <g>
+    <rect x="22" y="222" width="62" height="40" fill="#e9dcc4"/>
+    <path d="M14,224 L53,194 L92,224 Z" fill="#6b3b33"/>
+    <rect x="68" y="198" width="8" height="16" fill="#6b3b33"/>
+    <rect x="30" y="232" width="13" height="12" fill="#ffd27a"/><rect x="61" y="232" width="13" height="12" fill="#ffd27a"/>
+    <rect x="47" y="240" width="11" height="22" fill="#5a3b2a"/>
+    <rect x="22" y="222" width="62" height="40" fill="#000" opacity=".12"/>
+  </g>
+  <!-- barn (right) -->
+  <g>
+    <rect x="432" y="196" width="66" height="50" fill="#b8392f"/>
+    <path d="M426,198 L446,170 L484,170 L504,198 Z" fill="#7a2620"/>
+    <path d="M426,198 L446,170 L484,170 L504,198" fill="none" stroke="#efe6d8" stroke-width="2.5"/>
+    <rect x="452" y="214" width="26" height="32" fill="#8a2a23" stroke="#efe6d8" stroke-width="2.5"/>
+    <path d="M452,214 L478,246 M478,214 L452,246" stroke="#efe6d8" stroke-width="2"/>
+    <rect x="458" y="180" width="14" height="10" fill="#ffd27a" opacity=".85"/>
+    <rect x="432" y="196" width="66" height="50" fill="#000" opacity=".12"/>
+  </g>
+  <!-- cow grazing between the heads -->
+  <g transform="translate(240,236)">
+    <ellipse cx="22" cy="14" rx="20" ry="11" fill="#f2efe8"/>
+    <path d="M10,8 q6,-4 10,2 q-2,6 -10,4 Z M26,14 q8,-5 12,2 q-4,6 -12,2 Z" fill="#1c1a1a"/>
+    <rect x="7" y="20" width="4" height="12" fill="#f2efe8"/><rect x="15" y="21" width="4" height="11" fill="#e3ddd2"/>
+    <rect x="28" y="21" width="4" height="11" fill="#e3ddd2"/><rect x="35" y="20" width="4" height="12" fill="#f2efe8"/>
+    <ellipse cx="45" cy="19" rx="7" ry="6" fill="#f2efe8"/><ellipse cx="49" cy="22" rx="4" ry="3" fill="#e8b1a4"/>
+    <path d="M42,13 l-3,-4 M47,13 l2,-4" stroke="#d9c9a8" stroke-width="2" stroke-linecap="round"/>
+    <path d="M2,12 q-4,6 -2,12" stroke="#f2efe8" stroke-width="2" fill="none"/>
+  </g>
 
   <!-- ===== Renee (back left) ===== -->
   <g>
