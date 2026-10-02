@@ -15,7 +15,10 @@
     <linearGradient id="skinK" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d6a988"/><stop offset=".55" stop-color="#f3cfb2"/><stop offset="1" stop-color="#dcb091"/></linearGradient>
     <linearGradient id="rash" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a55d6"/><stop offset="1" stop-color="#173a9e"/></linearGradient>
     <linearGradient id="jumper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4e3e0"/><stop offset="1" stop-color="#b9b8b5"/></linearGradient>
-    <linearGradient id="blonde" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6dc8e"/><stop offset="1" stop-color="#d9b25a"/></linearGradient>
+    <linearGradient id="blonde" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9b46e"/><stop offset="1" stop-color="#a77c3f"/></linearGradient>
+    <pattern id="stripe" width="20" height="20" patternUnits="userSpaceOnUse"><rect width="20" height="20" fill="#24324f"/><rect y="12" width="20" height="6" fill="#e9e4d8"/></pattern>
+    <linearGradient id="pup" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eab76c"/><stop offset="1" stop-color="#c88c42"/></linearGradient>
+    <linearGradient id="rott" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a2220"/><stop offset="1" stop-color="#161211"/></linearGradient>
     <linearGradient id="dog" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2a85a"/><stop offset="1" stop-color="#bf8238"/></linearGradient>
     <pattern id="flanno" width="44" height="44" patternUnits="userSpaceOnUse" patternTransform="rotate(-4)">
       <rect width="44" height="44" fill="#a8262c"/>
@@ -84,44 +87,51 @@
     <ellipse cx="350" cy="140" rx="24" ry="12" fill="url(#shine)"/>
   </g>
 
-  <!-- ===== Kid 1, girl (front left) ===== -->
-  <g transform="translate(-40,10)">
-    <path d="M60,512 L66,446 Q72,410 112,400 L188,400 Q228,410 234,446 L240,512 Z" fill="#e8807a"/>
-    <path d="M128,402 Q150,418 172,402" fill="none" stroke="#c9615c" stroke-width="4"/>
-    <path d="M138,370 L138,404 Q150,412 162,404 L162,370 Z" fill="#dcae8e"/>
-    <!-- ponytail -->
-    <path d="M190,300 Q226,312 220,360 Q214,386 198,392 Q206,360 192,330 Z" fill="url(#blonde)"/>
-    <ellipse cx="150" cy="332" rx="40" ry="46" fill="url(#skinK)"/>
-    <path d="M108,336 Q102,282 150,280 Q198,282 194,336 Q188,306 170,300 Q150,294 130,302 Q112,312 108,336 Z" fill="url(#blonde)"/>
-    <circle cx="192" cy="300" r="7" fill="#e8807a"/>
-    <ellipse cx="140" cy="300" rx="18" ry="8" fill="url(#shine)"/>
+  <!-- ===== Kids, second row, shoulder to shoulder ===== -->
+  <!-- boy (right) -->
+  <g>
+    <path d="M246,512 L250,452 Q256,420 290,412 L346,412 Q380,420 386,452 L390,512 Z" fill="url(#stripe)"/>
+    <path d="M296,414 Q318,430 340,414" fill="none" stroke="#24324f" stroke-width="6"/>
+    <path d="M306,384 L306,416 Q318,424 330,416 L330,384 Z" fill="#dcae8e"/>
+    <ellipse cx="318" cy="350" rx="39" ry="43" fill="url(#skinK)"/>
+    <path d="M277,352 Q270,300 318,296 Q368,298 360,352 Q356,326 342,320 L332,330 L326,316 L312,326 L308,314 L296,326 Q282,330 277,352 Z" fill="url(#blonde)"/>
+    <ellipse cx="279" cy="356" rx="6" ry="9" fill="#dcae8e"/><ellipse cx="357" cy="356" rx="6" ry="9" fill="#dcae8e"/>
+    <ellipse cx="310" cy="316" rx="17" ry="7" fill="url(#shine)"/>
+  </g>
+  <!-- girl (left) -->
+  <g>
+    <path d="M128,512 L132,452 Q138,420 172,412 L228,412 Q262,420 268,452 L272,512 Z" fill="#a98bd4"/>
+    <path d="M176,413 Q188,432 200,422 Q212,432 224,413 L216,410 Q200,420 184,410 Z" fill="#f4f0ea"/>
+    <path d="M188,382 L188,414 Q200,422 212,414 L212,382 Z" fill="#dcae8e"/>
+    <!-- ponytail on her outside shoulder -->
+    <path d="M162,312 Q126,322 132,370 Q138,396 154,402 Q146,370 160,340 Z" fill="url(#blonde)"/>
+    <ellipse cx="200" cy="348" rx="39" ry="44" fill="url(#skinK)"/>
+    <path d="M158,372 Q148,296 200,292 Q252,296 242,372 Q240,336 232,322 Q216,308 200,312 Q184,308 168,322 Q160,336 158,372 Z" fill="url(#blonde)"/>
+    <path d="M200,295 L200,312" stroke="#8a6532" stroke-width="2" opacity=".6"/>
+    <circle cx="160" cy="318" r="6.5" fill="#a98bd4"/>
+    <ellipse cx="190" cy="314" rx="17" ry="7" fill="url(#shine)"/>
   </g>
 
-  <!-- ===== Golden retriever (front right) ===== -->
-  <g transform="translate(-162,6)">
-    <!-- chest / body -->
-    <path d="M356,512 L362,448 Q370,404 418,396 Q466,404 474,448 L480,512 Z" fill="url(#dog)"/>
-    <path d="M396,420 q8,14 0,28 M418,416 q8,16 0,32 M440,420 q8,14 0,28" stroke="#f1c17c" stroke-width="5" fill="none" stroke-linecap="round" opacity=".7"/>
-    <!-- head: broad domed skull -->
-    <path d="M374,344 Q372,300 418,298 Q464,300 462,344 Q462,366 450,378 L440,388 L396,388 L386,378 Q374,366 374,344 Z" fill="url(#dog)"/>
-    <!-- short muzzle -->
-    <path d="M398,360 Q398,346 418,346 Q438,346 438,360 L438,374 Q438,392 418,394 Q398,392 398,374 Z" fill="#f0c486"/>
-    <ellipse cx="418" cy="355" rx="8.5" ry="6" fill="#2b1d16"/>
-    <!-- floppy ears hanging from the top of the head -->
-    <path d="M390,306 Q366,306 360,334 Q356,362 368,378 Q380,372 384,352 Q388,328 398,312 Z" fill="#b97a33"/>
-    <path d="M446,306 Q470,306 476,334 Q480,362 468,378 Q456,372 452,352 Q448,328 438,312 Z" fill="#b97a33"/>
-    <ellipse cx="408" cy="320" rx="16" ry="8" fill="url(#shine)"/>
+  <!-- ===== Puppies, front row ===== -->
+  <!-- golden retriever puppy (left) -->
+  <g transform="translate(196,512) scale(1.12) translate(-196,-512)">
+    <path d="M136,512 Q138,478 196,472 Q254,478 256,512 Z" fill="url(#pup)"/>
+    <path d="M178,486 q6,10 0,22 M196,482 q6,12 0,26 M214,486 q6,10 0,22" stroke="#f5d39b" stroke-width="4" fill="none" stroke-linecap="round" opacity=".7"/>
+    <ellipse cx="196" cy="448" rx="44" ry="38" fill="url(#pup)"/>
+    <path d="M160,424 Q136,428 136,456 Q136,480 152,486 Q162,470 164,448 Z" fill="#c4863b"/>
+    <path d="M232,424 Q256,428 256,456 Q256,480 240,486 Q230,470 228,448 Z" fill="#c4863b"/>
+    <ellipse cx="196" cy="468" rx="20" ry="15" fill="#f6d7a4"/>
+    <ellipse cx="196" cy="459" rx="7.5" ry="5.5" fill="#2b1d16"/>
+    <ellipse cx="186" cy="428" rx="14" ry="7" fill="url(#shine)"/>
   </g>
-  <!-- ===== Kid 2, boy (front middle) ===== -->
-  <g transform="translate(122,-2)">
-    <path d="M206,512 L212,456 Q218,422 256,412 L322,412 Q360,422 366,456 L372,512 Z" fill="#2fb59a"/>
-    <path d="M266,414 Q289,430 312,414" fill="none" stroke="#21927b" stroke-width="4"/>
-    <path d="M277,382 L277,416 Q289,424 301,416 L301,382 Z" fill="#dcae8e"/>
-    <ellipse cx="289" cy="346" rx="40" ry="45" fill="url(#skinK)"/>
-    <!-- messy blonde -->
-    <path d="M247,348 Q240,296 289,292 Q340,294 332,348 Q328,322 314,316 L304,326 L298,312 L284,322 L280,310 L268,322 Q252,326 247,348 Z" fill="url(#blonde)"/>
-    <ellipse cx="249" cy="352" rx="6" ry="9" fill="#dcae8e"/><ellipse cx="329" cy="352" rx="6" ry="9" fill="#dcae8e"/>
-    <ellipse cx="280" cy="312" rx="18" ry="8" fill="url(#shine)"/>
+  <!-- rottweiler puppy (right) -->
+  <g transform="translate(320,512) scale(1.12) translate(-320,-512)">
+    <path d="M262,512 Q264,478 320,472 Q376,478 378,512 Z" fill="url(#rott)"/>
+    <path d="M300,476 Q320,500 340,476 Q336,506 320,512 Q304,506 300,476 Z" fill="#b8692e"/>
+    <ellipse cx="320" cy="448" rx="44" ry="38" fill="url(#rott)"/>
+    <path d="M286,422 Q268,420 266,440 Q272,454 286,448 Z M354,422 Q372,420 374,440 Q368,454 354,448 Z" fill="#110d0c"/>
+    <path d="M296,458 Q296,446 320,446 Q344,446 344,458 Q344,484 320,486 Q296,484 296,458 Z" fill="#b8692e"/>
+    <ellipse cx="320" cy="457" rx="7.5" ry="5.5" fill="#0a0707"/>
+    <ellipse cx="310" cy="426" rx="14" ry="7" fill="#fff" opacity=".08"/>
   </g>
-
 </svg>
