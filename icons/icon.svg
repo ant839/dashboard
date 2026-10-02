@@ -17,6 +17,13 @@
     <linearGradient id="jumper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4e3e0"/><stop offset="1" stop-color="#b9b8b5"/></linearGradient>
     <linearGradient id="blonde" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6dc8e"/><stop offset="1" stop-color="#d9b25a"/></linearGradient>
     <linearGradient id="dog" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2a85a"/><stop offset="1" stop-color="#bf8238"/></linearGradient>
+    <pattern id="flanno" width="44" height="44" patternUnits="userSpaceOnUse" patternTransform="rotate(-4)">
+      <rect width="44" height="44" fill="#a8262c"/>
+      <rect x="0" y="14" width="44" height="14" fill="#1c1012" opacity=".55"/>
+      <rect x="14" y="0" width="14" height="44" fill="#1c1012" opacity=".55"/>
+      <rect x="0" y="34" width="44" height="2.5" fill="#e9b7a8" opacity=".35"/>
+      <rect x="34" y="0" width="2.5" height="44" fill="#e9b7a8" opacity=".35"/>
+    </pattern>
     <radialGradient id="shine" cx=".4" cy=".3" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
   </defs>
 
@@ -43,44 +50,42 @@
     <!-- slicked hair with middle part -->
     <path d="M133,214 Q128,150 181,140 Q234,150 229,214 Q222,180 206,172 Q194,166 181,170 Q168,166 156,172 Q140,180 133,214 Z" fill="#2a1d18"/>
     <path d="M181,142 L181,170" stroke="#4a362c" stroke-width="2.5" opacity=".7"/>
-    <!-- sunglasses on head -->
-    <g transform="rotate(-6 181 160)">
-      <rect x="144" y="150" width="32" height="18" rx="8" fill="#3b2418" stroke="#7a4a2a" stroke-width="2.5"/>
-      <rect x="186" y="150" width="32" height="18" rx="8" fill="#3b2418" stroke="#7a4a2a" stroke-width="2.5"/>
-      <path d="M176,158 L186,158" stroke="#7a4a2a" stroke-width="3"/>
-    </g>
     <!-- ears + gold hoops -->
     <ellipse cx="135" cy="228" rx="7" ry="11" fill="#c8977a"/><ellipse cx="227" cy="228" rx="7" ry="11" fill="#c8977a"/>
     <circle cx="134" cy="246" r="6.5" fill="none" stroke="#e7c35a" stroke-width="3"/><circle cx="228" cy="246" r="6.5" fill="none" stroke="#e7c35a" stroke-width="3"/>
     <ellipse cx="170" cy="190" rx="22" ry="12" fill="url(#shine)"/>
   </g>
 
-  <!-- ===== Ant (back right, taller) ===== -->
+  <!-- ===== Ant (back right) ===== -->
   <g>
-    <!-- blue rashguard, broad -->
-    <path d="M236,512 L242,360 Q250,300 314,284 L346,276 L380,276 L412,284 Q476,300 484,360 L492,512 Z" fill="url(#rash)"/>
-    <path d="M330,280 Q363,304 396,280" fill="none" stroke="#123080" stroke-width="5"/>
-    <!-- medal lanyard -->
-    <path d="M320,286 L362,372 L404,286" fill="none" stroke="#f0c531" stroke-width="9" stroke-linejoin="round"/>
-    <path d="M320,286 L362,372 L404,286" fill="none" stroke="#1b1b1b" stroke-width="2" stroke-dasharray="6 10" opacity=".55"/>
-    <circle cx="362" cy="388" r="17" fill="#f2c94c" stroke="#c99a1e" stroke-width="3"/>
+    <!-- flannel shirt, broad -->
+    <path d="M236,512 L242,360 Q250,300 314,284 L340,278 L386,278 L412,284 Q476,300 484,360 L492,512 Z" fill="url(#flanno)"/>
+    <path d="M236,512 L242,360 Q250,300 314,284 L340,278 L386,278 L412,284 Q476,300 484,360 L492,512 Z" fill="#000" opacity=".12"/>
+    <!-- open collar showing neck -->
+    <path d="M330,276 L363,326 L396,276 Z" fill="#a8774f"/>
+    <path d="M326,272 L363,326 L340,334 L314,290 Z" fill="url(#flanno)" stroke="#5e1418" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M400,272 L363,326 L386,334 L412,290 Z" fill="url(#flanno)" stroke="#5e1418" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M363,326 L363,512" stroke="#5e1418" stroke-width="3"/>
+    <circle cx="370" cy="356" r="3.5" fill="#efe6d8"/><circle cx="370" cy="400" r="3.5" fill="#efe6d8"/><circle cx="370" cy="444" r="3.5" fill="#efe6d8"/>
     <!-- thick neck -->
-    <path d="M334,232 L334,286 Q363,300 392,286 L392,232 Z" fill="#a8774f"/>
-    <!-- head -->
-    <path d="M314,160 Q314,100 363,100 Q412,100 412,160 L413,214 L410,232 Q408,244 398,250 Q382,264 363,264 Q344,264 328,250 Q318,244 316,232 L313,214 Z" fill="url(#skinA)"/>
-    <!-- beard -->
-    <path d="M313,196 L316,232 Q318,244 328,250 Q344,264 363,264 Q382,264 398,250 Q408,244 410,232 L413,196 Q408,224 392,232 Q378,240 363,240 Q348,240 334,232 Q318,224 313,196 Z" fill="#5a3b26" opacity=".85"/>
-    <!-- short faded hair with quiff -->
-    <path d="M312,166 Q306,108 352,96 Q390,88 410,112 Q420,130 414,168 Q410,140 396,130 Q380,122 360,124 Q334,126 322,140 Q314,150 312,166 Z" fill="#4a3022"/>
-    <path d="M330,106 Q356,84 392,96 Q372,96 356,104 Z" fill="#5c3c2a"/>
-    <path d="M312,166 Q310,150 316,140 L318,182 Z M414,168 Q416,150 410,140 L408,182 Z" fill="#4a3022" opacity=".45"/>
+    <path d="M326,226 L326,280 Q363,300 400,280 L400,226 Z" fill="#a8774f"/>
+    <path d="M336,250 L350,296 M390,250 L376,296" stroke="#8a5f40" stroke-width="3.5" stroke-linecap="round" opacity=".45"/>
+    <!-- square head -->
+    <path d="M311,158 Q311,96 363,96 Q415,96 415,158 L417,214 L414,240 Q412,254 399,256 L327,256 Q314,254 312,240 L309,214 Z" fill="url(#skinA)"/>
+    <!-- beard following the square jaw -->
+    <path d="M309,196 L312,240 Q314,254 327,256 L399,256 Q412,254 414,240 L417,196 Q412,226 396,232 Q380,236 363,236 Q346,236 330,232 Q314,226 309,196 Z" fill="#5a3b26" opacity=".88"/>
+    <path d="M309,196 L312,240 Q314,254 327,256 L363,256 L363,248 L330,248 Q320,246 318,236 L314,194 Z" fill="#3a2618" opacity=".35"/>
+    <!-- short faded hair, a little quiff -->
+    <path d="M309,166 Q303,104 352,94 Q392,86 412,110 Q424,128 417,168 Q413,140 398,130 Q382,122 362,124 Q334,126 322,140 Q312,150 309,166 Z" fill="#4a3022"/>
+    <path d="M328,104 Q356,82 394,94 Q374,94 356,102 Z" fill="#5c3c2a"/>
+    <path d="M309,166 Q307,150 313,140 L315,184 Z M417,168 Q419,150 413,140 L411,184 Z" fill="#4a3022" opacity=".45"/>
     <!-- ears -->
-    <ellipse cx="312" cy="196" rx="8" ry="14" fill="#a8774f"/><ellipse cx="414" cy="196" rx="8" ry="14" fill="#a8774f"/>
+    <ellipse cx="309" cy="196" rx="8" ry="14" fill="#a8774f"/><ellipse cx="417" cy="196" rx="8" ry="14" fill="#a8774f"/>
     <ellipse cx="350" cy="140" rx="24" ry="12" fill="url(#shine)"/>
   </g>
 
   <!-- ===== Kid 1, girl (front left) ===== -->
-  <g>
+  <g transform="translate(-40,10)">
     <path d="M60,512 L66,446 Q72,410 112,400 L188,400 Q228,410 234,446 L240,512 Z" fill="#e8807a"/>
     <path d="M128,402 Q150,418 172,402" fill="none" stroke="#c9615c" stroke-width="4"/>
     <path d="M138,370 L138,404 Q150,412 162,404 L162,370 Z" fill="#dcae8e"/>
@@ -92,20 +97,8 @@
     <ellipse cx="140" cy="300" rx="18" ry="8" fill="url(#shine)"/>
   </g>
 
-  <!-- ===== Kid 2, boy (front middle) ===== -->
-  <g>
-    <path d="M206,512 L212,456 Q218,422 256,412 L322,412 Q360,422 366,456 L372,512 Z" fill="#2fb59a"/>
-    <path d="M266,414 Q289,430 312,414" fill="none" stroke="#21927b" stroke-width="4"/>
-    <path d="M277,382 L277,416 Q289,424 301,416 L301,382 Z" fill="#dcae8e"/>
-    <ellipse cx="289" cy="346" rx="40" ry="45" fill="url(#skinK)"/>
-    <!-- messy blonde -->
-    <path d="M247,348 Q240,296 289,292 Q340,294 332,348 Q328,322 314,316 L304,326 L298,312 L284,322 L280,310 L268,322 Q252,326 247,348 Z" fill="url(#blonde)"/>
-    <ellipse cx="249" cy="352" rx="6" ry="9" fill="#dcae8e"/><ellipse cx="329" cy="352" rx="6" ry="9" fill="#dcae8e"/>
-    <ellipse cx="280" cy="312" rx="18" ry="8" fill="url(#shine)"/>
-  </g>
-
   <!-- ===== Golden retriever (front right) ===== -->
-  <g>
+  <g transform="translate(-162,6)">
     <!-- chest / body -->
     <path d="M356,512 L362,448 Q370,404 418,396 Q466,404 474,448 L480,512 Z" fill="url(#dog)"/>
     <path d="M396,420 q8,14 0,28 M418,416 q8,16 0,32 M440,420 q8,14 0,28" stroke="#f1c17c" stroke-width="5" fill="none" stroke-linecap="round" opacity=".7"/>
@@ -119,4 +112,16 @@
     <path d="M446,306 Q470,306 476,334 Q480,362 468,378 Q456,372 452,352 Q448,328 438,312 Z" fill="#b97a33"/>
     <ellipse cx="408" cy="320" rx="16" ry="8" fill="url(#shine)"/>
   </g>
+  <!-- ===== Kid 2, boy (front middle) ===== -->
+  <g transform="translate(122,-2)">
+    <path d="M206,512 L212,456 Q218,422 256,412 L322,412 Q360,422 366,456 L372,512 Z" fill="#2fb59a"/>
+    <path d="M266,414 Q289,430 312,414" fill="none" stroke="#21927b" stroke-width="4"/>
+    <path d="M277,382 L277,416 Q289,424 301,416 L301,382 Z" fill="#dcae8e"/>
+    <ellipse cx="289" cy="346" rx="40" ry="45" fill="url(#skinK)"/>
+    <!-- messy blonde -->
+    <path d="M247,348 Q240,296 289,292 Q340,294 332,348 Q328,322 314,316 L304,326 L298,312 L284,322 L280,310 L268,322 Q252,326 247,348 Z" fill="url(#blonde)"/>
+    <ellipse cx="249" cy="352" rx="6" ry="9" fill="#dcae8e"/><ellipse cx="329" cy="352" rx="6" ry="9" fill="#dcae8e"/>
+    <ellipse cx="280" cy="312" rx="18" ry="8" fill="url(#shine)"/>
+  </g>
+
 </svg>
