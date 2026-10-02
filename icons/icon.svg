@@ -1,66 +1,122 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Rev app icon: a target with an Olympic barbell through the bullseye -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <radialGradient id="bg" cx="50%" cy="42%" r="78%">
-      <stop offset="0" stop-color="#1c2016"/>
-      <stop offset="1" stop-color="#09090a"/>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f1430"/>
+      <stop offset=".55" stop-color="#2a2550"/>
+      <stop offset="1" stop-color="#6b3f4c"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".62" r=".6">
+      <stop offset="0" stop-color="#ffb35c" stop-opacity=".75"/>
+      <stop offset=".55" stop-color="#ff8a4a" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#ff8a4a" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff"/>
-      <stop offset=".45" stop-color="#d9d9d4"/>
-      <stop offset=".55" stop-color="#9c9c97"/>
-      <stop offset="1" stop-color="#e6e6e1"/>
-    </linearGradient>
-    <linearGradient id="shaft" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#e8e8e3"/>
-      <stop offset="1" stop-color="#8e8e89"/>
-    </linearGradient>
-    <linearGradient id="red" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#ff5d57"/>
-      <stop offset=".55" stop-color="#d7263d"/>
-      <stop offset="1" stop-color="#a51b2e"/>
-    </linearGradient>
-    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#5aa2ff"/>
-      <stop offset=".55" stop-color="#1f62d6"/>
-      <stop offset="1" stop-color="#1647a0"/>
-    </linearGradient>
-    <pattern id="knurl" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-      <rect width="6" height="6" fill="none"/>
-      <path d="M0 0v6M3 0v6" stroke="#2a2a2a" stroke-opacity=".55" stroke-width="1.2"/>
-    </pattern>
+    <linearGradient id="skinA" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b07e5a"/><stop offset=".55" stop-color="#d9a37a"/><stop offset="1" stop-color="#b98560"/></linearGradient>
+    <linearGradient id="skinR" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c99a7c"/><stop offset=".55" stop-color="#ecc3a4"/><stop offset="1" stop-color="#d3a585"/></linearGradient>
+    <linearGradient id="skinK" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d6a988"/><stop offset=".55" stop-color="#f3cfb2"/><stop offset="1" stop-color="#dcb091"/></linearGradient>
+    <linearGradient id="rash" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a55d6"/><stop offset="1" stop-color="#173a9e"/></linearGradient>
+    <linearGradient id="jumper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4e3e0"/><stop offset="1" stop-color="#b9b8b5"/></linearGradient>
+    <linearGradient id="blonde" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6dc8e"/><stop offset="1" stop-color="#d9b25a"/></linearGradient>
+    <linearGradient id="dog" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2a85a"/><stop offset="1" stop-color="#bf8238"/></linearGradient>
+    <radialGradient id="shine" cx=".4" cy=".3" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
   </defs>
-  <rect width="512" height="512" fill="url(#bg)"/>
 
-  <!-- target -->
-  <circle cx="256" cy="256" r="206" fill="none" stroke="#c8f06a" stroke-opacity=".22" stroke-width="16"/>
-  <circle cx="256" cy="256" r="158" fill="none" stroke="#c8f06a" stroke-opacity=".45" stroke-width="16"/>
-  <circle cx="256" cy="256" r="110" fill="none" stroke="#c8f06a" stroke-opacity=".75" stroke-width="16"/>
-  <circle cx="256" cy="256" r="58" fill="#c8f06a"/>
-  <circle cx="256" cy="256" r="58" fill="none" stroke="#0b0b0c" stroke-opacity=".25" stroke-width="4"/>
+  <rect width="512" height="512" fill="url(#sky)"/>
+  <rect width="512" height="512" fill="url(#glow)"/>
+  <g fill="#fff">
+    <circle cx="60" cy="70" r="2.2" opacity=".8"/><circle cx="110" cy="40" r="1.6" opacity=".6"/><circle cx="430" cy="58" r="2.2" opacity=".8"/>
+    <circle cx="470" cy="120" r="1.6" opacity=".6"/><circle cx="40" cy="150" r="1.6" opacity=".55"/><circle cx="380" cy="30" r="1.6" opacity=".6"/>
+  </g>
+  <path d="M0,380 Q120,330 256,350 T512,330 L512,512 L0,512 Z" fill="#1d1a33" opacity=".7"/>
 
-  <!-- dark outline so the bar reads over the bullseye -->
-  <rect x="116" y="246" width="280" height="20" rx="10" fill="#0b0b0c" opacity=".85"/>
-  <rect x="18" y="240" width="476" height="32" rx="8" fill="#0b0b0c" opacity=".55"/>
-  <!-- Olympic bar: shaft with knurling (smooth ring each side of centre knurl) -->
-  <rect x="120" y="250" width="272" height="12" rx="6" fill="url(#shaft)"/>
-  <rect x="136" y="250" width="72" height="12" fill="url(#knurl)"/>
-  <rect x="236" y="250" width="40" height="12" fill="url(#knurl)"/>
-  <rect x="304" y="250" width="72" height="12" fill="url(#knurl)"/>
-  <!-- inner collars (sleeve stops) -->
-  <rect x="110" y="238" width="12" height="36" rx="3" fill="url(#chrome)"/>
-  <rect x="390" y="238" width="12" height="36" rx="3" fill="url(#chrome)"/>
-  <!-- sleeves -->
-  <rect x="22" y="244" width="90" height="24" rx="5" fill="url(#chrome)"/>
-  <rect x="400" y="244" width="90" height="24" rx="5" fill="url(#chrome)"/>
+  <!-- ===== Renee (back left) ===== -->
+  <g>
+    <!-- bun behind head -->
+    <ellipse cx="150" cy="152" rx="26" ry="23" fill="#2a1d18"/>
+    <!-- grey jumper -->
+    <path d="M70,512 L78,372 Q86,322 140,306 L178,296 L232,304 Q262,318 270,352 L276,512 Z" fill="url(#jumper)"/>
+    <path d="M158,298 L180,326 L204,298" fill="none" stroke="#a9a8a5" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M172,324 L180,326 L188,324" stroke="#9c9b98" stroke-width="3" fill="none"/>
+    <!-- neck -->
+    <path d="M166,262 L166,302 Q181,312 196,302 L196,262 Z" fill="#c8977a"/>
+    <!-- face -->
+    <path d="M136,206 Q136,152 181,152 Q226,152 226,206 L226,236 Q226,262 206,278 Q194,288 181,288 Q168,288 156,278 Q136,262 136,236 Z" fill="url(#skinR)"/>
+    <!-- slicked hair with middle part -->
+    <path d="M133,214 Q128,150 181,140 Q234,150 229,214 Q222,180 206,172 Q194,166 181,170 Q168,166 156,172 Q140,180 133,214 Z" fill="#2a1d18"/>
+    <path d="M181,142 L181,170" stroke="#4a362c" stroke-width="2.5" opacity=".7"/>
+    <!-- sunglasses on head -->
+    <g transform="rotate(-6 181 160)">
+      <rect x="144" y="150" width="32" height="18" rx="8" fill="#3b2418" stroke="#7a4a2a" stroke-width="2.5"/>
+      <rect x="186" y="150" width="32" height="18" rx="8" fill="#3b2418" stroke="#7a4a2a" stroke-width="2.5"/>
+      <path d="M176,158 L186,158" stroke="#7a4a2a" stroke-width="3"/>
+    </g>
+    <!-- ears + gold hoops -->
+    <ellipse cx="135" cy="228" rx="7" ry="11" fill="#c8977a"/><ellipse cx="227" cy="228" rx="7" ry="11" fill="#c8977a"/>
+    <circle cx="134" cy="246" r="6.5" fill="none" stroke="#e7c35a" stroke-width="3"/><circle cx="228" cy="246" r="6.5" fill="none" stroke="#e7c35a" stroke-width="3"/>
+    <ellipse cx="170" cy="190" rx="22" ry="12" fill="url(#shine)"/>
+  </g>
 
-  <!-- bumper plates: red 25 kg, blue 20 kg, both full size, then a competition collar -->
-  <rect x="84" y="140" width="26" height="232" rx="7" fill="url(#red)" stroke="#0b0b0c" stroke-width="3"/>
-  <rect x="58" y="140" width="26" height="232" rx="7" fill="url(#blue)" stroke="#0b0b0c" stroke-width="3"/>
-  <rect x="42" y="236" width="12" height="40" rx="3" fill="#0e0e0f" stroke="#e6e6e1" stroke-width="3"/>
-  <rect x="402" y="140" width="26" height="232" rx="7" fill="url(#red)" stroke="#0b0b0c" stroke-width="3"/>
-  <rect x="428" y="140" width="26" height="232" rx="7" fill="url(#blue)" stroke="#0b0b0c" stroke-width="3"/>
-  <rect x="458" y="236" width="12" height="40" rx="3" fill="#0e0e0f" stroke="#e6e6e1" stroke-width="3"/>
-  <!-- plate face highlight -->
-  <path d="M65 152v208M91 152v208M409 152v208M435 152v208" stroke="#ffffff" stroke-opacity=".35" stroke-width="3" stroke-linecap="round"/>
+  <!-- ===== Ant (back right, taller) ===== -->
+  <g>
+    <!-- blue rashguard, broad -->
+    <path d="M236,512 L242,360 Q250,300 314,284 L346,276 L380,276 L412,284 Q476,300 484,360 L492,512 Z" fill="url(#rash)"/>
+    <path d="M330,280 Q363,304 396,280" fill="none" stroke="#123080" stroke-width="5"/>
+    <!-- medal lanyard -->
+    <path d="M320,286 L362,372 L404,286" fill="none" stroke="#f0c531" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M320,286 L362,372 L404,286" fill="none" stroke="#1b1b1b" stroke-width="2" stroke-dasharray="6 10" opacity=".55"/>
+    <circle cx="362" cy="388" r="17" fill="#f2c94c" stroke="#c99a1e" stroke-width="3"/>
+    <!-- thick neck -->
+    <path d="M334,232 L334,286 Q363,300 392,286 L392,232 Z" fill="#a8774f"/>
+    <!-- head -->
+    <path d="M314,160 Q314,100 363,100 Q412,100 412,160 L413,214 L410,232 Q408,244 398,250 Q382,264 363,264 Q344,264 328,250 Q318,244 316,232 L313,214 Z" fill="url(#skinA)"/>
+    <!-- beard -->
+    <path d="M313,196 L316,232 Q318,244 328,250 Q344,264 363,264 Q382,264 398,250 Q408,244 410,232 L413,196 Q408,224 392,232 Q378,240 363,240 Q348,240 334,232 Q318,224 313,196 Z" fill="#5a3b26" opacity=".85"/>
+    <!-- short faded hair with quiff -->
+    <path d="M312,166 Q306,108 352,96 Q390,88 410,112 Q420,130 414,168 Q410,140 396,130 Q380,122 360,124 Q334,126 322,140 Q314,150 312,166 Z" fill="#4a3022"/>
+    <path d="M330,106 Q356,84 392,96 Q372,96 356,104 Z" fill="#5c3c2a"/>
+    <path d="M312,166 Q310,150 316,140 L318,182 Z M414,168 Q416,150 410,140 L408,182 Z" fill="#4a3022" opacity=".45"/>
+    <!-- ears -->
+    <ellipse cx="312" cy="196" rx="8" ry="14" fill="#a8774f"/><ellipse cx="414" cy="196" rx="8" ry="14" fill="#a8774f"/>
+    <ellipse cx="350" cy="140" rx="24" ry="12" fill="url(#shine)"/>
+  </g>
+
+  <!-- ===== Kid 1, girl (front left) ===== -->
+  <g>
+    <path d="M60,512 L66,446 Q72,410 112,400 L188,400 Q228,410 234,446 L240,512 Z" fill="#e8807a"/>
+    <path d="M128,402 Q150,418 172,402" fill="none" stroke="#c9615c" stroke-width="4"/>
+    <path d="M138,370 L138,404 Q150,412 162,404 L162,370 Z" fill="#dcae8e"/>
+    <!-- ponytail -->
+    <path d="M190,300 Q226,312 220,360 Q214,386 198,392 Q206,360 192,330 Z" fill="url(#blonde)"/>
+    <ellipse cx="150" cy="332" rx="40" ry="46" fill="url(#skinK)"/>
+    <path d="M108,336 Q102,282 150,280 Q198,282 194,336 Q188,306 170,300 Q150,294 130,302 Q112,312 108,336 Z" fill="url(#blonde)"/>
+    <circle cx="192" cy="300" r="7" fill="#e8807a"/>
+    <ellipse cx="140" cy="300" rx="18" ry="8" fill="url(#shine)"/>
+  </g>
+
+  <!-- ===== Kid 2, boy (front middle) ===== -->
+  <g>
+    <path d="M206,512 L212,456 Q218,422 256,412 L322,412 Q360,422 366,456 L372,512 Z" fill="#2fb59a"/>
+    <path d="M266,414 Q289,430 312,414" fill="none" stroke="#21927b" stroke-width="4"/>
+    <path d="M277,382 L277,416 Q289,424 301,416 L301,382 Z" fill="#dcae8e"/>
+    <ellipse cx="289" cy="346" rx="40" ry="45" fill="url(#skinK)"/>
+    <!-- messy blonde -->
+    <path d="M247,348 Q240,296 289,292 Q340,294 332,348 Q328,322 314,316 L304,326 L298,312 L284,322 L280,310 L268,322 Q252,326 247,348 Z" fill="url(#blonde)"/>
+    <ellipse cx="249" cy="352" rx="6" ry="9" fill="#dcae8e"/><ellipse cx="329" cy="352" rx="6" ry="9" fill="#dcae8e"/>
+    <ellipse cx="280" cy="312" rx="18" ry="8" fill="url(#shine)"/>
+  </g>
+
+  <!-- ===== Golden retriever (front right) ===== -->
+  <g>
+    <!-- chest / body -->
+    <path d="M356,512 L362,448 Q370,404 418,396 Q466,404 474,448 L480,512 Z" fill="url(#dog)"/>
+    <path d="M396,420 q8,14 0,28 M418,416 q8,16 0,32 M440,420 q8,14 0,28" stroke="#f1c17c" stroke-width="5" fill="none" stroke-linecap="round" opacity=".7"/>
+    <!-- head: broad domed skull -->
+    <path d="M374,344 Q372,300 418,298 Q464,300 462,344 Q462,366 450,378 L440,388 L396,388 L386,378 Q374,366 374,344 Z" fill="url(#dog)"/>
+    <!-- short muzzle -->
+    <path d="M398,360 Q398,346 418,346 Q438,346 438,360 L438,374 Q438,392 418,394 Q398,392 398,374 Z" fill="#f0c486"/>
+    <ellipse cx="418" cy="355" rx="8.5" ry="6" fill="#2b1d16"/>
+    <!-- floppy ears hanging from the top of the head -->
+    <path d="M390,306 Q366,306 360,334 Q356,362 368,378 Q380,372 384,352 Q388,328 398,312 Z" fill="#b97a33"/>
+    <path d="M446,306 Q470,306 476,334 Q480,362 468,378 Q456,372 452,352 Q448,328 438,312 Z" fill="#b97a33"/>
+    <ellipse cx="408" cy="320" rx="16" ry="8" fill="url(#shine)"/>
+  </g>
 </svg>
